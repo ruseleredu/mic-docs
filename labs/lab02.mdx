@@ -1,0 +1,275 @@
+---
+sidebar_position: 5
+title: Laboratório 02
+description: Introdução as aulas de laboratório
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import { LABsApoio } from "@site/src/components/AvisosSite";
+import LabFromTemplate from "@site/src/components/LabFromTemplate";
+import {
+  DevToolsv2,
+  GitConfig,
+  STM32Toolsv2,
+  GitCommit,
+} from "@site/src/components/InstructionsSite";
+import LabTable from "@site/src/components/LabTable";
+
+# Laboratório 02
+
+{/* Info de que este conteúdo é de apoio! */}
+
+<LABsApoio />
+
+{/* Tabela com link para atividade, inicio, fim e descrição do LAB! */}
+
+<div style={{ display: "flex", justifyContent: "center" }}>
+  <LabTable index={2} internal={false} />
+</div>
+
+---
+
+## Conteúdo
+
+Processo de compilação, gravação e commit de código;
+
+- [ ] Crie uma conta no [my.st.com](https://www.st.com/content/st_com/en/user-registration.html);
+- [ ] Instale o [STM32CubeMX](https://www.st.com/en/development-tools/stm32cubemx.html#get-software);
+- [ ] Instale o [ST-MCU-Finder](https://www.st.com/en/development-tools/st-mcu-finder-pc.html#get-software);
+- [ ] Instale o [STM32CubeProg](https://www.st.com/en/development-tools/stm32cubeprog.html#get-software);
+- [ ] Crie um perfil no Visual Studio Code chamado `STM32`;
+- [ ] Instale [STM32Cube para Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=stmicroelectronics.stm32-vscode-extension);
+- [ ] Configure o Visual Studio Code;
+- [ ] Teste de geração e compilação de projeto para o STM32F411CEUx;
+- [ ] Teste de uso do [LoadMX](/docs/loadmx)
+
+## Verifique o seu ambiente de desenvolvimento
+
+{/* List of Dev Tools */}
+
+<DevToolsv2 />
+
+{/* Configure o git */}
+
+<GitConfig />
+
+---
+
+{/* List of STM32Cube Tools */}
+
+<STM32Toolsv2 />
+
+## Crie um novo repositório com base no template do LAB02 {/* #new-repo-from-tpl */}
+
+Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub:
+
+{/* Gera instruções para criar o repositório no GitHub por grupo com base no template do laboratório. */}
+
+<LabFromTemplate labNumber="LAB02" opts="-c" />
+
+{/* Git Commit */}
+
+<GitCommit />
+
+## Instalação do VScode e extensão para o STM32
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/a5A4wAYuuOY?si=78Cd1dAWLqcsN9oG"
+  title="YouTube video player"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  referrerpolicy="strict-origin-when-cross-origin"
+  allowfullscreen
+></iframe>
+
+```bash
+code --list-extensions --profile "STM32"
+```
+
+<details>
+ <summary>Recomendações de extensões e configurações para o VS Code.</summary>
+```json title=".vscode/extensions.json"
+{
+  "recommendations": [
+    "dan-c-underwood.arm",
+    "jeff-hykin.better-cpp-syntax",
+    "marus25.cortex-debug",
+    "mcu-debug.debug-tracker-vscode",
+    "mcu-debug.memory-view",
+    "mcu-debug.peripheral-viewer",
+    "mcu-debug.rtos-views",
+    "ms-vscode.cmake-tools",
+    "ms-vscode.cpptools",
+    "ms-vscode.cpptools-extension-pack",
+    "ms-vscode.cpptools-themes",
+    "ms-vscode.hexeditor",
+    "pkief.material-icon-theme",
+    "stmicroelectronics.stm32-vscode-extension",
+    "trond-snekvik.gnu-mapfiles",
+    "twxs.cmake",
+    "yzhang.markdown-all-in-one",
+    "zixuanwang.linkerscript"
+  ]
+}
+```
+
+```json title=".vscode/settings.json"
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "ms-vscode.cpptools",
+  "editor.formatOnPaste": true,
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "workbench.iconTheme": "material-icon-theme",
+  "[markdown]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "cmake.options.statusBarVisibility": "visible"
+}
+```
+
+</details>
+
+## Diagrama de pinos do STM32F4x1
+
+---
+
+![STM32F4x1 microcontroller pinout diagram;](/img/MiniSTM32F4x1/STM32F4x1_PinoutDiagram_RichardBalint.png)
+
+O debugger [ST-LINK/V2](/docs/st-link) possue um conector IDC de 10 pinos. A pinagem é descrita na figura a seguir.
+
+![ST-LINK/V2 Clone](/img/ST-LINK_V2_Clone_Header.png)
+
+---
+
+## Como carregar um script do STM32CubeMX
+
+- https://www.st.com/resource/en/user_manual/um1718-stm32cubemx-for-stm32-configuration-and-initialization-c-code-generation-stmicroelectronics.pdf
+
+To run STM32CubeMX in interactive command-line mode, use the following command line:
+
+```bash
+"%STM32CubeMX_PATH%\jre\bin\java" -jar "%STM32CubeMX_PATH%\STM32CubeMX.exe" -i
+```
+
+To generate a script
+
+```bash
+export script ScriptToLoad.txt
+```
+
+To run STM32CubeMX in command-line mode, getting commands from a script, use the following command line:
+
+```bash
+"%STM32CubeMX_PATH%\jre\bin\java" -jar "%STM32CubeMX_PATH%\STM32CubeMX.exe" -s ScriptToLoad.txt
+```
+
+Exemplo de arquivo txt de configuração:
+
+```bash title="ScriptToLoad.txt"
+load STM32F411CEUx
+set pin "PC14-OSC32_IN" RCC_OSC32_IN
+lock pin "PC14-OSC32_IN" false
+set pin "PC15-OSC32_OUT" RCC_OSC32_OUT
+lock pin "PC15-OSC32_OUT" false
+set pin "PH0 - OSC_IN" RCC_OSC_IN
+lock pin "PH0 - OSC_IN" false
+set pin "PH1 - OSC_OUT" RCC_OSC_OUT
+lock pin "PH1 - OSC_OUT" false
+set pin "PA13" SYS_JTMS-SWDIO
+lock pin "PA13" false
+set pin "PA14" SYS_JTCK-SWCLK
+lock pin "PA14" false
+set mode RCC "HSE-External-Oscillator"
+set mode RCC "LSE-External-Oscillator"
+set mode SYS "Serial_Wire"
+set mode SYS "SysTick"
+```
+
+### [LoadMX](/docs/loadmx)
+
+Call for Help (--help, -h, /?)
+
+```bash
+LoadMX --help
+```
+
+Run STM32CubeMX interactively
+
+```bash
+LoadMX -i
+```
+
+Opens STM32CubeMX with provided Project Name and Script Name and loads default value for Code Generation (N)
+
+```bash
+LoadMX ProjectName ScriptToLoad.txt
+```
+
+Opens STM32CubeMX with provided Project Name, Script Name and generate code
+
+```bash
+LoadMX ProjectName ScriptToLoad.txt Y
+```
+
+## VS Code Terminal Configuration
+
+Configure `Git Bash` como terminal integrado do Visual Studio Code para evitar problemas de formatação de texto e comandos:
+
+```json title=".vscode/settings.json"
+"terminal.integrated.defaultProfile.windows": "Git Bash",
+```
+
+## Crie um [gh alias](/docs/github-cli#aliases) para deploy-debug
+
+```bash
+gh alias set deploy-debug 'tag="$1"; cp ./build/Debug/*.elf ./firmware-debug.elf && gh release create "$tag" ./firmware-debug.elf --generate-notes && rm ./firmware-debug.elf' --shell
+```
+
+Como funciona:
+
+- Considera a etiqueta de lançamento como $1.
+- Copia o ELF de ./build/Debug/\*.elf → ./firmware-debug.elf.
+- Executa gh release create com o arquivo renomeado.
+- Limpa removendo o arquivo renomeado temporário.
+
+Uso:
+
+```bash
+gh deploy-debug v1.0.0
+```
+
+### Rápida verificação do upload
+
+Assim que o comando terminar, você poderá verificar o upload diretamente em seu terminal usando:
+
+```bash
+gh release view v1.0.0 --web
+```
+
+## Instruções
+
+Esta atividade de laboratório tem como objetivo verificar a configuração adequada do ambiente de desenvolvimento para o STM32.
+
+- [ ] Crie uma organização baseada no nome do grupo;
+- [ ] Adicione os membros do seu grupo a organização;
+- [ ] Adicione o professor como membro da organização;
+- [ ] Crie um projeto em branco na pasta EmptyTest;
+- [ ] Importe um projeto em branco na pasta CubeMxTest;
+- [ ] Commit e push dos arquivos gerados;
+- [ ] Envie o link da organização (hyperlink);
+- [ ] Envie o link do repositório no GitHub (hyperlink);
+
+## Avaliação
+
+- [ ] Crie uma organização baseada no nome do grupo - 10%
+- [ ] Adicione os membros do seu grupo a organização - 10%
+- [ ] Adicione o professor como membro da organização - 10%
+- [ ] Crie um projeto em branco na pasta EmptyTest - 25%
+- [ ] Importe um projeto em branco na pasta CubeMxTest - 25%
+- [ ] Envie o link da organização e do repositório no GitHub (hyperlink) - 20%
