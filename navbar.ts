@@ -73,6 +73,11 @@ const navbarItems: NavbarItem[] = [
     { to: "/pdf/CT2026.pdf", label: "Calendário", position: "right", target: '_blank' },
     // { href: "https://www.utfpr.edu.br/alunos/calendario", label: "Calendário", position: "right" },
     {
+        href: "https://ruseleredu.github.io/iiot-docs/espconnect/",
+        label: "ESPConnect",
+        position: "right",
+    },
+    {
         href: "https://github.com/ruseleredu/mic-docs",
         label: "GitHub",
         position: "right",
