@@ -32,8 +32,9 @@ const config: Config = {
   // If you aren't using GitHub pages, you don't need these.
   organizationName: "ruseleredu", // Usually your GitHub org/user name.
   projectName: "mic-docs", // Usually your repo name.
-
+  deploymentBranch: "gh-pages",
   onBrokenLinks: "warn",
+
   staticDirectories: ['static'],
   markdown: {
     mermaid: true, // Diagrams can be rendered using Mermaid in a code block.
@@ -171,6 +172,14 @@ const config: Config = {
   // ... rest of your config
 
   themeConfig: {
+    announcementBar: {
+      id: 'migration_stm32_to_esp32', // Mude este ID para forçar a reexibição se o usuário já tiver fechado
+      content:
+        '⚠️ <strong>Aviso de Migração:</strong> O kit de desenvolvimento do curso migrou do <strong>STM32F411 (Black Pill)</strong> para o <strong>ESP32-DevKitC</strong>. O repositório legado do <a href="https://ruseleredu.github.io/stm32doc/">STM32</a>.',
+      backgroundColor: '#fff3cd', // Fundo amarelo claro (estilo aviso)
+      textColor: '#856404',       // Texto escuro proporcional
+      isCloseable: true,         // Permite ao usuário fechar a barra
+    },
     // Replace with your project's social card
     image: "img/ELT73A-BannerCourse.png",
     navbar: {
