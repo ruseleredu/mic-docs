@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkstm_32_doc=self.webpackChunkstm_32_doc||[]).push([["3220"],{1912(s){s.exports=JSON.parse('{"blogBasePath":"/mic-docs/blog","blogTitle":"Blog","authorsListPath":"/mic-docs/blog/authors"}')}}]);
