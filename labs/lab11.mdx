@@ -9,7 +9,6 @@ import TabItem from "@theme/TabItem";
 import { LABsApoio } from "@site/src/components/AvisosSite";
 import LabFromTemplate from "@site/src/components/LabFromTemplate";
 import {
-  STM32Toolsv2,
   GitConfig,
   DevToolsv2,
   GitCommit,
@@ -77,10 +76,6 @@ Cada item equivale a 10% da nota.
 <GitConfig />
 
 ---
-
-{/* List of STM32Cube Tools */}
-
-<STM32Toolsv2 />
 
 ## Crie um novo repositório com base no template do LAB11 {/* #new-repo-from-tpl */}
 
@@ -191,12 +186,6 @@ Seguem algumas referências para leitura do sensor de temperatura interna do STM
 - https://deepbluembedded.com/stm32-internal-temperature-sensor-reading-example/
 - https://stm32world.com/wiki/STM32_internal_temperature_and_voltage_reference
 - https://github.com/lbthomsen/blackpill
-
-Carrege a base do projeto com o [LoadMX](/docs/loadmx)
-
-```bash
-LoadMX TEMPSENSORI2C TEMPSENSORI2C.txt
-```
 
 Abra o projeto gerado no VS Code:
 

@@ -11,7 +11,6 @@ import LabFromTemplate from "@site/src/components/LabFromTemplate";
 import {
   DevToolsv2,
   GitConfig,
-  STM32Toolsv2,
   GitCommit,
 } from "@site/src/components/InstructionsSite";
 import LabTable from "@site/src/components/LabTable";
@@ -42,7 +41,6 @@ Processo de compilação, gravação e commit de código;
 - [ ] Instale [STM32Cube para Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=stmicroelectronics.stm32-vscode-extension);
 - [ ] Configure o Visual Studio Code;
 - [ ] Teste de geração e compilação de projeto para o STM32F411CEUx;
-- [ ] Teste de uso do [LoadMX](/docs/loadmx)
 
 ## Verifique o seu ambiente de desenvolvimento
 
@@ -55,10 +53,6 @@ Processo de compilação, gravação e commit de código;
 <GitConfig />
 
 ---
-
-{/* List of STM32Cube Tools */}
-
-<STM32Toolsv2 />
 
 ## Crie um novo repositório com base no template do LAB02 {/* #new-repo-from-tpl */}
 
@@ -189,32 +183,6 @@ set mode RCC "HSE-External-Oscillator"
 set mode RCC "LSE-External-Oscillator"
 set mode SYS "Serial_Wire"
 set mode SYS "SysTick"
-```
-
-### [LoadMX](/docs/loadmx)
-
-Call for Help (--help, -h, /?)
-
-```bash
-LoadMX --help
-```
-
-Run STM32CubeMX interactively
-
-```bash
-LoadMX -i
-```
-
-Opens STM32CubeMX with provided Project Name and Script Name and loads default value for Code Generation (N)
-
-```bash
-LoadMX ProjectName ScriptToLoad.txt
-```
-
-Opens STM32CubeMX with provided Project Name, Script Name and generate code
-
-```bash
-LoadMX ProjectName ScriptToLoad.txt Y
 ```
 
 ## VS Code Terminal Configuration

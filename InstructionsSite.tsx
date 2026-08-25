@@ -8,9 +8,15 @@ import Link from '@docusaurus/Link';
 
 // import {VerifyDev1,VerifyDev1} from '@site/src/components/InstructionsSite';
 /*
+<Link to="/docs/stm32cubemx">STM32CubeMX</Link>
+<Link to="/docs/stm32cubeclt">STM32CubeCLT</Link>
+<Link to="/docs/stm32cubeprg">STM32CubeProg</Link>
+<Link to="/docs/stm32cubemon">STM32CubeMonitor</Link>
+<Link to="/docs/stm32cubeide">STM32CubeIDE</Link>
 <Link to="/docs/git">git</Link>
 <Link to="/docs/github-cli">GitHub CLI</Link>
 <Link to="/docs/vs-code">Visual Studio Code</Link>
+<Link to="/docs/stm32cubetools">STM32Cube Tools</Link>
 */
 
 // import {VerifyDev1} from '@site/src/components/InstructionsSite';
@@ -237,14 +243,14 @@ export function DevToolsv2() {
                     code --list-extensions --profile "STM32"
                 </ThemeCodeBlock>
             </TabItem>
-            <TabItem value="esp32-wokwi" label="Wokwi">
-                <p><b><Link to="/docs/category/wokwi">Wokwi for VSCode</Link>: Embedded systems and IoT simulator supporting ESP32, Arduino, and the Raspberry Pi Pico.</b></p>
+            <TabItem value="stm32-vscode-extension" label="STM32CubeIDE">
+                <p><b><Link to="/docs/stm32-vscode-extension">STM32CubeIDE for Visual Studio Code</Link>: development experience for STM32 microcontrollers.</b></p>
                 <ul>
-                    <li><a href="https://marketplace.visualstudio.com/items?itemName=Wokwi.wokwi-vscode" target="_blank">Wokwi for VSCode</a> Your code never leaves your computer - Wokwi runs the simulation inside VS Code, using the firmware binaries from your project.
+                    <li><a href="https://marketplace.visualstudio.com/items?itemName=stmicroelectronics.stm32-vscode-extension" target="_blank">STM32CubeIDE for Visual Studio Code</a> is designed to enhance the development experience for STM32 microcontrollers by providing a comprehensive and updatable set of tools. The extension pack allow users to install one single pack bringing a full ESP32 IDE experience into VS Code.
                     </li>
                 </ul>
                 <ThemeCodeBlock className="language-bash">
-                    code --install-extension wokwi.wokwi-vscode --profile "ESP32IO"
+                    code --install-extension stmicroelectronics.stm32-vscode-extension --profile "ESP32IO"
                 </ThemeCodeBlock>
             </TabItem>
             <TabItem value="stm32-platformio" label="PlatformIO">
@@ -291,6 +297,7 @@ export function GitLogOut() {
     );
 }
 
+
 // import {GitCommit} from '@site/src/components/InstructionsSite';
 // <!-- Configure o git -->
 // <GitCommit />
@@ -331,6 +338,9 @@ export function GitCommit() {
         </div >
     );
 }
+
+
+
 
 // import {NewBranch} from '@site/src/components/InstructionsSite';
 // <!-- Como criar uma nova branch -->

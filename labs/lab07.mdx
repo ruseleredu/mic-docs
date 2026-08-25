@@ -11,7 +11,6 @@ import LabFromTemplate from "@site/src/components/LabFromTemplate";
 import {
   DevToolsv2,
   GitConfig,
-  STM32Toolsv2,
   GitCommit,
   NewBranch,
 } from "@site/src/components/InstructionsSite";
@@ -66,10 +65,6 @@ Esta atividade de laboratório tem como objetivo utilizar o DMA, MQTT e STM32Cub
 <GitConfig />
 
 ---
-
-{/* List of STM32Cube Tools */}
-
-<STM32Toolsv2 />
 
 ## Crie um novo repositório com base no template do LAB07 {/* #new-repo-from-tpl */}
 
@@ -451,26 +446,4 @@ Assim que o comando terminar, você poderá verificar o upload diretamente em se
 
 ```bash
 gh release view v1.0.0 --web
-```
-
-## Como carregar um script do STM32CubeMX com [LoadMX](/docs/loadmx)
-
-Call for Help (--help, -h, /?)
-
-```bash
-LoadMX --help
-```
-
-Run STM32CubeMX interactively with [LoadMX](/docs/loadmx)
-
-Generate code with TIM2, EXT INT, ADC1 and PWM
-
-```bash
-LoadMX TIM2EXTI0ADC1PWM TIM2EXTI0ADC1PWM.txt
-```
-
-Generate code with TIM2, EXT INT, DMA (IN1 and IN2) and PWM
-
-```bash
-LoadMX TIM2EXTI0ADC1PWMDMA TIM2EXTI0ADC1PWMDMA.txt
 ```

@@ -13,7 +13,6 @@ import LabFromTemplate from "@site/src/components/LabFromTemplate";
 import {
   DevToolsv2,
   GitConfig,
-  STM32Toolsv2,
   GitCommit,
   NewBranch,
 } from "@site/src/components/InstructionsSite";
@@ -45,7 +44,6 @@ Uso do STM32CubeMonitor; InfluxDB;
 - [ ] Instale [STM32Cube para Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=stmicroelectronics.stm32-vscode-extension);
 - [ ] Configure o Visual Studio Code;
 - [ ] Teste de geração e compilação de projeto para o STM32F411CEUx;
-- [ ] Teste de uso do [LoadMX](/docs/loadmx)
 
 ## Verifique o seu ambiente de desenvolvimento
 
@@ -58,10 +56,6 @@ Uso do STM32CubeMonitor; InfluxDB;
 <GitConfig />
 
 ---
-
-{/* List of STM32Cube Tools */}
-
-<STM32Toolsv2 />
 
 ## Crie um novo repositório com base no template do LAB08 {/* #new-repo-from-tpl */}
 
@@ -112,10 +106,6 @@ O debugger [ST-LINK/V2](/docs/st-link) possue um conector IDC de 10 pinos. A pin
 ---
 
 ## User Code
-
-```bash
-LoadMX TEMPSENSOR TEMPSENSOR.txt
-```
 
 ### Timer 2 com interrupção e saída PWM no canal 1
 

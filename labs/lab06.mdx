@@ -11,7 +11,6 @@ import LabFromTemplate from "@site/src/components/LabFromTemplate";
 import {
   DevToolsv2,
   GitConfig,
-  STM32Toolsv2,
   GitCommit,
   NewBranch,
 } from "@site/src/components/InstructionsSite";
@@ -51,10 +50,6 @@ Uso do STM32CubeMonitor; Visualização de variáveis;
 <GitConfig />
 
 ---
-
-{/* List of STM32Cube Tools */}
-
-<STM32Toolsv2 />
 
 ## Crie um novo repositório com base no template do LAB06 {/* #new-repo-from-tpl */}
 
@@ -276,7 +271,7 @@ gh release view v1.0.0 --web
 
 ## [STM32CubeMonitor](https://www.st.com/en/development-tools/stm32cubemonitor.html#section-get-software-table) - Monitoramento e Depuração em Tempo Real para STM32
 
-O [STM32CubeMonitor](/docs/stm32cubemonvideos) é uma ferramenta de monitoramento e depuração em tempo real para microcontroladores STM32. Ele permite que os desenvolvedores visualizem variáveis, monitorem o desempenho do sistema e depurem aplicativos de forma eficiente. Com uma interface intuitiva, o STM32CubeMonitor facilita a análise de dados e a identificação de problemas em projetos baseados em STM32, tornando-o uma escolha essencial para engenheiros e entusiastas que trabalham com esses microcontroladores.
+O STM32CubeMonitor é uma ferramenta de monitoramento e depuração em tempo real para microcontroladores STM32. Ele permite que os desenvolvedores visualizem variáveis, monitorem o desempenho do sistema e depurem aplicativos de forma eficiente. Com uma interface intuitiva, o STM32CubeMonitor facilita a análise de dados e a identificação de problemas em projetos baseados em STM32, tornando-o uma escolha essencial para engenheiros e entusiastas que trabalham com esses microcontroladores.
 
 - https://jsonformatter.org/
 
@@ -323,42 +318,4 @@ O [STM32CubeMonitor](/docs/stm32cubemonvideos) é uma ferramenta de monitorament
   ],
   "accesspoint": 0
 }
-```
-
-## Como carregar um script do STM32CubeMX com [LoadMX](/docs/loadmx)
-
-Call for Help (--help, -h, /?)
-
-```bash
-LoadMX --help
-```
-
-Run STM32CubeMX interactively with [LoadMX](/docs/loadmx)
-
-```bash
-LoadMX -i
-```
-
-To generate a script
-
-```bash
-export script ScriptToLoad.txt
-```
-
-Generate code with TIM2 and EXT INT
-
-```bash
-LoadMX TIM2EXTI0 TIM2EXTI0.txt
-```
-
-Generate code with TIM2, EXT INT and ADC1
-
-```bash
-LoadMX TIM2EXTI0ADC1 TIM2EXTI0ADC1.txt
-```
-
-Generate code with TIM2, EXT INT, ADC1 and PWM
-
-```bash
-LoadMX TIM2EXTI0ADC1PWM TIM2EXTI0ADC1PWM.txt
 ```

@@ -4,13 +4,20 @@ title: 💼 Components Show Case
 slug: /components-showcase
 ---
 
-import { LABsIncomplete, EaDIncomplete , LABsApoio } from '@site/src/components/AvisosSite';
-import {VerifyDev1,VerifyDev2,GitConfig} from '@site/src/components/InstructionsSite';
-import {STM32Tools,STM32Toolsv2,STM32ToolsFull} from '@site/src/components/InstructionsSite';
-import {DevTools,DevToolsv2} from '@site/src/components/InstructionsSite';
+import {
+  LABsIncomplete,
+  EaDIncomplete,
+  LABsApoio,
+} from "@site/src/components/AvisosSite";
+import {
+  VerifyDev1,
+  VerifyDev2,
+  GitConfig,
+} from "@site/src/components/InstructionsSite";
+
+import { DevTools, DevToolsv2 } from "@site/src/components/InstructionsSite";
 
 ## AvisosSite
-
 
 ```bash
 import {LABsIncomplete,EaDIncomplete,LABsApoio} from '@site/src/components/AvisosSite';
@@ -19,10 +26,12 @@ import {LABsIncomplete,EaDIncomplete,LABsApoio} from '@site/src/components/Aviso
 ### LABsIncomplete
 
 ```md
-{/* Alerta de que este conteúdo de laboratório está incompleto! */}
+{/_ Alerta de que este conteúdo de laboratório está incompleto! _/}
 <LABsIncomplete />
 ```
+
 {/* Alerta de que este conteúdo de laboratório está incompleto! */}
+
 <LABsIncomplete />
 
 ---
@@ -30,10 +39,12 @@ import {LABsIncomplete,EaDIncomplete,LABsApoio} from '@site/src/components/Aviso
 ### EaDIncomplete
 
 ```md
-{/* Alerta de que este conteúdo de EaD está incompleto! */}
+{/_ Alerta de que este conteúdo de EaD está incompleto! _/}
 <EaDIncomplete />
 ```
+
 {/* Alerta de que este conteúdo de EaD está incompleto! */}
+
 <EaDIncomplete />
 
 ---
@@ -41,10 +52,12 @@ import {LABsIncomplete,EaDIncomplete,LABsApoio} from '@site/src/components/Aviso
 ### LABsApoio
 
 ```md
-{/* Info de que este conteúdo é de apoio! */}
+{/_ Info de que este conteúdo é de apoio! _/}
 <LABsApoio />
 ```
+
 {/* Info de que este conteúdo é de apoio! */}
+
 <LABsApoio />
 
 ---
@@ -53,7 +66,6 @@ import {LABsIncomplete,EaDIncomplete,LABsApoio} from '@site/src/components/Aviso
 
 ```bash
 import {VerifyDev1,VerifyDev2,GitConfig} from '@site/src/components/InstructionsSite';
-import {STM32Tools,STM32Toolsv2,STM32ToolsFull} from '@site/src/components/InstructionsSite';
 import {DevTools,DevToolsv2} from '@site/src/components/InstructionsSite';
 ```
 
@@ -64,12 +76,12 @@ import {VerifyDev1} from '@site/src/components/InstructionsSite';
 ```
 
 ```md
-{/* Verifique o seu ambiente dev, git, gh e code */}
+{/_ Verifique o seu ambiente dev, git, gh e code _/}
 <VerifyDev1 />
-
 ```
 
 {/* Verifique o seu ambiente dev, git, gh e code */}
+
 <VerifyDev1 />
 
 ---
@@ -81,10 +93,12 @@ import {VerifyDev2} from '@site/src/components/InstructionsSite';
 ```
 
 ```md
-{/* Verifique o seu ambiente dev, git, gh, code, gcc e gdb */}
+{/_ Verifique o seu ambiente dev, git, gh, code, gcc e gdb _/}
 <VerifyDev2 />
 ```
+
 {/* Verifique o seu ambiente dev, git, gh, code, gcc e gdb */}
+
 <VerifyDev2 />
 
 ---
@@ -96,15 +110,15 @@ import {GitConfig} from '@site/src/components/InstructionsSite';
 ```
 
 ```md
-{/* Configure o git */}
+{/_ Configure o git _/}
 <GitConfig />
 ```
 
 {/* Configure o git */}
+
 <GitConfig />
 
 ---
-
 
 ### GitLogOut
 
@@ -112,14 +126,15 @@ import {GitConfig} from '@site/src/components/InstructionsSite';
 import {GitLogOut} from '@site/src/components/InstructionsSite';
 ```
 
-import {GitLogOut} from '@site/src/components/InstructionsSite';
+import { GitLogOut } from "@site/src/components/InstructionsSite";
 
 ```md
-{/* Logout do seu ambiente dev, git e gh */}
+{/_ Logout do seu ambiente dev, git e gh _/}
 <GitLogOut />
 ```
 
 {/* Logout do seu ambiente dev, git e gh */}
+
 <GitLogOut />
 
 ---
@@ -130,62 +145,16 @@ import {GitLogOut} from '@site/src/components/InstructionsSite';
 import {GitCommit} from '@site/src/components/InstructionsSite';
 ```
 
-import {GitCommit} from '@site/src/components/InstructionsSite';
+import { GitCommit } from "@site/src/components/InstructionsSite";
 
 ```md
-{/* Git Commit */}
+{/_ Git Commit _/}
 <GitCommit />
 ```
 
 {/* Git Commit */}
+
 <GitCommit />
-
----
-
-### STM32Tools
-
-```bash
-import {STM32Tools} from '@site/src/components/InstructionsSite';
-```
-
-```md
-{/* List of STM32Cube Tools */}
-<STM32Tools />
-```
-
-{/* List of STM32Cube Tools */}
-<STM32Tools />
-
-
----
-
-### STM32Toolsv2
-
-```bash
-import {STM32Toolsv2} from '@site/src/components/InstructionsSite';
-```
-
-```md
-{/* List of STM32Cube Tools */}
-<STM32Toolsv2 />
-```
-
-{/* List of STM32Cube Tools */}
-<STM32Toolsv2 />
-
----
-
-```bash
-import {STM32ToolsFull} from '@site/src/components/InstructionsSite';
-```
-
-```md
-{/* List of STM32Cube Tools */}
-<STM32ToolsFull />
-```
-
-{/* List of STM32Cube Tools */}
-<STM32ToolsFull />
 
 ---
 
@@ -196,11 +165,12 @@ import {DevTools} from '@site/src/components/InstructionsSite';
 ```
 
 ```md
-{/* List of Dev Tools */}
+{/_ List of Dev Tools _/}
 <DevTools />
 ```
 
 {/* List of Dev Tools */}
+
 <DevTools />
 
 ---
@@ -212,11 +182,12 @@ import {DevToolsv2} from '@site/src/components/InstructionsSite';
 ```
 
 ```md
-{/* List of Dev Tools */}
+{/_ List of Dev Tools _/}
 <DevToolsv2 />
 ```
 
 {/* List of Dev Tools */}
+
 <DevToolsv2 />
 
 ## LabFromTemplate
@@ -228,8 +199,9 @@ import LabFromTemplate from "@site/src/components/LabFromTemplate";
 ```
 
 ### LAB00
+
 ```md
-{/* Criar repositório no GitHub com base no template do laboratório */}
+{/_ Criar repositório no GitHub com base no template do laboratório _/}
 <LabFromTemplate labNumber="LAB00" />
 ```
 
@@ -245,13 +217,13 @@ import LabFromScratch from "@site/src/components/LabFromScratch";
 import LabFromScratch from "@site/src/components/LabFromScratch";
 ```
 
-
 ### LAB00
+
 ```md
-{/* Criar repositório no GitHub com base no comando */}
+{/_ Criar repositório no GitHub com base no comando _/}
 <LabFromScratch repoName="LAB00" opts="--add-readme -c -l mit -g C"/>
 ```
 
-<LabFromScratch repoName="LAB00" opts="--add-readme -c -l mit -g C"/>
+<LabFromScratch repoName="LAB00" opts="--add-readme -c -l mit -g C" />
 
 ---

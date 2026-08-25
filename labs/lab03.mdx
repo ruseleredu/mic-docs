@@ -11,7 +11,6 @@ import LabFromTemplate from "@site/src/components/LabFromTemplate";
 import {
   DevToolsv2,
   GitConfig,
-  STM32Toolsv2,
   GitCommit,
   NewBranch,
 } from "@site/src/components/InstructionsSite";
@@ -47,7 +46,6 @@ Esta atividade de laboratório tem como objetivo verificar a configuração adeq
 - [ ] Adicione o código para piscar o LED!
 - [ ] Commit e push dos arquivos gerados;
 - [ ] Teste de geração e compilação de projeto para o STM32F411CEUx;
-- [ ] Teste de uso do [LoadMX](/docs/loadmx)
 - [ ] Envie o link do repositório no GitHub (hyperlink);
 
 ## Avaliação
@@ -71,10 +69,6 @@ Esta atividade de laboratório tem como objetivo verificar a configuração adeq
 <GitConfig />
 
 ---
-
-{/* List of STM32Cube Tools */}
-
-<STM32Toolsv2 />
 
 ## Crie um novo repositório com base no template do LAB03 {/* #new-repo-from-tpl */}
 
@@ -258,38 +252,6 @@ Assim que o comando terminar, você poderá verificar o upload diretamente em se
 
 ```bash
 gh release view v1.0.0 --web
-```
-
-## Como carregar um script do STM32CubeMX
-
-Call for Help (--help, -h, /?)
-
-```bash
-LoadMX --help
-```
-
-Run [STM32CubeMX](/docs/stm32cubemx) interactively with [LoadMX](/docs/loadmx)
-
-```bash
-LoadMX -i
-```
-
-To generate a script
-
-```bash
-export script ScriptToLoad.txt
-```
-
-```bash
-LoadMX ProjectName FinalScript.txt
-```
-
-```bash
-code ProjectName --profile "STM32"
-```
-
-```bash
-code . --profile "STM32"
 ```
 
 ## Referências

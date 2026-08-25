@@ -65,22 +65,6 @@ const navbarItems: NavbarItem[] = [
                 to: "/projects/2026.2", // Link to a page in your PJTS docs
                 label: "Semestre 2026.2",
             },
-            {
-                to: "/projects/2026.1", // Link to a page in your PJTS docs
-                label: "Semestre 2026.1",
-            },
-            {
-                to: "/projects/2025.2", // Link to a page in your PJTS docs
-                label: "Semestre 2025.2",
-            },
-            {
-                to: "/projects/2025.1", // Link to a page in your PJTS docs
-                label: "Semestre 2025.1",
-            },
-            {
-                to: "/projects/2024.2", // Link to a page in your PJTS docs
-                label: "Semestre 2024.2",
-            },
         ],
     },
 
@@ -89,12 +73,7 @@ const navbarItems: NavbarItem[] = [
     { to: "/pdf/CT2026.pdf", label: "Calendário", position: "right", target: '_blank' },
     // { href: "https://www.utfpr.edu.br/alunos/calendario", label: "Calendário", position: "right" },
     {
-        href: 'https://ruseleredu.github.io/stm32f4xx-hal-driver-doxygen/index.html',
-        label: 'STM32CubeF4',
-        position: 'right',
-    },
-    {
-        href: "https://github.com/ruseleredu/stm32doc",
+        href: "https://github.com/ruseleredu/mic-docs",
         label: "GitHub",
         position: "right",
     },

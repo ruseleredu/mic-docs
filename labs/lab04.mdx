@@ -11,7 +11,6 @@ import LabFromTemplate from "@site/src/components/LabFromTemplate";
 import {
   DevToolsv2,
   GitConfig,
-  STM32Toolsv2,
   GitCommit,
   NewBranch,
 } from "@site/src/components/InstructionsSite";
@@ -66,10 +65,6 @@ Esta atividade de laboratório tem como objetivo verificar a interrupção via G
 
 ---
 
-{/* List of STM32Cube Tools */}
-
-<STM32Toolsv2 />
-
 ## Crie um novo repositório com base no template do LAB04 {/* #new-repo-from-tpl */}
 
 Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub:
@@ -81,12 +76,6 @@ Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub
 {/* Git Commit */}
 
 <GitCommit />
-
-Generate code with TIM2 and EXT INT
-
-```bash
-LoadMX TIM2EXTI0 TIM2EXTI0.txt
-```
 
 ## Diagrama de pinos do STM32F4x1
 
@@ -256,40 +245,4 @@ Assim que o comando terminar, você poderá verificar o upload diretamente em se
 
 ```bash
 gh release view v1.0.0 --web
-```
-
-## Como carregar um script do STM32CubeMX com [LoadMX](/docs/loadmx) {/* #loadmx */}
-
-Call for Help (--help, -h, /?)
-
-```bash
-LoadMX --help
-```
-
-Run STM32CubeMX interactively with [LoadMX](/docs/loadmx)
-
-```bash
-LoadMX -i
-```
-
-To generate a script
-
-```bash
-export script ScriptToLoad.txt
-```
-
-Opens STM32CubeMX with provided Project Name and Script Name and loads default value for Code Generation (N)
-
-```bash
-LoadMX ProjectName ScriptName.txt
-```
-
-Opens STM32CubeMX with provided Project Name, Script Name and generate code
-
-```bash
-LoadMX ProjectName ScriptName.txt Y
-```
-
-```bash
-LoadMX TIM2EXTI0 TIM2EXTI0.txt
 ```
