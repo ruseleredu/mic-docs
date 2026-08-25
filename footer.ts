@@ -51,8 +51,8 @@ const footer: ThemeConfig["footer"] = {
                     href: "https://cli.github.com/manual/",
                 },
                 {
-                    label: "STM32CubeIDE",
-                    href: "https://dev.st.com/stm32cube-docs/stm32cubeide-vscode/",
+                    label: "Wokwi Docs",
+                    href: "https://docs.wokwi.com/",
                 },
             ],
         },
@@ -191,8 +191,8 @@ const footer: ThemeConfig["footer"] = {
                     href: "https://stm32world.com/wiki/Main_Page",
                 },
                 {
-                    label: "Wokwi",
-                    href: "https://wokwi.com/",
+                    label: "Wokwi Docs",
+                    href: "https://docs.wokwi.com/",
                 },
                 {
                     label: "STM32F411",
@@ -228,8 +228,8 @@ const footer: ThemeConfig["footer"] = {
                     href: "https://code.visualstudio.com/download",
                 },
                 {
-                    label: "STM32CubeIDE",
-                    href: "https://marketplace.visualstudio.com/items?itemName=stmicroelectronics.stm32-vscode-extension",
+                    label: "Wokwi for VS Code",
+                    href: "https://marketplace.visualstudio.com/items?itemName=wokwi.wokwi-vscode",
                 },
                 {
                     label: "PlatformIO",
@@ -240,37 +240,8 @@ const footer: ThemeConfig["footer"] = {
                     href: "https://nodejs.org/en/download/",
                 },
                 {
-                    label: "Java",
-                    href: "https://www.java.com/pt-BR/download/",
-                },
-            ],
-        },
-        {
-            title: "STM32Cube",
-            items: [
-                {
-                    label: "STM32CubeMX",
-                    href: "https://www.st.com/en/development-tools/stm32cubemx.html",
-                },
-                {
-                    label: "STM32CubeCLT",
-                    href: "https://www.st.com/en/development-tools/stm32cubeclt.html",
-                },
-                {
-                    label: "STMCUFinder",
-                    href: "https://www.st.com/en/development-tools/st-mcu-finder-pc.html",
-                },
-                {
-                    label: "STM32CubeProg",
-                    href: "https://www.st.com/en/development-tools/stm32cubeprog.html",
-                },
-                {
-                    label: "STM32CubeMonitor",
-                    href: "https://www.st.com/en/development-tools/stm32cubemonitor.html",
-                },
-                {
-                    label: "STM32CubeIDE",
-                    href: "https://www.st.com/en/development-tools/stm32cubeide.html",
+                    label: "Python",
+                    href: "https://www.python.org/",
                 },
             ],
         },
