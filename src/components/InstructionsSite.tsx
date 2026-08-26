@@ -76,6 +76,9 @@ export function VerifyDev2() {
                     code -v
                 </ThemeCodeBlock>
                 <ThemeCodeBlock className="language-bash">
+                    code --profile "ESP32IO"
+                </ThemeCodeBlock>
+                <ThemeCodeBlock className="language-bash">
                     code --list-extensions --profile "ESP32IO"
                 </ThemeCodeBlock>
 
@@ -180,7 +183,11 @@ export function DevTools() {
                 <ThemeCodeBlock className="language-bash">
                     winget install --id Microsoft.VisualStudioCode -e --source winget
                 </ThemeCodeBlock>
-                <p>Extensões instaladas do <Link to="/docs/vs-code-intro">Visual Studio Code</Link> para o perfil STM32:</p>
+                <p>Crie o perfil ESP32IO:</p>
+                <ThemeCodeBlock className="language-bash">
+                    code --profile "ESP32IO"
+                </ThemeCodeBlock>
+                <p>Extensões instaladas do <Link to="/docs/vs-code-intro">Visual Studio Code</Link> para o perfil ESP32IO:</p>
                 <ThemeCodeBlock className="language-bash">
                     code --list-extensions --profile "ESP32IO"
                 </ThemeCodeBlock>
