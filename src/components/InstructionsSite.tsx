@@ -182,7 +182,7 @@ export function DevTools() {
                 </ThemeCodeBlock>
                 <p>Extensões instaladas do <Link to="/docs/vs-code-intro">Visual Studio Code</Link> para o perfil STM32:</p>
                 <ThemeCodeBlock className="language-bash">
-                    code --list-extensions --profile "STM32"
+                    code --list-extensions --profile "ESP32IO"
                 </ThemeCodeBlock>
             </TabItem>
         </Tabs>
@@ -234,7 +234,7 @@ export function DevToolsv2() {
                 </ThemeCodeBlock>
                 <p>Extensões instaladas do <Link to="/docs/vs-code-intro">Visual Studio Code</Link> para o perfil STM32:</p>
                 <ThemeCodeBlock className="language-bash">
-                    code --list-extensions --profile "STM32"
+                    code --list-extensions --profile "ESP32IO"
                 </ThemeCodeBlock>
             </TabItem>
             <TabItem value="esp32-wokwi" label="Wokwi">
@@ -302,27 +302,22 @@ export function GitCommit() {
                 <ThemeCodeBlock className="language-bash">
                     git status
                 </ThemeCodeBlock>
-
                 <p>Adicione os arquivos modificados:</p>
                 <ThemeCodeBlock className="language-bash">
                     git add .
                 </ThemeCodeBlock>
-
                 <p>Realize o <Link to="/docs/git-best-practices">commit</Link> das alterações:</p>
                 <ThemeCodeBlock className="language-bash">
                     git commit -m "Descrição breve das alterações realizadas!"
                 </ThemeCodeBlock>
-
                 <p>Envie para o repositório remoto (GitHub):</p>
                 <ThemeCodeBlock className="language-bash">
                     git push
                 </ThemeCodeBlock>
-
                 <p>Vizualize o log de alterações:</p>
                 <ThemeCodeBlock className="language-bash">
                     git log
                 </ThemeCodeBlock>
-
                 <p>Vizualize no GitHub:</p>
                 <ThemeCodeBlock className="language-bash">
                     gh repo view --web
