@@ -94,3 +94,13 @@ npm audit fix
 ```bash
 node scripts/check-groups.js 2026-1
 ```
+
+### Cria template do lab e repos por grupo:
+
+```bash
+./scripts/create-lab-template.sh
+```
+
+```bash
+./scripts/create-lab-from-template.sh
+```
