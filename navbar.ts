@@ -78,7 +78,7 @@ const navbarItems: NavbarItem[] = [
         position: "right",
     },
     {
-        href: "https://github.com/ruseleredu/mic-docs",
+        href: "https://github.com/ELT73A-S22-2026-2",
         label: "GitHub",
         position: "right",
     },
