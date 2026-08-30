@@ -175,36 +175,36 @@ const footer: ThemeConfig["footer"] = {
             title: "Recursos",
             items: [
                 {
-                    label: "WeAct Studio",
-                    href: "https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1",
+                    label: "Arduino-ESP32",
+                    href: "https://github.com/espressif/arduino-esp32",
                 },
                 {
                     label: "DeepBlue",
                     href: "https://deepbluembedded.com/",
                 },
                 {
-                    label: "STM32 MCU wiki",
-                    href: "https://wiki.st.com/stm32mcu/wiki/Main_Page",
+                    label: "RandomNerdTutorials",
+                    href: "https://randomnerdtutorials.com/projects-esp32/",
                 },
                 {
-                    label: "STM32World Wiki",
-                    href: "https://stm32world.com/wiki/Main_Page",
+                    label: "Learn Electronics",
+                    href: "https://lastminuteengineers.com/",
                 },
                 {
-                    label: "Wokwi Docs",
+                    label: "Wokwi",
                     href: "https://docs.wokwi.com/",
                 },
                 {
-                    label: "STM32F411",
-                    href: "https://www.st.com/en/microcontrollers-microprocessors/stm32f411.html",
+                    label: "ESP32",
+                    href: "https://www.espressif.com/en/products/socs/esp32",
                 },
                 {
-                    label: "STM32-base",
-                    href: "https://stm32-base.org/",
+                    label: "Arduino Documentation",
+                    href: "https://docs.arduino.cc/",
                 },
                 {
-                    label: "STM32CubeF4",
-                    href: "https://github.com/STMicroelectronics/STM32CubeF4/",
+                    label: "ESP32 Learning Kit",
+                    href: "https://docs.keyestudio.com/en/latest/docs/esp32/esp32.html",
                 },
             ],
         },
@@ -220,10 +220,6 @@ const footer: ThemeConfig["footer"] = {
                     href: "https://cli.github.com/",
                 },
                 {
-                    label: "GitHub Desktop",
-                    href: "https://desktop.github.com/download/",
-                },
-                {
                     label: "VS Code",
                     href: "https://code.visualstudio.com/download",
                 },
@@ -234,6 +230,10 @@ const footer: ThemeConfig["footer"] = {
                 {
                     label: "PlatformIO",
                     href: "https://platformio.org//install/ide?install=vscode",
+                },
+                {
+                    label: "Docker Desktop",
+                    href: "https://www.docker.com/products/docker-desktop/",
                 },
                 {
                     label: "Node.js",
