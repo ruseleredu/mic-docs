@@ -13,11 +13,12 @@ import {
   VerifyDev2,
   GitConfig,
   STM32Toolsv2,
-  DevToolsv2,
+  DevTools,
   GitLogOut,
   GitCommit,
 } from "@site/src/components/InstructionsSite";
 import LabTable from "@site/src/components/LabTable";
+import LabTeamMembers from "@site/src/components/LabTeamMembers";
 
 # Laboratório 01
 
@@ -40,16 +41,76 @@ Git e GitHub; Ambiente de desenvolvimento;
 - [ ] Uso do Git;
 - [ ] Uso do GitHub;
 - [ ] Crie uma organização no GitHub;
-- [ ] Adicione os membros do seu grupo;
-- [ ] Promova o professor como owner;
+- [ ] Solicitar inclusão em um time;
 - [ ] Ambiente de desenvolvimento;
 - [ ] Comandos básicos, git e GitHub;
+
+---
+
+# Solicitar inclusão em um time
+
+Esta página explica como pedir para ser adicionado(a) ao seu **grupo (time)** na
+organização **`ELT73A-S22-2026-2`** do [GitHub](https://github.com/).
+
+Toda solicitação é feita abrindo uma **issue** em um repositório dedicado, por meio
+de um formulário. Depois de enviada, um administrador adiciona você ao time e fecha
+a issue.
+
+:::info[Pré-requisitos]
+
+- Ter uma conta no [GitHub](https://github.com/).
+- Saber o **slug do seu grupo** (de `grupo-a` até `grupo-j`).
+- Conhecer o seu **username** do GitHub (o nome que aparece no seu perfil, sem o `@`).
+  :::
+
+## Passo a passo
+
+### 1. Abra o formulário de solicitação
+
+Acesse o repositório de solicitações e clique em [New issue](https://github.com/ELT73A-S22-2026-2/elt73a-central/issues/new/choose) (Nova issue), ou use
+o [link direto](https://github.com/ELT73A-S22-2026-2/elt73a-central/issues/new?template=solicitar-time.yml):
+
+### 2. Selecione o formulário
+
+Na tela de escolha, selecione **"Solicitar inclusão em time"**.
+
+### 3. Preencha os campos
+
+| Campo                      | O que informar                                          |
+| -------------------------- | ------------------------------------------------------- |
+| **Grupo (slug do time)**   | Escolha o slug do seu grupo, de `grupo-a` a `grupo-p`.  |
+| **Seu username do GitHub** | Seu nome de usuário, **sem o `@`**. Ex.: `octocat`.     |
+| **Confirmação**            | Marque a caixa confirmando que o username está correto. |
+
+:::caution[Confira o username]
+Um username digitado errado impede a inclusão e atrasa o processo. Confirme no seu
+perfil antes de enviar.
+:::
+
+- [ELT85B-N21-2026-2:LAB00](https://github.com/orgs/ELT85B-N21-2026-2/repositories?q=lab00)
+
+```bash
+Organization: ELT85B-N21-2026-2
+│
+├── Teams
+│   ├── Grupo-A
+│   ├── Grupo-B
+│   ├── ...
+│   └── Grupo-P (Professor)
+│
+└── Repositories
+    ├── lab01-template
+    ├── lab01-grupo-a
+    ├── lab01-grupo-b
+    ├── ...
+    └── lab01-grupo-p (Professor)
+```
 
 ## Verifique o seu ambiente de desenvolvimento
 
 {/* List of Dev Tools */}
 
-<DevToolsv2 />
+<DevTools />
 
 ---
 
@@ -63,22 +124,67 @@ Git e GitHub; Ambiente de desenvolvimento;
 
 <VerifyDev1 />
 
-## Crie um novo repositório com base no template do LAB01 {/* #new-repo-from-tpl */}
+---
 
-Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub:
+## Clone o repositório inicial do LAB00
 
-{/* Gera instruções para criar o repositório no GitHub por grupo com base no template do laboratório. */}
+Escolha o seu grupo e entre com o comando abaixo para criar o repositório no GitHub:
 
-<LabFromTemplate labNumber="LAB01" opts="-c" />
+<LabTeamMembers labName="lab00" />
 
 {/* Git Commit */}
 
 <GitCommit />
 
-## Git e GitHub
+## Uso do git e GitHub
 
-- [ ] Definições;
-- [ ] Uso do GitHub;
+- [Melhores práticas do Git](/docs/git-best-practices).
+- [Folha de Dicas de Git do GitHub](/docs/github-git-cheat-sheet).
+
+import ConventionalCommitsTypes from "@site/src/components/ConventionalCommitsTypes";
+
+## Conventional Commits em Projetos de Firmware e Sistemas Embarcados
+
+Em projetos de firmware e sistemas embarcados (PlatformIO + VS Code + Wokwi para ESP32), a adoção da [Convenção Conventional Commits](https://www.conventionalcommits.org/) traz clareza, facilita a geração automática de changelogs e melhora a colaboração em atividades de laboratório.
+
+Este documento apresenta a classificação dos tipos de commits e exemplos práticos orientados para o contexto de sala de aula.
+
+### Estrutura Básica
+
+```
+<tipo>[escopo opcional]: <descrição curta>
+
+[corpo opcional]
+
+[rodapé(s) opcional(is)]
+```
+
+### Regras importantes
+
+- A descrição deve ser escrita no **imperativo** e em minúsculas (exceto nomes próprios).
+- Máximo recomendado de 72 caracteres na primeira linha.
+- O escopo é opcional e geralmente indica o módulo ou componente afetado (`sensor`, `wifi`, `platformio`, `display`, etc.).
+- Use o corpo para explicar o _porquê_ da mudança, não apenas o _o quê_.
+
+### Classificação dos Tipos
+
+| Tipo         | Quando usar                                                  | Exemplo de contexto em laboratório                    |
+| ------------ | ------------------------------------------------------------ | ----------------------------------------------------- |
+| **feat**     | Nova funcionalidade                                          | Implementar leitura de sensor DHT22                   |
+| **fix**      | Correção de bug                                              | Corrigir overflow no buffer UART                      |
+| **docs**     | Alterações apenas em documentação                            | Atualizar README com diagrama de conexão              |
+| **style**    | Formatação, espaços, ponto e vírgula (sem mudança de lógica) | Ajustar indentação do código PlatformIO               |
+| **refactor** | Mudança de código que não corrige bug nem adiciona feature   | Separar lógica de Wi-Fi em arquivo próprio            |
+| **perf**     | Melhoria de performance                                      | Otimizar leitura ADC com media móvel                  |
+| **test**     | Adição ou correção de testes                                 | Criar teste unitário para função de debounce          |
+| **build**    | Mudanças no sistema de build ou dependências externas        | Atualizar versão da biblioteca FastLED                |
+| **ci**       | Configuração de integração contínua                          | Adicionar workflow de build no GitHub Actions         |
+| **chore**    | Tarefas de manutenção que não afetam o código-fonte          | Atualizar `.gitignore` ou limpar arquivos temporários |
+| **revert**   | Reverter um commit anterior                                  | Desfazer commit que quebrou o simulador Wokwi         |
+
+### Exemplos Práticos para Atividades de Laboratório
+
+<ConventionalCommitsTypes />
 
 O GitHub é uma plataforma de hospedagem de código-fonte e arquivos com controle de versão usando o Git.
 
@@ -194,122 +300,184 @@ git-merge - Join two or more development histories together
 git help merge
 ```
 
-## Exemplos
+## Cheatsheet — Team members working with lab repos
 
-### [Iniciar um novo repositório e publicá-lo no GitHub](https://docs.github.com/pt/get-started/using-git/about-git#exemplo-iniciar-um-novo-reposit%C3%B3rio-e-public%C3%A1-lo-no-github)
+**Org:** `ELT73A-S22-2026-2`  
+**Your team:** `Grupo-X` → slug `grupo-x`  
+**Your lab repo:** `lab01-grupo-x` (example)
 
-- `git init` inicializa um novo repositório Git e começa a acompanhar um diretório existente. Ele adiciona uma subpasta oculta dentro do diretório existente que contém a estrutura de dados interna necessária para o controle de versão.
-- `git add` prepara uma alteração. O Git controla as alterações na base de código de um desenvolvedor, mas é necessário testar e tirar um instantâneo das alterações para incluí-las no histórico do projeto. Este comando executa o teste, a primeira parte do processo de duas etapas. Todas as mudanças que são testadas irão tornar-se parte do próximo instantâneo e parte do histórico do projeto. O teste e o commit separados dão aos desenvolvedores total controle sobre o histórico do seu projeto sem alterar como eles codificam e funcionam.
-- `git commit` salva o instantâneo no histórico do projeto e conclui o processo de controle de alterações. Em suma, um commit funciona como tirar uma foto. Qualquer item que tenha sido preparado com `git add` passará a fazer parte do instantâneo com `git commit`.
-- `git push` atualiza o repositório remoto com quaisquer commits feitos localmente em um branch.
+---
 
-### create a new repository on the command line
+Open in VS Code:
 
 ```bash
-gh repo create ELT73A-S22-2026-1-X/lab01-init --private
+code .
+# or, if you use a profile:
+code . --profile "ESP32IO"
 ```
 
-```bash
-echo "# lab01-init" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/ELT73A-S22-2026-1-X/lab01-init.git
-git push -u origin main
-```
+---
 
-### push an existing repository from the command line
+## 2. Daily workflow
 
 ```bash
-gh repo create ELT73A-S22-2026-1-X/lab01-push --private
-```
-
-```bash
-git remote add origin https://github.com/ELT73A-S22-2026-1-X/lab01-push.git
-# git remote set-url origin https://github.com/ELT73A-S22-2026-1-X/lab01-push.git
-git branch -M main
-git push -u origin main
-```
-
-### clone an existing repository from the command line
-
-```bash
-git clone https://github.com/ELT73A-S22-2026-1-X/lab01-init.git
-```
-
-### [Contribuir para um repositório existente](https://docs.github.com/pt/get-started/using-git/about-git#example-contribute-to-an-existing-repository)
-
-```bash
-# download a repository on GitHub to our machine
-# Replace `owner/repo` with the owner and name of the repository to clone
-git clone https://github.com/ELT73A-S22-2026-1-X/lab01-init.git
-
-# change into the `repo` directory
-cd lab01-init
-
-# create a new branch to store any new changes
-git branch my-branch
-
-# switch to that branch (line of development)
-git checkout my-branch
-
-# make changes, for example, edit `file1.md`  using the text editor
-echo "# file 1 in lab01-init" >> file1.md
-
-# stage the changed files
-git add file1.md
-
-# take a snapshot of the staging area (anything that's been added)
-git commit -m "my snapshot"
-
-# push changes to github
-git push --set-upstream origin my-branch
-```
-
-### [Contribuir para uma ramificação existente no GitHub](https://docs.github.com/pt/get-started/using-git/about-git#exemplo-contribuir-para-uma-ramifica%C3%A7%C3%A3o-existente-no-github)
-
-```bash
-# Replace `owner/repo` with the owner and name of the repository to clone
-git clone https://github.com/ELT73A-S22-2026-1-X/lab01-init.git
-
-# change into the `repo` directory
-cd lab01-init
-
-# update all remote tracking branches, and the currently checked out branch
+# Update from remote
 git pull
 
-# change into the existing branch called `feature-a`
-git checkout feature-a
+# See status
+git status
 
-# make changes, for example, edit `file1.md` using the text editor
-echo "# Add feature-a in lab01-init" >> file1.md
+# Stage changes
+git add .
+# or specific files:
+git add src/main.cpp
 
-# stage the changed file
-git add file1.md
+# Commit
+git commit -m "Implement exercise 2"
 
-# take a snapshot of the staging area
-git commit -m "edit file1"
-
-# push changes to github
+# Push to GitHub
 git push
 ```
 
-### Mesclar feature-a
+If `git push` asks for a remote branch the first time:
 
 ```bash
-# Switch to the main branch
+git push -u origin main
+```
+
+---
+
+## 3. Branch workflow (recommended)
+
+```bash
+# Create and switch to a branch
+git checkout -b feature/ex2
+
+# Work, commit, push
+git add .
+git commit -m "Exercise 2"
+git push -u origin feature/ex2
+
+# Open a PR into main
+gh pr create --base main --title "Exercise 2" --body "Done"
+```
+
+After the PR is merged:
+
+```bash
 git checkout main
+git pull
+git branch -d feature/ex2
+```
 
-# Pull the latest changes from GitHub
-git pull origin main
+---
 
-# Merge feature-a into your current branch (main)
-git merge feature-a
+## 4. PlatformIO / embedded labs (if applicable)
 
-# Remove a Remote Branch
-git push origin --delete feature-a
+```bash
+# Build
+pio run
 
+# Upload to board
+pio run -t upload
+
+# Serial monitor
+pio device monitor
+
+# Run tests
+pio test
+```
+
+---
+
+## 5. What you **can** and **cannot** do
+
+| Action                                        | Allowed?                 |
+| --------------------------------------------- | ------------------------ |
+| Clone / pull / push to **your** group repo    | Yes (if team has `push`) |
+| Create branches / commits                     | Yes                      |
+| Open issues / PRs in your repo                | Yes                      |
+| Edit other groups’ repos (`lab00-grupo-b`, …) | No                       |
+| Delete the repository                         | No (usually)             |
+| Change team / org settings                    | No                       |
+| Access `lab00-template` (if private)          | Only if granted          |
+
+Your access comes from the **team** (`grupo-a`, etc.), not from being repo admin.
+
+---
+
+## 6. Quick reference by lab
+
+| Lab     | Repository                          |
+| ------- | ----------------------------------- |
+| LAB00   | `ELT73A-S22-2026-2/lab00-grupo-a`   |
+| LAB05   | `ELT73A-S22-2026-2/lab05-grupo-a`   |
+| Projeto | `ELT73A-S22-2026-2/projeto-grupo-a` |
+
+Replace `a` with your group letter (`b`, `c`, …).
+
+Clone pattern:
+
+```bash
+gh repo clone ELT73A-S22-2026-2/lab05-grupo-a
+```
+
+---
+
+## 7. Common problems
+
+**Permission denied on push**
+
+- Confirm you are logged in: `gh auth status`
+- Confirm you are in the right team/repo
+- Ask the instructor to check team access (`push` on the repo)
+
+**Repo not found**
+
+```bash
+gh repo view ELT73A-S22-2026-2/lab00-grupo-a
+```
+
+If 404: wrong name, or you are not a member of the org/team yet.
+
+**Merge conflicts**
+
+```bash
+git pull
+# fix conflicted files
+git add .
+git commit -m "Resolve merge conflicts"
+git push
+```
+
+**Undo local changes (destructive)**
+
+```bash
+git checkout -- .
+git clean -fd
+```
+
+---
+
+## 8. Minimal “start of lab” checklist
+
+1. `gh auth status` (logged in)
+2. `gh repo clone ELT73A-S22-2026-2/labXX-grupo-y`
+3. `cd labXX-grupo-y`
+4. `code .`
+5. Work → `git add` → `git commit` → `git push`
+6. Check CI: `gh run list`
+
+---
+
+## 9. One-liner cheat card
+
+```text
+clone   →  gh repo clone ORG/lab00-grupo-a
+update  →  git pull
+save    →  git add . && git commit -m "msg" && git push
+web     →  gh repo view --web
+ci      →  gh run list
 ```
 
 ## Criando diagramas
@@ -317,6 +485,18 @@ git push origin --delete feature-a
 - https://docs.github.com/pt/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams
 
 Here is a simple flow chart:
+
+````md
+```mermaid
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
+```
+````
+
+---
 
 ```mermaid
 graph TD;
@@ -327,10 +507,6 @@ graph TD;
 ```
 
 ---
-
-```mermaid
-  info
-```
 
 ## Como escrever expressões matemáticas
 
@@ -343,6 +519,8 @@ $$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \
 
 **The Cauchy-Schwarz Inequality**\
 $$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
+
+---
 
 ## Static Badge
 
@@ -385,111 +563,6 @@ Escolha e configuração de temas no VScode
   referrerpolicy="strict-origin-when-cross-origin"
   allowfullscreen
 ></iframe>
-
-```bash
-code --list-extensions --profile "Markdown"
-```
-
-```json title=".vscode/extensions.json"
-{
-  "recommendations": [
-    /* Markdown & Documentation */
-    "yzhang.markdown-all-in-one",
-    "tomasdahlqvist.markdown-admonitions",
-    "bierner.markdown-footnotes",
-    "davidanson.vscode-markdownlint",
-
-    /* Formatting & UI */
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
-    "pkief.material-icon-theme"
-
-    // Add other relevant extensions
-  ]
-}
-```
-
-```json title=".vscode/settings.json"
-{
-  "workbench.iconTheme": "material-icon-theme",
-  "editor.formatOnSave": true,
-  "terminal.integrated.defaultProfile.windows": "Git Bash",
-  "editor.formatOnPaste": true,
-  "[markdown]": {
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
-  }
-}
-```
-
-```bash
-mkdir helloworld
-cd helloworld
-code .
-```
-
-```c
-#include <stdio.h>
-
-int main() {
-  printf("Hello World!");
-  return 0;
-}
-```
-
-```bash
-git init
-git add .
-git commit -m "First Commit!"
-```
-
-If you have a local Git repository you want to push to GitHub, you can use:
-
-```bash
-gh repo create ELT73A-S22-2025-2-X/helloworld --source=. --public --push
-```
-
-Description of the repository
-
-```bash
-gh repo edit -d "Description of the repository"
-```
-
-Make the repository available as a template repository
-
-```bash
-gh repo edit  --template
-```
-
-## Uso do [GitHub CLI](/docs/github-cli)
-
-Create a new remote repository in a different organization
-
-```bash
-gh repo create ELT73A-S22-2026-1-X/LAB01 --public -c -l mit --add-readme -g C
-```
-
-## Uso do git e GitHub
-
-- [Melhores práticas do Git](/docs/git-best-practices).
-- [Folha de Dicas de Git do GitHub](/docs/github-git-cheat-sheet).
-
-## Instruções TODO
-
-Esta atividade de laboratório tem como objetivo verificar a configuração adequada do ambiente de desenvolvimento e uso do Git e GitHub.
-
-- [ ] Crie uma organização baseada no nome do grupo;
-- [ ] Adicione os membros do seu grupo a organização;
-- [ ] Adicione o professor como membro da organização;
-- [ ] Commit e push dos arquivos gerados;
-- [ ] Envie o link da organização (hyperlink);
-- [ ] Envie o link do repositório no GitHub (hyperlink);
-
-## Avaliação TODO
-
-- [ ] Crie uma organização baseada no nome do grupo - 10%
-- [ ] Adicione os membros do seu grupo a organização - 10%
-- [ ] Adicione o professor como membro da organização - 10%
-- [ ] Envie o link da organização e do repositório no GitHub (hyperlink) - 20%
 
 ---
 
