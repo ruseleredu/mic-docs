@@ -7,15 +7,15 @@ import Admonition from "@theme/Admonition";
 type LabTeamMembersProps = {
     /** Nome do laboratório, ex: "lab00", "lab05", "projeto" */
     labName?: string;
-    /** Perfil do VS Code, ex: "STM32" */
+    /** Perfil do VS Code, ex: "ESP32IO" */
     vscodeProfile?: string;
 };
 
 export default function LabTeamMembers({
     labName = "lab00",
-    vscodeProfile = "STM32",
+    vscodeProfile = "ESP32IO",
 }: LabTeamMembersProps) {
-    const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "X"];
+    const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "P"];
     const org = "ELT73A-S22-2026-2";
 
     return (
@@ -25,6 +25,7 @@ export default function LabTeamMembers({
                 const repoName = `${labName}-grupo-${groupLower}`;
                 const fullRepo = `${org}/${repoName}`;
                 const repoUrl = `https://github.com/${fullRepo}`;
+                const reposUrl = `https://github.com/orgs/${org}/teams/grupo-${groupLower}/repositories`;
                 const teamSlug = `grupo-${groupLower}`;
 
                 return (
@@ -45,25 +46,18 @@ export default function LabTeamMembers({
                                     {repoUrl}
                                 </a>
                             </li>
+                            <li>
+                                <b>Repositórios:</b>{" "}
+                                <a href={reposUrl} target="_blank" rel="noopener noreferrer">
+                                    {reposUrl}
+                                </a>
+                            </li>
                         </ul>
-
-                        <Admonition type="note" title="Configure o GitHub CLI (apenas na primeira vez)">
-                            <ThemeCodeBlock className="language-bash">
-                                {`gh auth login`}
-                            </ThemeCodeBlock>
-                            <ThemeCodeBlock className="language-bash">
-                                {`git config --global user.name "Seu Nome"`}
-                            </ThemeCodeBlock>
-                            <ThemeCodeBlock className="language-bash">
-                                {`git config --global user.email "seu@email.com"`}
-                            </ThemeCodeBlock>
-                        </Admonition>
-
                         <p>
                             <b>1.</b> Clone o repositório do laboratório:
                         </p>
                         <ThemeCodeBlock className="language-bash">
-                            {`gh repo clone ${fullRepo}`}
+                            {`git clone ${repoUrl}.git`}
                         </ThemeCodeBlock>
                         <ThemeCodeBlock className="language-bash">
                             {`cd ${repoName}`}
@@ -75,7 +69,6 @@ export default function LabTeamMembers({
                         <ThemeCodeBlock className="language-bash">
                             {`code . --profile "${vscodeProfile}"`}
                         </ThemeCodeBlock>
-
                         <p>
                             <b>3.</b> Fluxo diário de trabalho:
                         </p>
@@ -85,33 +78,6 @@ git add .
 git commit -m "Descreva suas alterações"
 git push`}
                         </ThemeCodeBlock>
-
-                        <p>
-                            <b>4.</b> Abrir o repositório no navegador:
-                        </p>
-                        <ThemeCodeBlock className="language-bash">
-                            {`gh repo view ${fullRepo} --web`}
-                        </ThemeCodeBlock>
-
-
-                        <Admonition type="tip" title="Branch + Pull Request (opcional)">
-                            <ThemeCodeBlock className="language-bash">
-                                {`git checkout -b feature/exercicio-1
-git add . && git commit -m "Exercício 1" && git push -u origin feature/exercicio-1
-gh pr create --title "Exercício 1" --body "Concluído"`}
-                            </ThemeCodeBlock>
-                        </Admonition>
-
-                        <Admonition type="info" title="Regras de acesso">
-                            <ul>
-                                <li>
-                                    Você pode fazer <b>push</b> apenas no repositório do seu grupo (
-                                    <code>{repoName}</code>).
-                                </li>
-                                <li>Não é possível acessar ou alterar os repositórios dos outros grupos.</li>
-                                <li>Em caso de erro de permissão, verifique com o professor se você está no time correto.</li>
-                            </ul>
-                        </Admonition>
                     </TabItem>
                 );
             })}
