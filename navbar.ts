@@ -78,6 +78,11 @@ const navbarItems: NavbarItem[] = [
         position: "right",
     },
     {
+        href: "https://moodle.utfpr.edu.br/course/view.php?id=29540",
+        label: "Moodle",
+        position: "right",
+    },
+    {
         href: "https://github.com/ELT73A-S22-2026-2",
         label: "GitHub",
         position: "right",
