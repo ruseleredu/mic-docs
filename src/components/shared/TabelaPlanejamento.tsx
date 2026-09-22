@@ -4,7 +4,7 @@ import type {
   AtividadeSincrona,
   AtividadeAssincrona,
   Procedimento,
-} from '../types/planejamento';
+} from '../../types/planejamento';
 
 /**
  * TabelaPlanejamento
