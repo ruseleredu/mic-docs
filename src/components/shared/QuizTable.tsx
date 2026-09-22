@@ -2,7 +2,7 @@
 import React from "react";
 import Link from "@docusaurus/Link";
 import DataTable, { Column } from "./DataTable";
-import { quizData, QuizRow } from "../data/quizData";
+import { quizData, QuizRow } from "../../data/quizData";
 
 interface QuizTableProps {
     index?: number;

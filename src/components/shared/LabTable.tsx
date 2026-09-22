@@ -2,7 +2,7 @@
 import React from "react";
 import Link from "@docusaurus/Link";
 import DataTable, { Column } from "./DataTable";
-import { labData, LabRow } from "../data/labData";
+import { labData, LabRow } from "../../data/labData";
 
 interface LabTableProps {
     index?: number;
