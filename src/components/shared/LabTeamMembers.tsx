@@ -4,6 +4,9 @@ import TabItem from "@theme/TabItem";
 import ThemeCodeBlock from "@theme/CodeBlock";
 import Admonition from "@theme/Admonition";
 
+
+import { GROUPS, ORG } from "../constants"; // one folder up
+
 type LabTeamMembersProps = {
     /** Nome do laboratório, ex: "lab00", "lab05", "projeto" */
     labName?: string;
@@ -15,17 +18,14 @@ export default function LabTeamMembers({
     labName = "lab00",
     vscodeProfile = "ESP32IO",
 }: LabTeamMembersProps) {
-    const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "P"];
-    const org = "ELT73A-S22-2026-2";
-
     return (
         <Tabs>
-            {groups.map((group) => {
+            {GROUPS.map((group) => {
                 const groupLower = group.toLowerCase();
                 const repoName = `${labName}-grupo-${groupLower}`;
-                const fullRepo = `${org}/${repoName}`;
+                const fullRepo = `${ORG}/${repoName}`;
                 const repoUrl = `https://github.com/${fullRepo}`;
-                const reposUrl = `https://github.com/orgs/${org}/teams/grupo-${groupLower}/repositories`;
+                const reposUrl = `https://github.com/orgs/${ORG}/teams/grupo-${groupLower}/repositories`;
                 const teamSlug = `grupo-${groupLower}`;
 
                 return (
@@ -33,8 +33,8 @@ export default function LabTeamMembers({
                         <ul>
                             <li>
                                 <b>Organização:</b>{" "}
-                                <a href={`https://github.com/${org}`} target="_blank" rel="noopener noreferrer">
-                                    {org}
+                                <a href={`https://github.com/${ORG}`} target="_blank" rel="noopener noreferrer">
+                                    {ORG}
                                 </a>
                             </li>
                             <li>

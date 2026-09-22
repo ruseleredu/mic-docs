@@ -4,7 +4,7 @@ import MDXComponents from '@theme-original/MDXComponents';
 // Importa o seu componente customizado
 import LabTable from "@site/src/components/shared/LabTable";
 import QuizTable from '@site/src/components/shared/QuizTable';
-import LabTeamMembers from "@site/src/components/LabTeamMembers";
+import LabTeamMembers from "@site/src/components/shared/LabTeamMembers";
 import LabFromTemplate from "@site/src/components/LabFromTemplate";
 import LabSubmit from "@site/src/components/shared/LabSubmit";
 import CommitPoint from "@site/src/components/shared/CommitPoint";
