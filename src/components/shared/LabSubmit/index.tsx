@@ -6,8 +6,7 @@ import labassigns from '@site/src/data/labassigns.json';
 import styles from './styles.module.css';
 
 // Grupos e organização da turma. Ajuste aqui se a lista mudar.
-const GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'P'] as const;
-const ORG = 'ELT73A-S22-2026-2';
+import { GROUPS, ORG } from '../../constants';
 
 // Aceita tanto { "lab00": 1748058 } quanto { "lab00": { cmid, title } }.
 type LabEntry = number | { cmid: number; title?: string };
