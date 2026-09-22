@@ -5,9 +5,9 @@ import MDXComponents from '@theme-original/MDXComponents';
 import LabTable from "@site/src/components/shared/LabTable";
 import QuizTable from '@site/src/components/shared/QuizTable';
 import LabTeamMembers from "@site/src/components/LabTeamMembers";
-import LabSubmit from "@site/src/components/LabSubmit";
 import LabFromTemplate from "@site/src/components/LabFromTemplate";
-import CommitPoint from "@site/src/components/CommitPoint";
+import LabSubmit from "@site/src/components/LabSubmit";
+import CommitPoint from "@site/src/components/shared/CommitPoint";
 import FileTree from "@site/src/components/shared/FileTree";
 import SimpleFileTree from "@site/src/components/shared/SimpleFileTree";
 
@@ -18,8 +18,8 @@ export default {
     LabTable,
     QuizTable,
     LabTeamMembers,
-    LabSubmit,
     LabFromTemplate,
+    LabSubmit,
     CommitPoint,
     FileTree,
     SimpleFileTree,
