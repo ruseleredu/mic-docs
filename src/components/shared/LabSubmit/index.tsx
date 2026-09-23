@@ -6,7 +6,7 @@ import labassigns from '@site/src/data/labassigns.json';
 import styles from './styles.module.css';
 
 // Grupos e organização da turma. Ajuste aqui se a lista mudar.
-import { GROUPS, ORG } from '../../constants';
+import { GROUPS, ORG, labgradehref } from '../../constants';
 
 // Aceita tanto { "lab00": 1748058 } quanto { "lab00": { cmid, title } }.
 type LabEntry = number | { cmid: number; title?: string };
@@ -119,7 +119,7 @@ export default function LabSubmit({ labName }: LabSubmitProps): ReactElement {
           Cada cartão <strong>Ponto de commit</strong> é uma tarefa: faça-a, copie o comando do cartão e rode.
           A mensagem começa com o código (<code>T1:</code>, <code>T2:</code>…) — é como a correção identifica sua entrega.
           Um commit por tarefa; pode refazer (vale o mais recente); e <strong>não esqueça o <code>git push</code></strong>.
-          Detalhes em <a href="/mic-docs/labs/como-funciona-avaliacao">Como funciona a avaliação</a>.
+          Detalhes em <a href="${labgradehref}">Como funciona a avaliação</a>.
         </p>
       </Admonition>
     </div>
