@@ -1,0 +1,403 @@
+---
+id: guia-atalhos
+title: Guia — Atalhos do CMD, PowerShell, Git Bash e VS Code
+sidebar_label: Atalhos da disciplina
+keywords:
+  [
+    atalhos,
+    cmd,
+    powershell,
+    git bash,
+    vscode,
+    terminal,
+    iniciar em,
+    pasta-mae,
+    laboratorio,
+    ELT73A,
+  ]
+---
+
+import {
+  LabSetup,
+  LabLogout,
+} from "@site/src/components/shared/InstructionsSite";
+
+# Atalhos da disciplina ELT73A
+
+Por padrão, o Prompt de Comando, o PowerShell e o Git Bash abrem na sua pasta
+de usuário, e o VS Code abre a última pasta usada. Em toda aula, você perde
+tempo navegando até a pasta certa e corre o risco de clonar um repositório
+**fora** da pasta-mãe.
+
+Este guia cria quatro atalhos na Área de Trabalho que já abrem **dentro** de
+`%USERPROFILE%\ELT73A`:
+
+| Atalho                  | Abre                 | Uso na disciplina                         |
+| ----------------------- | -------------------- | ----------------------------------------- |
+| **ELT73A - CMD**        | Prompt de Comando    | Comandos dos guias (padrão da disciplina) |
+| **ELT73A - PowerShell** | Windows PowerShell   | Alternativa ao cmd                        |
+| **ELT73A - Git Bash**   | Terminal Bash do Git | Comandos no estilo Linux                  |
+| **ELT73A - VS Code**    | VS Code na pasta-mãe | Visão geral dos repositórios              |
+
+<LabSetup />
+
+:::info[Pré-requisito]
+Este guia parte da pasta-mãe `ELT73A` descrita no
+[guia da máquina compartilhada](/labs/guides/guia-pasta-mae#criar). Se ela não existir,
+o script abaixo a cria.
+:::
+
+:::note[Máquina compartilhada]
+Os atalhos ficam na **sua** Área de Trabalho e apontam para a **sua** pasta.
+Eles são removidos no fim da aula junto com a pasta-mãe (veja
+[Remover os atalhos](#remover)).
+:::
+
+## Objetivos
+
+- Criar atalhos para o CMD, o PowerShell, o Git Bash e o VS Code que abram na pasta `ELT73A`.
+- Definir o Prompt de Comando como terminal padrão dentro do VS Code.
+- Verificar em qual pasta cada atalho abre.
+- Remover os atalhos antes de sair do laboratório.
+
+## Como um atalho decide a pasta inicial
+
+Todo atalho do Windows (`.lnk`) tem dois campos que importam aqui:
+
+- **Destino**: o programa que será aberto, com seus parâmetros.
+- **Iniciar em**: a pasta em que o programa começa.
+
+Os atalhos da disciplina usam `%USERPROFILE%\ELT73A` no campo **Iniciar em**.
+Por isso, ao abrir o terminal, o comando `cd` (ou `pwd`) já mostra a pasta-mãe.
+
+## Parte 1 — Criar os atalhos {/* #criar-atalhos */}
+
+<Tabs groupId="metodo">
+  <TabItem value="script" label="Com script (recomendado)" default>
+
+        O script `atalhos-ELT73A.cmd` cria os quatro atalhos de uma vez e também sabe
+        removê-los no fim da aula.
+
+        **1.** Abra um **Prompt de Comando** (`Win+R`, digite `cmd`, Enter) e crie o
+        arquivo dentro da pasta-mãe:
+
+        ```bat title="cmd"
+        mkdir "%USERPROFILE%\ELT73A"
+        notepad "%USERPROFILE%\ELT73A\atalhos-ELT73A.cmd"
+        ```
+
+        O Bloco de Notas pergunta se deseja criar o arquivo. Clique em **Sim**.
+
+        **2.** Cole o conteúdo abaixo (ou [baixe o arquivo](pathname:///scripts/atalhos-ELT73A.cmd)),
+        salve com `Ctrl+S` e feche o Bloco de Notas.
+
+        ```bat title="atalhos-ELT73A.cmd"
+        @echo off
+        rem ============================================================
+        rem  atalhos-ELT73A.cmd - atalhos da disciplina ELT73A
+        rem
+        rem  Uso:
+        rem    atalhos-ELT73A.cmd           cria os atalhos na Area de Trabalho
+        rem    atalhos-ELT73A.cmd remover   apaga os atalhos da Area de Trabalho
+        rem
+        rem  Todos os atalhos abrem na pasta %USERPROFILE%\ELT73A
+        rem ============================================================
+        setlocal
+        set "PASTA=%USERPROFILE%\ELT73A"
+
+        if /i "%~1"=="remover" goto remover
+
+        if not exist "%PASTA%" mkdir "%PASTA%"
+        echo Pasta da disciplina: %PASTA%
+        echo.
+
+        rem --- CMD -------------------------------------------------------
+        set "A_NOME=ELT73A - CMD"
+        set "A_ALVO=%ComSpec%"
+        set "A_ARGS=/k title ELT73A"
+        set "A_JANELA=1"
+        call :criar
+
+        rem --- PowerShell ------------------------------------------------
+        set "A_NOME=ELT73A - PowerShell"
+        set "A_ALVO=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+        set "A_ARGS=-NoExit -NoLogo"
+        set "A_JANELA=1"
+        call :criar
+
+        rem --- Git Bash --------------------------------------------------
+        set "A_ALVO="
+        if exist "%ProgramFiles%\Git\git-bash.exe" set "A_ALVO=%ProgramFiles%\Git\git-bash.exe"
+        if not defined A_ALVO if exist "%LOCALAPPDATA%\Programs\Git\git-bash.exe" set "A_ALVO=%LOCALAPPDATA%\Programs\Git\git-bash.exe"
+        if not defined A_ALVO goto sem_gitbash
+        set "A_NOME=ELT73A - Git Bash"
+        set A_ARGS="--cd=%PASTA%"
+        set "A_JANELA=1"
+        call :criar
+        goto vscode
+        :sem_gitbash
+        echo [aviso] Git Bash nao encontrado. Atalho nao criado.
+
+        rem --- VS Code ---------------------------------------------------
+        :vscode
+        where code >nul 2>nul
+        if errorlevel 1 goto sem_vscode
+        set "A_NOME=ELT73A - VS Code"
+        set "A_ALVO=%ComSpec%"
+        set A_ARGS=/c code "%PASTA%"
+        set "A_JANELA=7"
+        call :criar
+        goto pronto
+        :sem_vscode
+        echo [aviso] Comando code nao encontrado no PATH. Atalho nao criado.
+
+        :pronto
+        echo.
+        echo Pronto. Os atalhos estao na Area de Trabalho.
+        goto fim
+
+        rem --- Remover ---------------------------------------------------
+        :remover
+        powershell -NoProfile -Command "$d=[Environment]::GetFolderPath('Desktop'); Get-ChildItem -LiteralPath $d -Filter 'ELT73A - *.lnk' | ForEach-Object { Remove-Item -LiteralPath $_.FullName; Write-Host ('[removido] ' + $_.Name) }"
+        goto fim
+
+        :fim
+        endlocal
+        exit /b 0
+
+        rem --- Sub-rotina: cria um atalho a partir das variaveis A_* ------
+        :criar
+        powershell -NoProfile -Command "$d=[Environment]::GetFolderPath('Desktop'); $s=(New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $d ($env:A_NOME + '.lnk'))); $s.TargetPath=$env:A_ALVO; $s.Arguments=$env:A_ARGS; $s.WorkingDirectory=$env:PASTA; $s.WindowStyle=[int]$env:A_JANELA; $s.Description='Disciplina ELT73A'; $s.Save(); Write-Host ('[ok] ' + $env:A_NOME)"
+        exit /b 0
+        ```
+
+        **3.** Execute o script:
+
+        ```bat title="cmd"
+        "%USERPROFILE%\ELT73A\atalhos-ELT73A.cmd"
+        ```
+
+        Saída esperada:
+
+        ```text
+        Pasta da disciplina: C:\Users\aluno\ELT73A
+
+        [ok] ELT73A - CMD
+        [ok] ELT73A - PowerShell
+        [ok] ELT73A - Git Bash
+        [ok] ELT73A - VS Code
+
+        Pronto. Os atalhos estao na Area de Trabalho.
+        ```
+
+        Se aparecer uma linha `[aviso]`, o programa correspondente não foi encontrado.
+        Os outros atalhos são criados normalmente.
+
+        :::tip[Detalhes que fazem diferença]
+
+        - O script é todo em ASCII (sem acentos) para não ter problema de codificação
+        no cmd.
+        - Os atalhos são criados com a ajuda do PowerShell, mas você roda tudo pelo
+        **cmd**: não é preciso mudar a política de execução do PowerShell.
+        - A Área de Trabalho é localizada automaticamente, mesmo quando está
+        redirecionada para o OneDrive.
+        - O atalho do VS Code usa o comando `code` e abre minimizado a janela
+        auxiliar do cmd, que fecha sozinha.
+        :::
+      </TabItem>
+
+  <TabItem value="manual" label="Manualmente">
+
+Para cada atalho:
+
+1. Clique com o botão direito na Área de Trabalho, **Novo** e depois **Atalho**.
+2. Em **Digite o local do item**, cole o **Destino** da tabela abaixo e avance.
+3. Digite o **Nome** e clique em **Concluir**.
+4. Clique com o botão direito no atalho criado e abra **Propriedades**.
+5. No campo **Iniciar em**, digite `%USERPROFILE%\ELT73A` e clique em **OK**.
+
+| Nome                  | Destino                                                                       |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `ELT73A - CMD`        | `%ComSpec% /k title ELT73A`                                                   |
+| `ELT73A - PowerShell` | `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoExit -NoLogo` |
+| `ELT73A - Git Bash`   | `"C:\Program Files\Git\git-bash.exe"`                                         |
+| `ELT73A - VS Code`    | `%ComSpec% /c code .`                                                         |
+
+No atalho do VS Code, mude também **Executar** para **Minimizada**, para não
+aparecer a janela do cmd que abre o VS Code.
+
+:::warning[Git Bash]
+Não copie o atalho padrão do Git Bash do menu Iniciar: ele usa o parâmetro
+`--cd-to-home`, que ignora o campo **Iniciar em** e sempre abre na pasta de
+usuário.
+:::
+
+  </TabItem>
+</Tabs>
+
+### Verificação dos atalhos {/* #verificar */}
+
+Abra cada atalho e rode o comando indicado. Preveja a saída antes de executar.
+
+<Tabs groupId="terminal">
+  <TabItem value="cmd" label="CMD" default>
+
+```bat title="ELT73A - CMD"
+cd
+```
+
+```text
+C:\Users\aluno\ELT73A
+```
+
+O título da janela também deve mostrar `ELT73A`.
+
+  </TabItem>
+  <TabItem value="ps" label="PowerShell">
+
+```powershell title="ELT73A - PowerShell"
+Get-Location
+```
+
+```text
+Path
+----
+C:\Users\aluno\ELT73A
+```
+
+  </TabItem>
+  <TabItem value="bash" label="Git Bash">
+
+```bash title="ELT73A - Git Bash"
+pwd
+```
+
+```text
+/c/Users/aluno/ELT73A
+```
+
+No Git Bash, `C:\` aparece como `/c/` e as barras são normais (`/`).
+
+  </TabItem>
+  <TabItem value="code" label="VS Code">
+
+O VS Code abre com `ELT73A` no Explorer, listando os repositórios clonados.
+Se aparecer o aviso de confiança, marque a opção de confiar na pasta-mãe
+(veja o [guia da máquina compartilhada](/labs/guides/guia-pasta-mae#confiar)).
+
+  </TabItem>
+</Tabs>
+
+## Parte 2 — Configurar o terminal do VS Code {/* #terminal-vscode */}
+
+O VS Code tem um terminal integrado (`` Ctrl+` ``). Para que ele use o **cmd**,
+como os guias da disciplina:
+
+1. `Ctrl+Shift+P` e execute **Terminal: Select Default Profile**.
+2. Escolha **Command Prompt**.
+3. Feche o terminal aberto (ícone de lixeira) e abra outro com `` Ctrl+` ``.
+
+Para abrir outro tipo de terminal só naquele momento, use a seta ao lado do `+`
+no painel do terminal e escolha **PowerShell** ou **Git Bash**. O Git Bash
+aparece automaticamente quando o Git está instalado.
+
+:::tip[Configurar só no repositório]
+Em máquina compartilhada, prefira não alterar as configurações de usuário do
+VS Code. A mesma escolha pode ficar no próprio repositório, no arquivo
+`.vscode/settings.json`:
+
+```json title=".vscode/settings.json"
+{
+  "terminal.integrated.defaultProfile.windows": "Command Prompt"
+}
+```
+
+Essa configuração só é aplicada quando a pasta é confiável (Workspace Trust).
+:::
+
+:::warning[PlatformIO e a pasta-mãe]
+O atalho **ELT73A - VS Code** abre a pasta-mãe, que serve para ver todos os
+repositórios. Para compilar e simular, o PlatformIO precisa do repositório
+aberto como pasta principal (onde está o `platformio.ini`). Nas aulas
+embarcadas, abra o repositório do lab pelo atalho **ELT73A - CMD**:
+
+```bat title="ELT73A - CMD"
+code lab01-grupo-a
+```
+
+:::
+
+## Parte 3 — Remover os atalhos no fim da aula {/* #remover */}
+
+Faça isso **antes** de apagar a pasta-mãe, porque o script está dentro dela.
+
+```bat title="cmd"
+"%USERPROFILE%\ELT73A\atalhos-ELT73A.cmd" remover
+```
+
+Saída esperada:
+
+```text
+[removido] ELT73A - CMD.lnk
+[removido] ELT73A - Git Bash.lnk
+[removido] ELT73A - PowerShell.lnk
+[removido] ELT73A - VS Code.lnk
+```
+
+Se você criou os atalhos manualmente, apague os quatro arquivos
+`ELT73A - ...` da Área de Trabalho.
+
+Depois, siga a
+[limpeza da máquina compartilhada](/labs/guides/guia-pasta-mae#limpeza) para sair do
+GitHub e apagar a pasta-mãe.
+
+## Solução de problemas
+
+<details>
+  <summary>O terminal abre na pasta de usuário, não em ELT73A</summary>
+
+- Abra **Propriedades** do atalho e confira o campo **Iniciar em**.
+- A pasta `ELT73A` precisa existir. Se ela foi apagada, o Windows abre o
+  terminal em outra pasta. Recrie a pasta ou rode o script de novo.
+- No Git Bash, confira se o **Destino** não contém `--cd-to-home`.
+
+</details>
+
+<details>
+  <summary>O atalho do Git Bash ou do VS Code não foi criado</summary>
+
+- **Git Bash:** o script procura o Git nas pastas de instalação padrão. Se o
+  Git estiver em outro lugar, crie esse atalho manualmente.
+- **VS Code:** o script precisa do comando `code` no PATH. Teste com
+  `where code`. Se não encontrar, reinstale o VS Code marcando a opção
+  **Add to PATH** ou crie o atalho manualmente.
+
+</details>
+
+<details>
+  <summary>Ao abrir o atalho do VS Code, aparece uma janela preta rápida</summary>
+
+É o cmd que executa o comando `code` e fecha em seguida. No atalho manual,
+mude **Executar** para **Minimizada** nas Propriedades. O atalho criado pelo
+script já vem assim.
+
+</details>
+
+<details>
+  <summary>O script mostra erro de PowerShell</summary>
+
+O script usa o **Windows PowerShell** que vem com o Windows, sem alterar a
+política de execução. Se a máquina bloquear o PowerShell, use a aba
+**Manualmente** da Parte 1.
+
+</details>
+
+## Checklist
+
+- [ ] Script `atalhos-ELT73A.cmd` salvo em `%USERPROFILE%\ELT73A` e executado.
+- [ ] Quatro atalhos `ELT73A - ...` na Área de Trabalho.
+- [ ] CMD, PowerShell e Git Bash abrem em `ELT73A` (verificado com `cd`, `Get-Location` e `pwd`).
+- [ ] Terminal padrão do VS Code definido como **Command Prompt**.
+- [ ] No fim da aula: atalhos removidos com `atalhos-ELT73A.cmd remover`.
+
+<LabLogout />
