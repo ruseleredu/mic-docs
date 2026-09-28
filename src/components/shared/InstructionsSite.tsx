@@ -310,6 +310,49 @@ export function DevTools() {
                     esptool chip-id
                 </ThemeCodeBlock>
             </TabItem>
+            <TabItem value="esp32-docker" label="Docker">
+                <p><b><Link to="/lab/guides/instalacao-docker-wsl2">Docker Desktop & WSL 2</Link>: O Docker Desktop no Windows 11 utiliza a arquitetura do WSL 2 para executar containers Linux nativamente com alta performance.</b></p>
+                <ul>
+                    <li>
+                        <p>Habilitação e Atualização do WSL 2:</p>
+                        <ThemeCodeBlock className="language-bash">
+                            {`wsl --install`}
+                        </ThemeCodeBlock>
+                        <ThemeCodeBlock className="language-bash">
+                            {`wsl --update && wsl --set-default-version 2`}
+                        </ThemeCodeBlock>
+                    </li>
+                    <li>
+                        <p>Instalação do Docker Desktop via Winget:</p>
+                        <ThemeCodeBlock className="language-bash">
+                            {`winget install --id Docker.DockerDesktop -e`}
+                        </ThemeCodeBlock>
+                    </li>
+                    <li>
+                        <p>Confirme no terminal integrado do VS Code:</p>
+                        <ThemeCodeBlock className="language-bash">
+                            {`wsl --version && docker --version && docker compose version`}
+                        </ThemeCodeBlock>
+                    </li>
+                    <li>
+                        <p>Teste rápido com a imagem oficial do Nginx:</p>
+                        <ThemeCodeBlock className="language-bash">
+                            {`docker run --rm -d -p 8080:80 --name teste-nginx nginx`}
+                        </ThemeCodeBlock>
+                    </li>
+                    <li>
+                        <p>Acesse no navegador:<a href="http://localhost:8080" target="_blank" rel="noopener noreferrer">
+                            http://localhost:8080
+                        </a></p>
+                    </li>
+                    <li>
+                        <p>Pare o container:</p>
+                        <ThemeCodeBlock className="language-bash">
+                            {`docker stop teste-nginx`}
+                        </ThemeCodeBlock>
+                    </li>
+                </ul>
+            </TabItem>
         </Tabs>
     );
 }
