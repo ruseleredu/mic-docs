@@ -311,7 +311,7 @@ export function DevTools() {
                 </ThemeCodeBlock>
             </TabItem>
             <TabItem value="esp32-docker" label="Docker">
-                <p><b><Link to="/lab/guides/instalacao-docker-wsl2">Docker Desktop & WSL 2</Link>: O Docker Desktop no Windows 11 utiliza a arquitetura do WSL 2 para executar containers Linux nativamente com alta performance.</b></p>
+                <p><b><Link to="/labs/guides/instalacao-docker-wsl2">Docker Desktop & WSL 2</Link>: O Docker Desktop no Windows 11 utiliza a arquitetura do WSL 2 para executar containers Linux nativamente com alta performance.</b></p>
                 <ul>
                     <li>
                         <p>Habilitação e Atualização do WSL 2:</p>
