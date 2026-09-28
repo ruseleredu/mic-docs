@@ -10,6 +10,8 @@ import LabSubmit from "@site/src/components/shared/LabSubmit";
 import CommitPoint from "@site/src/components/shared/CommitPoint";
 import FileTree from "@site/src/components/shared/FileTree";
 import SimpleFileTree from "@site/src/components/shared/SimpleFileTree";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 export default {
     // Mantém os componentes padrão do MDX
@@ -23,4 +25,6 @@ export default {
     CommitPoint,
     FileTree,
     SimpleFileTree,
+    Tabs,
+    TabItem,
 };
