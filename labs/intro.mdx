@@ -4,20 +4,124 @@ title: Introdução
 description: Introdução as aulas de laboratório
 ---
 
-## Tabela dos LABs com links internos
+## Ambiente de desenvolvimento
 
-<LabTable internal={true} />
+### Configuração do ambiente de desenvolvimento {/* #setup */}
 
-## Tabela dos LABs com links externos
+import {
+  DevTools,
+  GitConfig,
+  VerifyDev1,
+  GitLogOut,
+} from "@site/src/components/shared/InstructionsSite";
 
-<LabTable internal={false} />
+<DevTools />
 
-## Cronograma
+---
 
-## Projeto Final
+### Configure o git {/* #git-config */}
 
-Projetos desenvolvidos na disciplina de Sistemas Microcontrolados
+<GitConfig />
 
-- https://github.com/ruseleredu/ELT73A-Projects
+---
 
-## Estrutura do Laboratório 00
+### Status do git, gh e code: {/* #verify */}
+
+<VerifyDev1 />
+
+---
+
+### Logout {/* #logout */}
+
+<GitLogOut />
+
+---
+
+## Clone o repositório inicial do LABXY (Exemplo)
+
+Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub:
+
+<LabTeamMembers labName="labxy" />
+
+## Envie o link do repositório do seu grupo no Moodle:
+
+<LabSubmit labName="labxy" />
+
+## Estrutura do Laboratório XY
+
+<SimpleFileTree defaultOpen details profile="labxy" />
+
+## Como funciona a avaliação
+
+Nesta disciplina, **você entrega cada tarefa fazendo um commit**. Ao longo das aulas, os cartões **"Ponto de commit"** mostram exatamente o que salvar e quando.
+
+### Como é um "Ponto de commit"
+
+Quando você conclui uma tarefa, encontra um cartão como este (numeração e pontos são ilustrativos):
+
+<CommitPoint
+  task="exemplo — pisca o LED_BUILTIN"
+  pontos={5}
+  n={1}
+  id="exemplo"
+/>
+
+Clique em **Copiar** no bloco de código do cartão e cole o comando no terminal, dentro da pasta do seu repositório. Feito isso, a tarefa está entregue.
+
+### Passo a passo
+
+1. Faça a tarefa descrita logo antes do cartão.
+2. Copie o comando do cartão e rode no terminal. Ele é algo como:
+   ```bash
+   git add . && git commit -m "T1: ..." && git push
+   ```
+3. Pronto — esse commit registra a tarefa **T1**. Siga para o próximo ponto.
+
+:::warning[A mensagem do commit é o que vale]
+A mensagem **começa com o código da tarefa** (`T1:`, `T2:`, …). É por ela que a correção automática identifica o que você entregou — **não altere esse prefixo** e use exatamente o que o cartão copia.
+:::
+
+### Regras que importam
+
+- **Um commit por tarefa**, na ordem. Prefira commitar cada ponto separadamente.
+- **Pode refazer:** se melhorar uma tarefa, faça um novo commit com o mesmo código (`T2: ...`). Vale sempre o **mais recente**.
+- **Não esqueça o `git push`** — sem enviar, seu trabalho não chega para correção.
+- Uma tarefa **sem commit** correspondente vale **zero**.
+
+### Como a nota é calculada
+
+- A cada `push`, uma correção automática avalia **cada tarefa no estado do commit dela**. Por isso tudo bem reescrever o mesmo arquivo entre as partes: cada `Tn` é avaliado no seu próprio ponto da história.
+- Cada tarefa verifica se o projeto **compila** e se cumpre os **requisitos** daquele ponto. A nota da tarefa é **proporcional** ao que passou.
+- A nota final é a soma dos pontos, **normalizada de 0 a 10**.
+
+### Dicas rápidas
+
+- Compile/teste **antes** de commitar.
+- Use **exatamente** a mensagem do cartão (o botão de copiar já traz o código certo).
+- Fez os commits na ordem `T1`, `T2`, …? Ótimo — é assim que a numeração casa com a correção.
+
+---
+
+## Tabela dos LABs com links internos {/* #tabela-dos-labs-com-links-internos */}
+
+<div style={{ display: "flex", justifyContent: "center" }}>
+  <LabTable internal={true} />
+</div>
+
+---
+
+## Tabela dos LABs com links externos {/* #tabela-dos-labs-com-links-externos */}
+
+<div style={{ display: "flex", justifyContent: "center" }}>
+  <LabTable internal={false} />
+</div>
+
+---
+
+## Teste Slidev 16/9 {/* #teste-slidev-16-9 */}
+
+<iframe
+  src="https://ruseleredu.github.io/iiot-slides/demo/"
+  style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }}
+  allowFullScreen
+/>
