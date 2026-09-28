@@ -31,6 +31,12 @@ git subtree pull --prefix=src/components/shared shared-components main --squash
 git subtree push --prefix=src/components/shared shared-components main
 ```
 
+## Reset all tracked files to match the latest commit:
+
+```bash
+git reset --hard HEAD
+```
+
 ## Remove remote
 
 ```bash
