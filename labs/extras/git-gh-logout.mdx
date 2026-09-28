@@ -1,0 +1,484 @@
+---
+title: Diagnóstico e Logout do Git/GitHub
+description: Guia para diagnosticar e remover credenciais do Git, GitHub CLI e Windows
+---
+
+## 🔐 Diagnóstico e Logout do Git/GitHub
+
+Quando o Git continua utilizando uma conta antiga do GitHub, fazer apenas `gh auth logout` **não é suficiente**.
+
+Isso acontece porque existem diferentes mecanismos de autenticação:
+
+```text
+                    Git / GitHub
+                         │
+             ┌───────────┴───────────┐
+             │                       │
+             ▼                       ▼
+       Git over HTTPS             GitHub CLI
+             │                       │
+             ▼                       ▼
+    Git Credential Manager       gh auth
+             │
+             ▼
+    Windows Credential Manager
+```
+
+Este guia apresenta um procedimento para:
+
+1. 🔎 diagnosticar o estado atual;
+2. 🧹 remover credenciais armazenadas pelo Git;
+3. 🪟 verificar credenciais do Windows;
+4. 🐙 fazer logout do GitHub CLI;
+5. ✅ validar o resultado;
+6. 🔑 autenticar novamente.
+
+---
+
+### 1. 🔎 Primeiro: descobrir o que está autenticado
+
+Antes de apagar qualquer coisa, verifique o estado atual.
+
+#### GitHub CLI
+
+Execute:
+
+```bash
+gh auth status
+```
+
+Um resultado semelhante a:
+
+```text
+github.com
+  ✓ Logged in to github.com account usuario
+  - Active account: true
+  - Git operations protocol: https
+```
+
+indica que o GitHub CLI possui uma sessão autenticada.
+
+---
+
+### 2. 🔎 Verificar a configuração do Git
+
+Veja como o Git está configurado:
+
+```bash
+git config --global --list
+```
+
+Para visualizar também configurações locais do projeto:
+
+```bash
+git config --list --show-origin
+```
+
+Procure principalmente por:
+
+```text
+user.name
+user.email
+credential.helper
+```
+
+#### Exemplo
+
+```text
+file:C:/Users/usuario/.gitconfig
+    user.name=Adriano Ruseler
+    user.email=usuario@example.com
+    credential.helper=manager
+```
+
+---
+
+### 3. 🔎 Verificar o endereço remoto do projeto
+
+Dentro do repositório Git:
+
+```bash
+git remote -v
+```
+
+Exemplo:
+
+```text
+origin  https://github.com/usuario/projeto.git (fetch)
+origin  https://github.com/usuario/projeto.git (push)
+```
+
+Ou:
+
+```text
+origin  git@github.com:usuario/projeto.git (fetch)
+origin  git@github.com:usuario/projeto.git (push)
+```
+
+Isso é importante porque existem dois mecanismos diferentes:
+
+| URL                      | Método                   |
+| ------------------------ | ------------------------ |
+| `https://github.com/...` | HTTPS + credencial/token |
+| `git@github.com:...`     | SSH + chave SSH          |
+
+---
+
+## 🧹 4. Limpar autenticação HTTPS do Git
+
+Se o projeto utiliza:
+
+```text
+https://github.com/...
+```
+
+o Git normalmente utiliza o **Git Credential Manager**.
+
+Para remover a credencial armazenada para o GitHub:
+
+```bash
+git credential-manager erase
+```
+
+Dependendo da versão do Git Credential Manager, o comando pode solicitar os dados do servidor.
+
+Uma forma explícita é:
+
+```bash
+echo "protocol=https
+host=github.com" | git credential-manager erase
+```
+
+---
+
+## 🪟 5. Verificar o Credential Manager do Windows
+
+O Windows também pode possuir credenciais armazenadas.
+
+No **CMD**:
+
+```bat
+cmdkey /list | findstr "github"
+```
+
+No PowerShell:
+
+```powershell
+cmdkey /list | Select-String "github"
+```
+
+Um resultado pode ser semelhante a:
+
+```text
+Target: LegacyGeneric:target=git:https://github.com
+```
+
+Nesse caso, existe uma credencial relacionada ao GitHub armazenada no Windows.
+
+---
+
+### 6. Remover a credencial do Windows
+
+Se você identificou uma credencial que deseja remover:
+
+```bat
+cmdkey /delete:git:https://github.com
+```
+
+Depois, verifique novamente:
+
+```bat
+cmdkey /list | findstr "github"
+```
+
+---
+
+## 🐙 7. Fazer logout do GitHub CLI
+
+O GitHub CLI possui seu próprio mecanismo de autenticação.
+
+Para sair:
+
+```bash
+gh auth logout
+```
+
+O CLI normalmente pergunta qual conta/host deve ser desconectado.
+
+Depois confirme:
+
+```bash
+gh auth status
+```
+
+O objetivo é que o GitHub CLI não apresente mais uma sessão autenticada para a conta que você acabou de remover.
+
+---
+
+## 🔎 8. Diagnóstico completo
+
+Quando o problema ainda não estiver resolvido, execute os comandos abaixo.
+
+### 8.1 Versão do Git
+
+```bash
+git --version
+```
+
+#### 8.2 Versão do GitHub CLI
+
+```bash
+gh --version
+```
+
+#### 8.3 Configuração de credenciais
+
+```bash
+git config --show-origin --get-all credential.helper
+```
+
+#### 8.4 Identidade configurada
+
+```bash
+git config --global user.name
+git config --global user.email
+```
+
+#### 8.5 Repositório remoto
+
+```bash
+git remote -v
+```
+
+#### 8.6 Estado do GitHub CLI
+
+```bash
+gh auth status
+```
+
+#### 8.7 Credenciais do Windows
+
+No CMD:
+
+```bat
+cmdkey /list | findstr "github"
+```
+
+---
+
+## 🧪 9. Testar novamente
+
+Depois de remover as credenciais, faça uma operação que exija autenticação.
+
+Por exemplo:
+
+```bash
+git fetch
+```
+
+ou:
+
+```bash
+git pull
+```
+
+Se estiver utilizando HTTPS e não houver uma credencial válida armazenada, o Git deverá solicitar uma nova autenticação ou acionar o mecanismo configurado para autenticação.
+
+---
+
+## 🔑 10. Autenticar novamente pelo GitHub CLI
+
+Uma opção conveniente é utilizar o GitHub CLI:
+
+```bash
+gh auth login
+```
+
+O assistente apresentará opções para configurar:
+
+- GitHub.com;
+- protocolo HTTPS ou SSH;
+- autenticação pelo navegador.
+
+Depois confirme:
+
+```bash
+gh auth status
+```
+
+---
+
+## 🔄 11. Procedimento completo para trocar de conta
+
+Se o objetivo for **trocar completamente a conta GitHub utilizada no computador**, utilize esta sequência.
+
+#### Passo 1 — verificar
+
+```bash
+gh auth status
+```
+
+#### Passo 2 — verificar o remoto
+
+```bash
+git remote -v
+```
+
+#### Passo 3 — remover autenticação do GitHub CLI
+
+```bash
+gh auth logout
+```
+
+#### Passo 4 — limpar credencial HTTPS do Git
+
+```bash
+echo "protocol=https
+host=github.com" | git credential-manager erase
+```
+
+#### Passo 5 — verificar credenciais do Windows
+
+```bat
+cmdkey /list | findstr "github"
+```
+
+#### Passo 6 — remover uma credencial identificada
+
+```bat
+cmdkey /delete:git:https://github.com
+```
+
+#### Passo 7 — confirmar
+
+```bash
+gh auth status
+```
+
+#### Passo 8 — autenticar novamente
+
+```bash
+gh auth login
+```
+
+---
+
+## 🧭 12. Fluxograma de diagnóstico
+
+```text
+                 Problema com GitHub
+                         │
+                         ▼
+                  git remote -v
+                         │
+             ┌───────────┴───────────┐
+             │                       │
+             ▼                       ▼
+        https://...             git@github.com:...
+             │                       │
+             ▼                       ▼
+    Credential Manager              SSH
+             │                       │
+             ▼                       ▼
+       cmdkey / GCM              ssh -T
+             │                       │
+             ▼                       │
+       limpar credencial             │
+             │                       │
+             └───────────┬───────────┘
+                         ▼
+                  gh auth status
+                         │
+                         ▼
+                   gh auth login
+```
+
+---
+
+## 📋 13. Tabela de referência
+
+| Sintoma                            | Verificar                  | Comando                                  |
+| ---------------------------------- | -------------------------- | ---------------------------------------- |
+| Git usa conta antiga               | Credential Manager         | `git credential-manager`                 |
+| Credencial armazenada no Windows   | Windows Credential Manager | `cmdkey /list`                           |
+| GitHub CLI está conectado          | GitHub CLI                 | `gh auth status`                         |
+| Fazer logout do CLI                | GitHub CLI                 | `gh auth logout`                         |
+| Fazer novo login                   | GitHub CLI                 | `gh auth login`                          |
+| Descobrir protocolo do projeto     | Remote                     | `git remote -v`                          |
+| Identidade dos commits             | Git config                 | `git config user.email`                  |
+| Configuração do Credential Manager | Git config                 | `git config --get-all credential.helper` |
+
+---
+
+## ⚠️ GitHub CLI ≠ Git
+
+É importante entender esta diferença:
+
+```text
+┌───────────────────────────────┐
+│          Git                  │
+│                               │
+│  git pull                     │
+│  git push                     │
+│  git fetch                    │
+│                               │
+│  Credential Manager           │
+└───────────────┬───────────────┘
+                │
+                │ HTTPS
+                ▼
+          github.com
+
+
+┌───────────────────────────────┐
+│        GitHub CLI             │
+│                               │
+│  gh auth login                │
+│  gh auth logout               │
+│  gh auth status               │
+│                               │
+│  autenticação do gh           │
+└───────────────┬───────────────┘
+                │
+                ▼
+          github.com
+```
+
+Portanto:
+
+```bash
+gh auth logout
+```
+
+**não significa necessariamente que o Git deixou de possuir uma credencial HTTPS armazenada.**
+
+Da mesma forma:
+
+```bash
+git credential-manager erase
+```
+
+**não significa necessariamente que o GitHub CLI foi desconectado.**
+
+---
+
+## ✅ Checklist final
+
+Antes de considerar o ambiente limpo:
+
+- [ ] `git remote -v` foi verificado
+- [ ] O protocolo HTTPS/SSH foi identificado
+- [ ] `git config --global user.name` foi verificado
+- [ ] `git config --global user.email` foi verificado
+- [ ] `git credential-manager` foi verificado
+- [ ] `cmdkey /list` foi verificado
+- [ ] Credenciais antigas foram removidas
+- [ ] `gh auth status` foi verificado
+- [ ] `gh auth logout` foi executado, se necessário
+- [ ] `gh auth login` foi executado para a nova conta
+- [ ] `git fetch` ou `git pull` foi testado
+
+```
+:::
+
+```
