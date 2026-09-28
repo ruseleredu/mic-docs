@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkmic_doc=self.webpackChunkmic_doc||[]).push([["6955"],{91765(e){e.exports=JSON.parse('{"metadata":{"permalink":"/mic-docs/blog","page":1,"postsPerPage":10,"totalPages":1,"totalCount":2,"blogDescription":"Blog","blogTitle":"Blog"}}')}}]);
