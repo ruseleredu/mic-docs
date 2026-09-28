@@ -1,0 +1,201 @@
+---
+id: git-multiplas-contas-github
+title: Usar várias contas GitHub no Git (sem a janela de seleção)
+sidebar_label: Várias contas GitHub
+description: Como definir uma conta padrão no Git Credential Manager e usar outra conta em repositórios específicos, evitando a janela "Select an account".
+tags: [git, github, credenciais, windows]
+---
+
+# Usar várias contas GitHub no Git
+
+Quando há mais de uma conta GitHub salva no **Git Credential Manager (GCM)**, o Git
+não sabe qual usar. Por isso ele abre a janela **"Select an account"** a cada
+`push`, `pull` ou `clone`.
+
+Este guia mostra como resolver isso de duas formas, que podem ser usadas juntas:
+
+1. **Conta padrão global**: uma conta usada em todos os repositórios.
+2. **Conta por repositório**: uma conta diferente só nos repositórios que precisam dela.
+
+:::info[Exemplo usado neste guia]
+
+- `ruseleredu` é a **conta padrão**.
+- `AdrianoRuseler` é usada **apenas em alguns repositórios**.
+
+Troque os nomes pelos das suas contas.
+:::
+
+## Pré-requisito: verificar as contas salvas
+
+Liste as contas que o GCM conhece para o GitHub:
+
+```bash
+git credential-manager github list
+```
+
+Saída esperada:
+
+```text
+ruseleredu
+AdrianoRuseler
+```
+
+:::tip
+Se o comando não existir, atualize o Git for Windows. O GCM vem incluído nele.
+:::
+
+## Opção 1: definir uma conta padrão global
+
+Esta configuração diz ao GCM qual conta usar para **qualquer** repositório em
+`https://github.com`:
+
+```bash
+git config --global credential.https://github.com.username ruseleredu
+```
+
+Para conferir:
+
+```bash
+git config --global --get credential.https://github.com.username
+```
+
+A partir daí, a janela de seleção não aparece mais nos repositórios que não
+tenham uma configuração própria.
+
+## Opção 2: usar outra conta em um repositório específico
+
+Nos repositórios que pertencem à outra conta, sobrescreva o padrão
+**localmente**. Há duas maneiras de fazer isso.
+
+<Tabs groupId="metodo-repo">
+  <TabItem value="config" label="Via git config (recomendado)" default>
+
+Dentro da pasta do repositório:
+
+```bash
+git config credential.username AdrianoRuseler
+```
+
+A configuração fica salva em `.git/config` e vale apenas para esse repositório.
+Ela tem prioridade sobre a configuração global.
+
+Para conferir:
+
+```bash
+git config --local --get credential.username
+```
+
+  </TabItem>
+  <TabItem value="url" label="Via URL do remote">
+
+Inclua o nome de usuário diretamente na URL do `origin`:
+
+```bash
+git remote set-url origin https://AdrianoRuseler@github.com/dono/repositorio.git
+```
+
+Para conferir:
+
+```bash
+git remote -v
+```
+
+  </TabItem>
+</Tabs>
+
+### Ao clonar um repositório novo
+
+Você pode indicar a conta já no `clone`:
+
+<Tabs groupId="metodo-repo">
+  <TabItem value="config" label="Via git config (recomendado)" default>
+
+```bash
+git clone -c credential.username=AdrianoRuseler https://github.com/dono/repositorio.git
+```
+
+  </TabItem>
+  <TabItem value="url" label="Via URL do remote">
+
+```bash
+git clone https://AdrianoRuseler@github.com/dono/repositorio.git
+```
+
+  </TabItem>
+</Tabs>
+
+## Combinando as duas opções
+
+| Situação                                    | O que configurar          | Conta usada      |
+| ------------------------------------------- | ------------------------- | ---------------- |
+| Repositório sem configuração local          | Apenas a global (Opção 1) | `ruseleredu`     |
+| Repositório com `credential.username` local | Local (Opção 2)           | `AdrianoRuseler` |
+| Remote com usuário na URL                   | URL do remote (Opção 2)   | `AdrianoRuseler` |
+
+A ordem de prioridade é: **usuário na URL** → **configuração local** →
+**configuração global**.
+
+## Alternativa: remover a conta que você não usa
+
+Se você só precisa de uma conta, basta remover a outra. Com uma única conta
+salva, o GCM não pergunta mais nada:
+
+```bash
+git credential-manager github logout AdrianoRuseler
+```
+
+:::warning
+Depois disso, qualquer repositório que dependa dessa conta vai pedir login
+novamente no próximo `push` ou `pull`.
+:::
+
+## Desfazer as configurações
+
+<Tabs>
+  <TabItem value="global" label="Global" default>
+
+```bash
+git config --global --unset credential.https://github.com.username
+```
+
+  </TabItem>
+  <TabItem value="local" label="Por repositório">
+
+```bash
+git config --unset credential.username
+```
+
+Se você usou a URL com usuário, volte para a URL sem ele:
+
+```bash
+git remote set-url origin https://github.com/dono/repositorio.git
+```
+
+  </TabItem>
+</Tabs>
+
+## Solução de problemas
+
+<details>
+  <summary>A janela continua aparecendo</summary>
+
+- Confirme se o nome da conta está escrito exatamente como aparece em
+  `git credential-manager github list`.
+- Verifique se não há outra configuração conflitante:
+
+  ```bash
+  git config --show-origin --get-all credential.username
+  git config --show-origin --get-regexp "credential\..*username"
+  ```
+
+- Confira se o remote usa **HTTPS**. Remotes SSH (`git@github.com:...`) não usam o GCM.
+
+</details>
+
+<details>
+  <summary>Erro de permissão (403) ao fazer push</summary>
+
+O Git está usando uma conta sem acesso ao repositório. Verifique qual conta
+está configurada no repositório (Opção 2) e se ela tem permissão de escrita.
+
+</details>
