@@ -5,7 +5,7 @@ import ThemeCodeBlock from "@theme/CodeBlock";
 import Admonition from "@theme/Admonition";
 
 
-import { GROUPS, ORG } from "../constants"; // one folder up
+import { GROUPS, ORG, HOMEFOLDER } from "../constants"; // one folder up
 
 type LabTeamMembersProps = {
     /** Nome do laboratório, ex: "lab00", "lab05", "projeto" */
@@ -55,13 +55,19 @@ export default function LabTeamMembers({
                             </li>
                         </ul>
                         <p>
-                            <b>1.</b> Clone o repositório do laboratório:
+                            <b>1.</b> Crie e entre na pasta-mãe da disciplina:
+                        </p>
+                        <ThemeCodeBlock className="language-bash">
+                            {`mkdir "%USERPROFILE%\ELT73A" & cd /d "%USERPROFILE%\ELT73A"`}
+                        </ThemeCodeBlock>
+                        <p>
+                            <b>2.</b> Clone e entre no repositório do laboratório:
                         </p>
                         <ThemeCodeBlock className="language-bash">
                             {`git clone ${repoUrl}.git && cd ${repoName}`}
                         </ThemeCodeBlock>
                         <p>
-                            <b>2.</b> Abra no VS Code:
+                            <b>3.</b> Abra o conteúdo do repositório no perfil {`${vscodeProfile}`} do VS Code :
                         </p>
                         <ThemeCodeBlock className="language-bash">
                             {`code . --profile "${vscodeProfile}"`}
