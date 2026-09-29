@@ -17,7 +17,7 @@ import Link from '@docusaurus/Link';
 // ---------------------------------------------------------------------------
 // <LabSetup /> — bloco "Antes de começar" (topo do lab)
 // ---------------------------------------------------------------------------
-export function LabSetup({ intro = '/lab/intro' } = {}) {
+export function LabSetup({ intro = '/labs/intro' } = {}) {
     return (
         <Admonition type="info" title="Antes de começar">
             <p>
@@ -38,9 +38,13 @@ export function LabSetup({ intro = '/lab/intro' } = {}) {
                     deve mostrar as versões e <code>Logged in to github.com</code>
                 </li>
             </ol>
-            <p>Verificação rápida (um comando confirma os três):</p>
+            <p>Verificação rápida de versão instalada:</p>
             <ThemeCodeBlock language="bash">
-                git --version &amp;&amp; gh auth status &amp;&amp; code -v
+                git -v &amp;&amp; gh --version &amp;&amp; code -v &amp;&amp; pio --version
+            </ThemeCodeBlock>
+            <p>Verificação rápida de autenticação:</p>
+            <ThemeCodeBlock language="bash">
+                git config --get-regexp ^user\. &amp;&amp; gh auth status &amp;&amp; code --list-extensions --profile "ESP32IO"
             </ThemeCodeBlock>
         </Admonition>
     );
@@ -49,7 +53,7 @@ export function LabSetup({ intro = '/lab/intro' } = {}) {
 // ---------------------------------------------------------------------------
 // <LabLogout /> — bloco "Ao terminar" (fim do lab; máquina compartilhada)
 // ---------------------------------------------------------------------------
-export function LabLogout({ intro = '/lab/intro' } = {}) {
+export function LabLogout({ intro = '/labs/intro' } = {}) {
     return (
         <Admonition type="warning" title="Ao terminar — máquina de laboratório">
             <p>
@@ -67,31 +71,18 @@ export function LabLogout({ intro = '/lab/intro' } = {}) {
 export function VerifyDev1() {
     return (
         <div>
-            <Details summary={<summary>Verifique o seu ambiente de desenvolvimento!</summary>}>
-                <p>Versão do <Link to="/docs/git">git</Link> e configurações:</p>
-                <ThemeCodeBlock className="language-bash">
-                    git --version
-                </ThemeCodeBlock>
-                <ThemeCodeBlock className="language-bash">
-                    git config --list --show-origin
-                </ThemeCodeBlock>
-
-                <p>Versão do <Link to="/docs/github-cli">GitHub CLI</Link> e status de login:</p>
-                <ThemeCodeBlock className="language-bash">
-                    gh --version
-                </ThemeCodeBlock>
-                <ThemeCodeBlock className="language-bash">
-                    gh auth status
-                </ThemeCodeBlock>
-
-                <p>Versão do <Link to="/docs/vs-code-intro">Visual Studio Code</Link> e extensões instaladas:</p>
-                <ThemeCodeBlock className="language-bash">
-                    code -v
-                </ThemeCodeBlock>
-                <ThemeCodeBlock className="language-bash">
-                    code --list-extensions --profile "ESP32IO"
-                </ThemeCodeBlock>
-            </Details>
+            <p>Versão do <Link to="/docs/git">git</Link> e configurações:</p>
+            <ThemeCodeBlock className="language-bash">
+                git --version &amp;&amp; git config --list --show-origin
+            </ThemeCodeBlock>
+            <p>Versão do <Link to="/docs/github-cli">GitHub CLI</Link> e status de login:</p>
+            <ThemeCodeBlock className="language-bash">
+                gh --version &amp;&amp; gh auth status
+            </ThemeCodeBlock>
+            <p>Versão do <Link to="/docs/vs-code-intro">Visual Studio Code</Link> e extensões instaladas:</p>
+            <ThemeCodeBlock className="language-bash">
+                code -v &amp;&amp; code --list-extensions --profile "ESP32IO"
+            </ThemeCodeBlock>
         </div >
     );
 }
@@ -148,42 +139,40 @@ export function VerifyDev2() {
 export function GitConfig() {
     return (
         <div>
-            <Details summary={<summary>Configure a ferramenta git</summary>}>
-                <p>Configure o nome de usuário para todos os repositórios locais ligados às suas transações de commit:</p>
-                <ThemeCodeBlock className="language-bash">
-                    git config --global user.name "Your Name"
-                </ThemeCodeBlock>
+            <p>Configure o nome de usuário para todos os repositórios locais ligados às suas transações de commit:</p>
+            <ThemeCodeBlock className="language-bash">
+                git config --global user.name "Your Name"
+            </ThemeCodeBlock>
 
-                <p> Configure o email de usuário para todos os repositórios locais ligados às suas transações de commit:</p>
-                <ThemeCodeBlock className="language-bash">
-                    git config --global user.email "you@example.com"
-                </ThemeCodeBlock>
+            <p> Configure o email de usuário para todos os repositórios locais ligados às suas transações de commit:</p>
+            <ThemeCodeBlock className="language-bash">
+                git config --global user.email "you@example.com"
+            </ThemeCodeBlock>
 
-                <p>É recomendado verificar se a instalação do seu Git não está realizando nenhuma transformação entre LFs e CRLFs.</p>
-                <ThemeCodeBlock className="language-bash">
-                    git config --global core.autocrlf false
-                </ThemeCodeBlock>
+            <p>É recomendado verificar se a instalação do seu Git não está realizando nenhuma transformação entre LFs e CRLFs.</p>
+            <ThemeCodeBlock className="language-bash">
+                git config --global core.autocrlf false
+            </ThemeCodeBlock>
 
-                <p>Configure o <Link to="/docs/git">git</Link> para usar o <Link to="/docs/vs-code-intro">Visual Studio Code</Link> como editor padrão para tarefas como escrever mensagens de commit ou rebases interativos</p>
-                <ThemeCodeBlock className="language-bash">
-                    git config --global core.editor "code --wait"
-                </ThemeCodeBlock>
+            <p>Configure o <Link to="/docs/git">git</Link> para usar o <Link to="/docs/vs-code-intro">Visual Studio Code</Link> como editor padrão para tarefas como escrever mensagens de commit ou rebases interativos</p>
+            <ThemeCodeBlock className="language-bash">
+                git config --global core.editor "code --wait"
+            </ThemeCodeBlock>
 
-                <p>Habilite a coloração automática da saída da linha de comando do <Link to="/docs/git">Git</Link>:</p>
-                <ThemeCodeBlock className="language-bash">
-                    git config --global color.ui auto
-                </ThemeCodeBlock>
+            <p>Habilite a coloração automática da saída da linha de comando do <Link to="/docs/git">Git</Link>:</p>
+            <ThemeCodeBlock className="language-bash">
+                git config --global color.ui auto
+            </ThemeCodeBlock>
 
-                <p>Configura o <Link to="/docs/git">Git</Link> para usar main como o nome do branch padrão sempre que você inicializar um novo repositório localmente:</p>
-                <ThemeCodeBlock className="language-bash">
-                    git config --global init.defaultBranch main
-                </ThemeCodeBlock>
+            <p>Configura o <Link to="/docs/git">Git</Link> para usar main como o nome do branch padrão sempre que você inicializar um novo repositório localmente:</p>
+            <ThemeCodeBlock className="language-bash">
+                git config --global init.defaultBranch main
+            </ThemeCodeBlock>
 
-                <p>Liste as configurações aplicadas:</p>
-                <ThemeCodeBlock className="language-bash">
-                    git config --list --show-origin
-                </ThemeCodeBlock>
-            </Details>
+            <p>Liste as configurações aplicadas:</p>
+            <ThemeCodeBlock className="language-bash">
+                git config --list --show-origin
+            </ThemeCodeBlock>
         </div >
     );
 }
@@ -311,7 +300,7 @@ export function DevTools() {
                 </ThemeCodeBlock>
             </TabItem>
             <TabItem value="esp32-docker" label="Docker">
-                <p><b><Link to="/lab/guides/instalacao-docker-wsl2">Docker Desktop & WSL 2</Link>: O Docker Desktop no Windows 11 utiliza a arquitetura do WSL 2 para executar containers Linux nativamente com alta performance.</b></p>
+                <p><b><Link to="/labs/guides/instalacao-docker-wsl2">Docker Desktop & WSL 2</Link>: O Docker Desktop no Windows 11 utiliza a arquitetura do WSL 2 para executar containers Linux nativamente com alta performance.</b></p>
                 <ul>
                     <li>
                         <p>Habilitação e Atualização do WSL 2:</p>
@@ -322,7 +311,6 @@ export function DevTools() {
                             {`wsl --update && wsl --set-default-version 2`}
                         </ThemeCodeBlock>
                     </li>
-
                     <li>
                         <p>Instalação do Docker Desktop via Winget:</p>
                         <ThemeCodeBlock className="language-bash">
@@ -354,7 +342,7 @@ export function DevTools() {
                     </li>
                 </ul>
             </TabItem>
-        </Tabs >
+        </Tabs>
     );
 }
 
@@ -495,24 +483,10 @@ export function DevToolsv2() {
 export function GitLogOut() {
     return (
         <div>
-            <Details summary={<summary>Faça Logout do seu ambiente de desenvolvimento!</summary>}>
-                <p>Para o <Link to="/docs/git">git</Link> "esquecer" suas informações salvas:</p>
-                <ThemeCodeBlock className="language-bash">
-                    git credential-manager erase
-                </ThemeCodeBlock>
-                <p>Ou liste suas credenciais:</p>
-                <ThemeCodeBlock className="language-bash">
-                    cmdkey /list | findstr "github"
-                </ThemeCodeBlock>
-                <p>Exclua a credencial:</p>
-                <ThemeCodeBlock className="language-bash">
-                    cmdkey /delete:git:https://github.com
-                </ThemeCodeBlock>
-                <p>Logout do <Link to="/docs/github-cli">GitHub CLI</Link>:</p>
-                <ThemeCodeBlock className="language-bash">
-                    gh auth logout
-                </ThemeCodeBlock>
-            </Details>
+            <p>Para o <Link to="/docs/git">git</Link> "esquecer" suas informações salvas:</p>
+            <ThemeCodeBlock className="language-bash">
+                git credential-manager erase &amp;&amp; cmdkey /list | findstr "github" &amp;&amp; gh auth logout
+            </ThemeCodeBlock>
         </div >
     );
 }
@@ -564,32 +538,26 @@ export function NewBranch() {
                 <ThemeCodeBlock className="language-bash">
                     git status
                 </ThemeCodeBlock>
-
                 <p>Crie uma nova branch:</p>
                 <ThemeCodeBlock className="language-bash">
                     git branch new-feature
                 </ThemeCodeBlock>
-
                 <p>Altere para a nova branch:</p>
                 <ThemeCodeBlock className="language-bash">
                     git checkout new-feature
                 </ThemeCodeBlock>
-
                 <p>Mostra as branches:</p>
                 <ThemeCodeBlock className="language-bash">
                     git branch
                 </ThemeCodeBlock>
-
                 <p>Envie a nova branch para o repositório remoto:</p>
                 <ThemeCodeBlock className="language-bash">
                     git push --set-upstream origin new-feature
                 </ThemeCodeBlock>
-
                 <p>Compara as branches:</p>
                 <ThemeCodeBlock className="language-bash">
                     git diff main new-feature
                 </ThemeCodeBlock>
-
                 <p>Retorna para a branch principal:</p>
                 <ThemeCodeBlock className="language-bash">
                     git checkout main

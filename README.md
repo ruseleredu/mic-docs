@@ -31,6 +31,21 @@ git subtree pull --prefix=src/components/shared shared-components main --squash
 git subtree push --prefix=src/components/shared shared-components main
 ```
 
+## Reset all tracked files to match the latest commit:
+
+```bash
+git reset --hard HEAD
+```
+## Substituir totalmente o conteúdo do subtree pelo remoto sem merge
+
+
+```bash
+git rm -r src/components/shared
+git commit -m "Remove local shared-components subtree"
+
+git subtree add --prefix=src/components/shared shared-components main --squash
+```
+
 ## Remove remote
 
 ```bash
