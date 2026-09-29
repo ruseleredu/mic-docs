@@ -25,18 +25,13 @@ export default function LabTeamMembers({
                 const repoName = `${labName}-grupo-${groupLower}`;
                 const fullRepo = `${ORG}/${repoName}`;
                 const repoUrl = `https://github.com/${fullRepo}`;
-                const reposUrl = `https://github.com/orgs/${ORG}/teams/grupo-${groupLower}/repositories`;
+                const teamsUrl = `https://github.com/orgs/${ORG}/teams/grupo-${groupLower}`;
+                const CommitsUrl = `https://github.com/${fullRepo}/commits/main/`;
                 const teamSlug = `grupo-${groupLower}`;
 
                 return (
                     <TabItem key={group} value={groupLower} label={group}>
                         <ul>
-                            <li>
-                                <b>Organização:</b>{" "}
-                                <a href={`https://github.com/${ORG}`} target="_blank" rel="noopener noreferrer">
-                                    {ORG}
-                                </a>
-                            </li>
                             <li>
                                 <b>Grupo:</b> Grupo-{group} (slug: <code>{teamSlug}</code>)
                             </li>
@@ -47,9 +42,15 @@ export default function LabTeamMembers({
                                 </a>
                             </li>
                             <li>
-                                <b>Repositórios:</b>{" "}
-                                <a href={reposUrl} target="_blank" rel="noopener noreferrer">
-                                    {reposUrl}
+                                <b>Commits:</b>{" "}
+                                <a href={CommitsUrl} target="_blank" rel="noopener noreferrer">
+                                    {CommitsUrl}
+                                </a>
+                            </li>
+                            <li>
+                                <b>Time:</b>{" "}
+                                <a href={teamsUrl} target="_blank" rel="noopener noreferrer">
+                                    {teamsUrl}
                                 </a>
                             </li>
                         </ul>
@@ -57,12 +58,8 @@ export default function LabTeamMembers({
                             <b>1.</b> Clone o repositório do laboratório:
                         </p>
                         <ThemeCodeBlock className="language-bash">
-                            {`git clone ${repoUrl}.git`}
+                            {`git clone ${repoUrl}.git && cd ${repoName}`}
                         </ThemeCodeBlock>
-                        <ThemeCodeBlock className="language-bash">
-                            {`cd ${repoName}`}
-                        </ThemeCodeBlock>
-
                         <p>
                             <b>2.</b> Abra no VS Code:
                         </p>
