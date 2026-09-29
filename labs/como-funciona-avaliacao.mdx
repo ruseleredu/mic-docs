@@ -116,6 +116,93 @@ Um alívio: como cada tarefa é avaliada no **estado congelado do seu commit `Tn
 
 ---
 
+## Me perdi — como voltar a um commit que funcionava?
+
+Bagunçou pastas e arquivos e não sabe mais o que mudou? Calma: tudo que você commitou está guardado. A ideia é **trazer os arquivos de volta de um commit bom e fazer um commit novo por cima**, sem apagar nada da história.
+
+:::tip[Regra de ouro (de novo)]
+Voltar no tempo = **restaurar os arquivos + commit novo**. Não use `reset --hard` nem `push --force` para isso.
+:::
+
+**0) Confira se você está na pasta certa**
+
+Muitas vezes o "me perdi" é só estar fora do repositório, ou dentro de um clone dentro de outro clone:
+
+```bash
+pwd                              # onde estou?
+git rev-parse --show-toplevel    # qual é a raiz do repositório?
+git status                       # em que branch estou e o que mudou
+```
+
+Se o `git status` disser **`HEAD detached`**, você "viajou" para um commit antigo com `git checkout <hash>`. Volte para a branch principal:
+
+```bash
+git switch main    # ou master, conforme o seu repositório
+```
+
+**1) Ache o último commit que funcionava**
+
+```bash
+git log --oneline                  # lista resumida de commits
+git log --oneline --grep="^T3:"    # só os commits da tarefa T3
+```
+
+Anote o código (hash) do commit bom, por exemplo `a1b2c3d`.
+
+**2) Traga os arquivos de volta e faça um commit novo** _(recomendado)_
+
+```bash
+git restore --source=a1b2c3d --staged --worktree -- .
+git commit -m "T4: volta ao estado de T3 e refaz"
+git push
+```
+
+Seus arquivos rastreados ficam **exatamente** como naquele commit (os que não existiam lá são removidos). Funciona mesmo depois do `push` e é seguro no repositório do grupo. Use no commit o token da tarefa em que você está.
+
+Quer recuperar só um arquivo ou uma pasta?
+
+```bash
+git restore --source=a1b2c3d -- src/main.cpp
+```
+
+**3) Só quero descartar o que ainda NÃO commitei**
+
+```bash
+git restore .     # desfaz alterações em arquivos já rastreados
+git clean -n      # MOSTRA os arquivos novos que seriam apagados
+git clean -fd     # apaga de fato (só depois de conferir o -n!)
+```
+
+**4) E o `reset --hard`?**
+
+Só em um caso: o commit ruim **ainda não foi enviado** (sem `push`). Mesmo assim, crie um backup antes:
+
+```bash
+git branch backup-antes-do-reset   # rede de seguranca
+git reset --hard a1b2c3d
+```
+
+:::danger[Já deu `push`? Então nada de `reset --hard`]
+Se o commit já está no servidor, o `reset` exigiria `git push --force`, que pode **apagar o trabalho dos colegas**. Use a opção **2** (restaurar + commit novo).
+:::
+
+**5) Fiz besteira e perdi trabalho — o `git reflog` salva**
+
+O `reflog` guarda todos os lugares por onde você passou, inclusive depois de um `reset --hard`:
+
+```bash
+git reflog                     # lista os estados recentes (HEAD@{0}, HEAD@{1}, ...)
+git branch resgate HEAD@{3}    # recupera o estado de 3 passos atrás numa branch nova
+```
+
+Depois é só usar a opção **2** com o hash da branch `resgate`.
+
+:::info[Por que isso não prejudica sua nota]
+Cada tarefa é corrigida no **estado congelado do seu commit `Tn:`**. Restaurar arquivos e commitar de novo **não altera** as tarefas já entregues — só cria uma entrega nova.
+:::
+
+---
+
 ## Para instrutores — cartão para colar no início de cada lab
 
 Cole este `:::info` de 4 linhas no topo de cada aula (ele resume o essencial e aponta para esta página):
