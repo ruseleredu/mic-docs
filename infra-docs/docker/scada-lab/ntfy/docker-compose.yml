@@ -1,0 +1,32 @@
+services:
+  ntfy:
+    image: binwiederhier/ntfy:v2.11.0
+    container_name: ntfy
+    command:
+      - serve
+    environment:
+      - TZ=UTC
+    # Options can be passed via environment variables or a config file
+    # Direct environment configuration:
+      - NTFY_BASE_URL=http://localhost:8080
+      - NTFY_CACHE_FILE=/var/cache/ntfy/cache.db
+      - NTFY_AUTH_FILE=/var/lib/ntfy/user.db
+      - NTFY_AUTH_DEFAULT_ACCESS=deny-all # Set to 'read-write' if you don't want auth enabled
+    volumes:
+      - ntfy_cache:/var/cache/ntfy
+      - ntfy_data:/var/lib/ntfy
+      - ntfy_config:/etc/ntfy
+    ports:
+      - "8080:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -q '\"health\": true' || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  ntfy_cache:
+  ntfy_data:
+  ntfy_config:
