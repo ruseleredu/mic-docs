@@ -38,7 +38,7 @@ o kit usa a mesma senha e o mesmo credentialSecret do grupo no laboratório.
   py gen_iot_scada_ntfy_portal.py --kit a --ponte-mqtt 192.168.0.10     # liga o MQTT do kit ao do lab
 
 Uso:
-  py gen_iot_scada_ntfy_portal.py --lab lab05 --grupos 10 --ip 192.168.0.10
+  py gen_iot_scada_ntfy_portal.py --lab lab04 --grupos 10 --ip 192.168.0.102
   py gen_iot_scada_ntfy_portal.py --sem-tunel            # só rede local (http://IP/)
   py gen_iot_scada_ntfy_portal.py --novas-senhas         # sorteia senhas novas para todos
   py gen_iot_scada_ntfy_portal.py --gitea-db sqlite   # sem PostgreSQL (Gitea em SQLite)
@@ -58,7 +58,7 @@ PUBLICO_URL_PADRAO = "https://iot.adrianoruseler.com"
 
 ap = argparse.ArgumentParser(description="Gera o LAB IoT (caminhos + túnel SSH para o VPS).")
 ap.add_argument("--lab", default="lab05", help="Nome do lab (ex.: lab05); prefixo de tudo")
-ap.add_argument("--grupos", type=int, default=10, help="Quantidade de grupos de alunos (máx. 24)")
+ap.add_argument("--grupos", type=int, default=13, help="Quantidade de grupos de alunos (máx. 24)")
 ap.add_argument("--ip", default="127.0.0.1",
                 help="IP do servidor na rede do laboratório (acesso local, MQTT e MQTT Explorer)")
 ap.add_argument("--dominio", default="iot.lab",
@@ -87,7 +87,7 @@ ap.add_argument("--proteger-http", action="store_true",
                 help="Exige login (usuário/senha do grupo) nos dashboards e endpoints HTTP do Node-RED")
 ap.add_argument("--novas-senhas", action="store_true",
                 help="Sorteia senhas novas para todos os grupos (padrão: mantém as já geradas)")
-ap.add_argument("--github-org", default="ELT85B-N21-2026-2",
+ap.add_argument("--github-org", default="ELT73A-S22-2026-2",
                 help="Organização do GitHub com os repositórios <lab>-grupo-<letra> (para publicar os acessos)")
 ap.add_argument("--saida", default=None,
                 help="Pasta de saída (padrão: <lab>; com --kit: <lab>-kits/<grupo>; com --kit todos: pasta base)")
