@@ -34,9 +34,16 @@ description: Introdução as aulas de laboratório
 ---
 
 import {
+  DevTools,
   LabSetup,
   LabLogout,
 } from "@site/src/components/shared/InstructionsSite";
+
+## Configuração do ambiente de desenvolvimento {/* #setup */}
+
+<DevTools />
+
+---
 
 <LabSetup />
 
@@ -70,6 +77,7 @@ Os cartões **"Ponto de commit"** marcam cada tarefa avaliada. Copie o comando d
 - Uma rede **WiFi** (real, para o ESP32 físico).
 - Um **broker MQTT**:
   - **Público** (para o Wokwi): `broker.hivemq.com:1883`.
+  - **Privado** (para o Wokwi): `mqtt.adrianoruseler.com:1883`.
   - **Local** (para o ESP32 físico): um **Mosquitto em Docker** na sua máquina/rede (ver "Broker MQTT local com Docker"), ex.: `192.168.0.10:1883`.
 
 ---
@@ -87,10 +95,22 @@ Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub
 ## Crie um novo projeto no Platform IO
 
 ```bash
-pio project init -b esp32dev -O "framework=arduino" -O "monitor_speed=115200" --sample-code
+pio project init -b esp32dev -O "framework=arduino" -O "monitor_speed=115200" --ide vscode --sample-code
 ```
 
-<CommitPoint task="pio project init" pontos={5} />
+### Wokwi init
+
+```bash
+wokwi-cli init
+```
+
+- Valide o arquivo `diagram.json`
+
+```bash
+wokwi-cli lint
+```
+
+<CommitPoint task="pio project and wokwi init" pontos={5} />
 
 ---
 
@@ -179,7 +199,7 @@ lib_deps =
 ```json title="diagram.json"
 {
   "version": 1,
-  "author": "Aluno",
+  "author": "Uri Shaked",
   "editor": "wokwi",
   "parts": [
     {
@@ -188,28 +208,11 @@ lib_deps =
       "top": 0,
       "left": 0,
       "attrs": {}
-    },
-    {
-      "type": "wokwi-led",
-      "id": "led1",
-      "top": -48,
-      "left": 110,
-      "attrs": { "color": "green" }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r1",
-      "top": 20,
-      "left": 110,
-      "attrs": { "value": "220" }
     }
   ],
   "connections": [
-    ["esp:TX0", "$serialMonitor:RX", "", []],
-    ["esp:RX0", "$serialMonitor:TX", "", []],
-    ["esp:2", "r1:1", "green", []],
-    ["r1:2", "led1:A", "green", []],
-    ["led1:C", "esp:GND.1", "black", []]
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []]
   ]
 }
 ```
@@ -222,6 +225,7 @@ lib_deps =
 version = 1
 firmware = '.pio/build/esp32dev/firmware.bin'
 elf = '.pio/build/esp32dev/firmware.elf'
+gdbServerPort = 3333
 ```
 
 </TabItem>
@@ -253,8 +257,10 @@ Modo estação (`WIFI_STA`), `WiFi.begin()` e espera até `WL_CONNECTED`.
 #include <Arduino.h>
 #include <WiFi.h>
 
-const char* WIFI_SSID = "IoT-Broker";
-const char* WIFI_PASS = "ESP32IoTLab";
+const char *WIFI_SSID  = "Wokwi-GUEST";
+const char *WIFI_PASS = "";
+// const char* WIFI_SSID = "IoT-Broker";
+// const char* WIFI_PASS = "ESP32IoTLab";
 
 void conectaWiFi() {
   Serial.print("Conectando a "); Serial.println(WIFI_SSID);
@@ -298,11 +304,14 @@ RSSI: -30
 O `PubSubClient` usa um `WiFiClient` por baixo. Definimos o servidor e tentamos conectar com um **client id único**.
 
 ```cpp
+#include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-const char* WIFI_SSID = "IoT-Broker";
-const char* WIFI_PASS = "ESP32IoTLab";
+const char *WIFI_SSID  = "Wokwi-GUEST";
+const char *WIFI_PASS = "";
+// const char* WIFI_SSID = "IoT-Broker";
+// const char* WIFI_PASS = "ESP32IoTLab";
 const char* MQTT_HOST = "broker.hivemq.com";
 const int   MQTT_PORT = 1883;
 
@@ -356,6 +365,76 @@ Se falhar, `mqtt.state()` dá a pista: `-2` = não alcançou o servidor (host/po
 :::
 
 <CommitPoint task="conecta ao broker MQTT" pontos={15} />
+
+---
+
+## Conectar ao broker MQTT com senha
+
+O `PubSubClient` usa um `WiFiClient` por baixo. Definimos o servidor e tentamos conectar com um **client id único**.
+
+```cpp
+#include <Arduino.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+//const char *WIFI_SSID  = "Wokwi-GUEST";
+//const char *WIFI_PASS = "";
+const char* WIFI_SSID = "IoT-Broker";
+const char* WIFI_PASS = "ESP32IoTLab";
+
+const char* MQTT_HOST = "mqtt.adrianoruseler.com";
+const int   MQTT_PORT = 1883;
+
+// Add your MQTT credentials here
+const char* MQTT_USER = "your_username"; // Leave empty "" if not required
+const char* MQTT_PASS = "your_password"; // Leave empty "" if not required
+
+WiFiClient   wifiClient;
+PubSubClient mqtt(wifiClient);
+
+void conectaWiFi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED) { delay(300); Serial.print("."); }
+  Serial.print("\nWiFi OK, IP: "); Serial.println(WiFi.localIP());
+}
+
+void conectaMQTT() {
+  mqtt.setServer(MQTT_HOST, MQTT_PORT);
+  while (!mqtt.connected()) {
+    String clientId = "esp32-" + String(random(0xffff), HEX);
+    Serial.print("Conectando ao broker MQTT... ");
+
+    // Updated connect method passing clientId, username, and password
+    if (mqtt.connect(clientId.c_str(), MQTT_USER, MQTT_PASS)) {
+      Serial.println("conectado!");
+    } else {
+      Serial.print("falhou (rc="); Serial.print(mqtt.state());
+      Serial.println("), nova tentativa em 2s");
+      delay(2000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  conectaWiFi();
+  conectaMQTT();
+}
+
+void loop() {
+  mqtt.loop();
+}
+```
+
+Saída esperada:
+
+```text
+....
+WiFi OK, IP: 10.13.37.2
+Conectando ao broker MQTT... conectado!
+```
 
 ---
 
