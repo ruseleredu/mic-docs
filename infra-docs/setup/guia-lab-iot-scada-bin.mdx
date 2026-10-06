@@ -1,10 +1,8 @@
 ---
-id: lab-iot-scada-ntfy
-hide_title: true
-draft: true # <--- Use this key to mark the document as a draft
-title: Guia do LAB IoT (Node-RED, FUXA, MQTT, Gitea, wastebin, ntfy e VPS)
-sidebar_label: Guia do LAB IoT SCADA NTFY
-description: Como gerar, subir, publicar e usar o laboratório IoT — servidor Windows 11 no laboratório com Node-RED e FUXA (SCADA/HMI) por grupo, MQTT, Gitea, wastebin e ntfy (notificações push), publicado em https://iot.adrianoruseler.com por um túnel SSH até um VPS com Apache, e o kit de cada grupo para rodar na máquina do aluno. Instruções para o professor e para o aluno.
+id: guia-lab-iot-bin
+title: Guia do LAB IoT (Node-RED, FUXA, MQTT, Gitea, MicroBin, ntfy e VPS)
+sidebar_label: Guia do LAB IoT - MicroBin
+description: Como gerar, subir, publicar e usar o laboratório IoT — servidor Windows 11 no laboratório com Node-RED e FUXA (SCADA/HMI) por grupo, MQTT, Gitea, MicroBin e ntfy (notificações push), publicado em https://iot.adrianoruseler.com por um túnel SSH até um VPS com Apache, e o kit de cada grupo para rodar na máquina do aluno. Instruções para o professor e para o aluno.
 keywords:
   [
     node-red,
@@ -14,7 +12,8 @@ keywords:
     mqtt,
     mosquitto,
     gitea,
-    wastebin,
+    microbin,
+    pastebin,
     ntfy,
     notificações,
     push,
@@ -32,16 +31,16 @@ keywords:
 toc_max_heading_level: 3
 ---
 
-# Guia do LAB IoT
+# Guia do LAB IoT (Node-RED, FUXA, MQTT, Gitea, MicroBin, ntfy e VPS)
 
 Este guia explica como montar o laboratório da disciplina com o script
-**`gen_iot_scada_ntfy_portal.py`** e como usá-lo no dia a dia.
+**`gen_iot_scada_portal.py`** e como usá-lo no dia a dia.
 
 - **[Parte 1 — Professor](#parte-1--professor)**: preparar o servidor do laboratório (Windows 11)
   e o VPS, gerar o ambiente, publicar na internet, entregar os acessos pelo GitHub, gerar os kits
   dos grupos e administrar o lab.
 - **[Parte 2 — Aluno](#parte-2--aluno)**: acessar no laboratório ou de casa, programar no
-  Node-RED, montar telas SCADA no FUXA, usar MQTT, compartilhar código no wastebin, receber avisos no
+  Node-RED, montar telas SCADA no FUXA, usar MQTT, compartilhar código no MicroBin, receber avisos no
   celular (ntfy), versionar no Gitea e rodar o kit do grupo no próprio computador.
 
 :::info[Visão geral em uma frase]
@@ -90,7 +89,7 @@ flowchart TB
       subgraph UNI["Únicos (todo o lab)"]
         direction TB
         GT["Gitea<br/>/git/"]
-        WB["wastebin<br/>/bin/"]
+        WB["MicroBin<br/>/bin/"]
         NT["ntfy · avisos push<br/>/ntfy/ · /avisos/<br/>(ACL por grupo)"]
       end
 
@@ -139,7 +138,7 @@ Os serviços ficam em **caminhos** do endereço base, iguais nos dois casos:
 | Dashboard do grupo A                               | `/lab05-a/dashboard` | ✅     | ✅      |
 | FUXA (SCADA/HMI) do grupo A                        | `/fuxa/lab05-a/`     | ✅     | ✅      |
 | Gitea                                              | `/git/`              | ✅     | ✅      |
-| wastebin (colar código)                            | `/bin/`              | ✅     | ✅      |
+| MicroBin (colar código)                            | `/bin/`              | ✅     | ✅      |
 | Avisos (página web do ntfy)                        | `/avisos/`           | ✅     | ✅      |
 | ntfy (servidor para o app do celular e o Node-RED) | `/ntfy`              | ✅     | ✅      |
 | MQTT Explorer                                      | porta `3001`         | ✅     | ❌      |
@@ -170,7 +169,7 @@ O nome do lab (`--lab`, padrão `lab05`) é combinado com uma letra:
 ```mermaid
 flowchart TD
   A["Servidor do lab: WSL 2, Docker Desktop, Python"] --> B["IP fixo + firewall (80, 1883, 3001)"]
-  B --> C["py gen_iot_scada_ntfy_portal.py<br/>(gera a pasta lab05)"]
+  B --> C["py gen_iot_scada_portal.py<br/>(gera a pasta lab05)"]
   C --> D["Gerar a chave do túnel"]
   D --> E["Enviar vps/ + chave ao VPS"]
   E --> F["No VPS: sudo bash setup-vps.sh"]
@@ -200,7 +199,7 @@ Consumo aproximado com 10 grupos:
 | FUXA                                             | 11 (grupos + professor)         | ~130 MB cada     |
 | Gitea + PostgreSQL                               | 1                               | ~400 MB          |
 | ntfy                                             | 1 (todo o lab)                  | ~30 MB           |
-| nginx, mosquitto, wastebin, MQTT Explorer, túnel | 1 cada                          | ~200 MB no total |
+| nginx, mosquitto, MicroBin, MQTT Explorer, túnel | 1 cada                          | ~200 MB no total |
 | **Total**                                        |                                 | **~3,5 GB**      |
 
 #### 2.2 Instalar os programas
@@ -290,11 +289,11 @@ domínio já mostra outro conteúdo, ele deixa de aparecer. As exceções são a
 
 ### 4. Gerar o ambiente
 
-Coloque o `gen_iot_scada_ntfy_portal.py` em `C:\lab`, abra o PowerShell nessa pasta e rode:
+Coloque o `gen_iot_scada_portal.py` em `C:\lab`, abra o PowerShell nessa pasta e rode:
 
 ```powershell
 cd C:\lab
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --grupos 10 --ip 192.168.0.102
+py .\gen_iot_scada_portal.py --lab lab05 --grupos 10 --ip 192.168.0.102
 ```
 
 O script **não sobe nada**: ele só gera os arquivos em `C:\lab\lab05`. Saída (resumida):
@@ -315,7 +314,7 @@ O script **não sobe nada**: ele só gera os arquivos em `C:\lab\lab05`. Saída 
 
   Local:   http://192.168.0.102/
   Público: https://iot.adrianoruseler.com/   (túnel SSH -> Apache do VPS iot.adrianoruseler.com)
-  Grupo A: <base>/lab05-a/   ·   Gitea: <base>/git/   ·   wastebin: <base>/bin/
+  Grupo A: <base>/lab05-a/   ·   Gitea: <base>/git/   ·   MicroBin: <base>/bin/
   MQTT Explorer: http://192.168.0.102:3001/   ·   MQTT: 192.168.0.102:1883  (rede local)
   FUXA:   <base>/fuxa/lab05-a/ (SCADA/HMI do grupo; 11 instâncias)
   ntfy:   <base>/avisos/ (página)  ·  app: <base>/ntfy  ·  tópicos lab05-a, lab05-a-*, lab05-avisos
@@ -343,7 +342,7 @@ sincronizados com o OneDrive, porque a sincronização pode travar arquivos usad
 | `--gitea-db`                                        | `postgres`                       | Banco do Gitea: `postgres` ou `sqlite` (sem PostgreSQL).                                                                   |
 | `--gitea-repo`                                      | `nodered`                        | Repositório criado em cada organização (`''` = nenhum).                                                                    |
 | `--sem-fuxa`                                        | desligado                        | Não inclui o FUXA (SCADA/HMI).                                                                                             |
-| `--sem-wastebin`                                    | desligado                        | Não inclui o wastebin (`/bin/`).                                                                                           |
+| `--sem-microbin`                                    | desligado                        | Não inclui o MicroBin (`/bin/`).                                                                                           |
 | `--sem-ntfy`                                        | desligado                        | Não inclui o ntfy (avisos push em `/ntfy` e `/avisos/`).                                                                   |
 | `--proteger-http`                                   | desligado                        | Dashboards/endpoints HTTP do Node-RED **e as telas do FUXA** passam a pedir o login do grupo.                              |
 | `--novas-senhas`                                    | desligado                        | Sorteia senhas **novas** para todos (por padrão, as senhas são mantidas).                                                  |
@@ -367,16 +366,16 @@ rede do laboratório.
 
 ```powershell
 # Dashboards e telas do FUXA protegidos por senha
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --ip 192.168.0.102 --proteger-http
+py .\gen_iot_scada_portal.py --lab lab05 --ip 192.168.0.102 --proteger-http
 
 # Laboratório enxuto: sem FUXA e Gitea em SQLite (não cria o PostgreSQL)
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --ip 192.168.0.102 --sem-fuxa --gitea-db sqlite
+py .\gen_iot_scada_portal.py --lab lab05 --ip 192.168.0.102 --sem-fuxa --gitea-db sqlite
 
 # Só rede local, sem VPS
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --ip 192.168.0.102 --sem-tunel
+py .\gen_iot_scada_portal.py --lab lab05 --ip 192.168.0.102 --sem-tunel
 
 # Kits de todos os grupos (lab05-kits\lab05-a.zip, ...)
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --grupos 10 --kit todos
+py .\gen_iot_scada_portal.py --lab lab05 --grupos 10 --kit todos
 ```
 
 ### 5. O que foi gerado
@@ -388,9 +387,9 @@ lab05\
 ├── credenciais.txt              # ⚠️ senhas e endereços de todos
 ├── .segredos.json               # ⚠️ senhas e chaves persistentes — NÃO apague
 ├── nginx\nginx.conf             # um servidor, tudo em caminhos
-├── nginx\htpasswd               # login do wastebin (todos os usuários)
+├── nginx\htpasswd               # login do MicroBin (todos os usuários)
 ├── nginx\html\index.html        # portal (links relativos: valem no IP e no domínio)
-├── nginx\html\avisos\           # página do ntfy + exemplo-node-red.json (ntfy + wastebin)
+├── nginx\html\avisos\           # página do ntfy + exemplo-node-red.json (ntfy + MicroBin)
 ├── ntfy\server.yml              # ntfy: usuários, ACL por grupo e tokens do Node-RED
 ├── settings\lab05-a.js ...      # configuração de cada Node-RED
 ├── data\lab05-a\ ...            # fluxos, projetos e bancos SQLite de cada grupo
@@ -412,8 +411,8 @@ lab05\
     └── lab-offline.html         # página "laboratório desligado"
 ```
 
-Banco do Gitea, repositórios Git, pastes do wastebin e o histórico do ntfy ficam em **volumes do Docker**
-(`lab05_postgres_data`, `lab05_gitea_data`, `lab05_wastebin_data`, `lab05_ntfy_data`,
+Banco do Gitea, repositórios Git, pastes do MicroBin e o histórico do ntfy ficam em **volumes do Docker**
+(`lab05_postgres_data`, `lab05_gitea_data`, `lab05_microbin_data`, `lab05_ntfy_data`,
 `lab05_mosquitto_data`). O Node-RED e o FUXA ficam em pastas comuns (`data\` e `fuxa\`). O backup
 está na [seção 17.1](#171-backup).
 
@@ -503,7 +502,7 @@ flowchart TB
   MOS --> FX["FUXA (todos)"]
   MOS --> MQX["mqtt-explorer"]
   NR & FX & GT & MQX --> NG["nginx"]
-  WB["wastebin"] --> NG
+  WB["MicroBin"] --> NG
   NT["ntfy"] --> NG
   NG --> TUN["tunel → VPS"]
 ```
@@ -542,9 +541,9 @@ de novo a cada 10 s.
 ### 9. Credenciais
 
 O `credenciais.txt` traz as senhas e **os dois endereços** de cada serviço. **Um par
-usuário/senha por grupo** vale para Node-RED, FUXA, Gitea, wastebin e ntfy:
+usuário/senha por grupo** vale para Node-RED, FUXA, Gitea, MicroBin e ntfy:
 
-| Usuário               | Node-RED                | FUXA                      | Gitea                                | wastebin | ntfy                                                  |
+| Usuário               | Node-RED                | FUXA                      | Gitea                                | MicroBin | ntfy                                                  |
 | --------------------- | ----------------------- | ------------------------- | ------------------------------------ | -------- | ----------------------------------------------------- |
 | `lab05-a`             | edita o próprio         | administra o do grupo     | escreve em `lab05-grupo-a`           | ✅       | lê/escreve `lab05-a`, `lab05-a-*`; lê `lab05-avisos`  |
 | `lab05-a-view`        | só visualiza            | —                         | —                                    | —        | —                                                     |
@@ -573,7 +572,7 @@ execuções seguintes só substituem esse bloco.
 
 ```mermaid
 flowchart LR
-  G["gen_iot_scada_ntfy_portal.py"] --> AC["acessos\lab05-a.md …<br/>(um por grupo + p + n)"]
+  G["gen_iot_scada_portal.py"] --> AC["acessos\lab05-a.md …<br/>(um por grupo + p + n)"]
   AC --> PUB["publicar-acessos-github.sh<br/>(gh api)"]
   PUB --> RA["lab05-grupo-a<br/>README.md"]
   PUB --> RB["lab05-grupo-b<br/>README.md"]
@@ -670,25 +669,32 @@ O usuário `lab05-p` administra o FUXA de todos os grupos. Para acompanhar um gr
 `/fuxa/lab05-a/editor`. As telas de operação ficam em `/fuxa/lab05-a/home`.
 :::
 
-### 12. wastebin (colar e compartilhar código)
+### 12. MicroBin (colar código e enviar arquivos)
 
-O **[wastebin](https://github.com/matze/wastebin)** é um "pastebin" único para todo o lab, em
-**`/bin/`**: cola-se um trecho de código, um log ou um fluxo do Node-RED (JSON) e compartilha-se o
-link. Útil para tirar dúvidas e trocar trechos entre grupos e com o professor.
+O **[MicroBin](https://microbin.eu)** é um "pastebin" único para todo o lab, em **`/bin/`**: cola-se
+um trecho de código, um log ou um fluxo do Node-RED (JSON), ou envia-se um **arquivo** (foto da
+montagem, PDF, firmware), e compartilha-se o link. Útil para tirar dúvidas e trocar material entre
+grupos e com o professor.
 
-| Item           | Como está configurado                                                              |
-| -------------- | ---------------------------------------------------------------------------------- |
-| Login          | usuário e senha de **qualquer** grupo (ou `lab05-p`/`lab05-n`), pedidos pelo nginx |
-| Tamanho máximo | 2 MB por paste                                                                     |
-| Validade       | 10 min, 1 h, 1 dia (padrão), 7 dias, 1 mês ou para sempre                          |
-| Dados          | volume `lab05_wastebin_data` (SQLite)                                              |
+| Item              | Como está configurado                                                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Login para entrar | usuário e senha de **qualquer** grupo (ou `lab05-p`/`lab05-n`), pedidos pelo nginx                                                                 |
+| Administração     | **`/bin/admin`** com o login do professor (`lab05-p`): lista, edita e apaga tudo, com estatísticas                                                 |
+| Conteúdo          | texto com destaque de sintaxe, arquivos até 50 MB (10 MB se criptografados)                                                                        |
+| Privacidade       | _pública_ (aparece em **List**), _não listada_, _somente leitura_, _privada_ (criptografada no servidor) ou _secreta_ (criptografada no navegador) |
+| Validade          | 1 min a **1 mês** (padrão: 24 h); opção "queimar após N leituras"                                                                                  |
+| Links e QR code   | o botão _Copy URL_ e o **QR** usam o endereço público (`https://iot.adrianoruseler.com/bin/…`), para abrir no celular                              |
+| Dados             | volume `lab05_microbin_data` (SQLite + arquivos)                                                                                                   |
+| Imagem            | `danielszabo99/microbin:2.1.4` (fixa), sem telemetria nem checagem de versão                                                                       |
 
-O wastebin não tem painel de administração. Para listar ou apagar pastes, no servidor:
+O MicroBin roda na raiz do container e gera os links com o prefixo `/bin`
+(`MICROBIN_PUBLIC_PATH=/bin`); o nginx retira o `/bin` ao encaminhar. A interface é em inglês.
 
-```powershell
-docker exec lab05-wastebin /app/wastebin-ctl list
-docker exec lab05-wastebin /app/wastebin-ctl delete <id>
-```
+:::caution[Identificadores fáceis de adivinhar]
+Os nomes dos pastes (`ape-wasp-cobra`) vêm de um número de 16 bits: quem tem login no lab
+consegue adivinhar links "não listados". Para algo sensível, use a privacidade _privada_ ou
+_secreta_ (com senha).
+:::
 
 ### 13. Avisos push (ntfy)
 
@@ -742,40 +748,41 @@ stream JSON funcionam normalmente):
 
 **Variáveis já definidas no Node-RED de cada grupo** (`env.get("...")` num nó _function_):
 
-| Variável                                           | Exemplo (grupo A)                                |
-| -------------------------------------------------- | ------------------------------------------------ |
-| `NTFY_URL`                                         | `http://ntfy`                                    |
-| `NTFY_TOPIC`                                       | `lab05-a`                                        |
-| `NTFY_TOKEN`                                       | `tk_…` (do usuário `lab05-a`)                    |
-| `NTFY_AVISOS`                                      | `lab05-avisos`                                   |
-| `WASTEBIN_URL` / `WASTEBIN_LINK` / `WASTEBIN_AUTH` | wastebin interno / link público / login do grupo |
-| `GRUPO`                                            | `lab05-a`                                        |
+| Variável                                           | Exemplo (grupo A)                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
+| `NTFY_URL`                                         | `http://ntfy`                                                             |
+| `NTFY_TOPIC`                                       | `lab05-a`                                                                 |
+| `NTFY_TOKEN`                                       | `tk_…` (do usuário `lab05-a`)                                             |
+| `NTFY_AVISOS`                                      | `lab05-avisos`                                                            |
+| `MICROBIN_URL` / `MICROBIN_LINK` / `MICROBIN_AUTH` | MicroBin interno (`http://microbin:8080`) / link público / login do grupo |
+| `GRUPO`                                            | `lab05-a`                                                                 |
 
-#### 13.1 ntfy + wastebin
+#### 13.1 ntfy + MicroBin
 
-Os dois não têm integração nativa (o wastebin não tem webhooks; o ntfy limita a mensagem a 4 KB),
-mas se completam: **o texto longo vai para o wastebin e o aviso leva o link**. No celular, o aviso
-mostra o resumo e um botão **"Abrir no wastebin"**.
+Os dois não têm integração nativa (o MicroBin não tem webhooks; o ntfy limita a mensagem a 4 KB),
+mas se completam: **o texto longo vai para o MicroBin e o aviso leva o link**. No celular, o aviso
+mostra o resumo e um botão **"Abrir no MicroBin"**.
 
 ```mermaid
 sequenceDiagram
   participant NR as Node-RED lab05-a
-  participant WB as wastebin
+  participant WB as MicroBin
   participant NT as ntfy
   participant CEL as 📱 celular do grupo
-  NR->>WB: POST {text: relatório, expires: 86400}
-  WB-->>NR: {path: "/Xy12.json"}
-  NR->>NT: POST {topic: lab05-a, message: resumo,<br/>click + ação "Abrir no wastebin"}
+  NR->>WB: POST /upload (multipart: content, expiration=24hour, privacy=unlisted)
+  WB-->>NR: 302 · Location: /bin/upload/ape-wasp-cobra
+  NR->>NT: POST {topic: lab05-a, message: resumo,<br/>click + ação "Abrir no MicroBin"}
   NT-->>CEL: push "Relatório pronto"
-  CEL->>WB: toque no botão → https://iot.adrianoruseler.com/bin/Xy12.json
+  CEL->>WB: toque no botão → https://iot.adrianoruseler.com/bin/upload/ape-wasp-cobra
 ```
 
 Isso já está pronto em dois lugares:
 
-- **Página `/avisos/`**: ao publicar, marque _Texto longo: guardar no wastebin e mandar o link_ (ou
-  publique mais de ~3,5 KB: vai para o wastebin automaticamente).
+- **Página `/avisos/`**: ao publicar, marque _Texto longo: guardar no MicroBin e mandar o link_ (ou
+  publique mais de ~3,5 KB: vai para o MicroBin automaticamente).
 - **Fluxo de exemplo do Node-RED**: `/avisos/exemplo-node-red.json` (importar com _Menu → Import_),
-  com "avisar (ntfy)" e "colar no wastebin → avisar com link". Usa só as variáveis acima, então o
+  com "avisar (ntfy)" e "colar no MicroBin → avisar com link" (o nó _http request_ não segue o
+  redirecionamento, `msg.followRedirects = false`, e lê o id no cabeçalho `Location`). Usa só as variáveis acima, então o
   mesmo fluxo funciona para qualquer grupo e no kit.
 
 :::note[iPhone]
@@ -818,7 +825,7 @@ flowchart TB
   end
   ESPK["ESP32 em casa"] -- "IP do PC :1883" --> MQK
   CELK["📱 celular (mesma rede)"] -- "http://IP-do-PC/ntfy" --> NGK
-  NRK -. "texto longo (WASTEBIN_URL)" .-> WBL["wastebin do laboratório"]
+  NRK -. "texto longo (MICROBIN_URL)" .-> WBL["MicroBin do laboratório"]
   NRK -- "Projects: push/pull HTTPS<br/>iot.adrianoruseler.com/git/" --> GITL["Gitea do laboratório"]
   MQK -. "ponte MQTT lab05-a/#<br/>(--ponte-mqtt, só na rede do lab)" .-> MQL["mosquitto do laboratório"]
 ```
@@ -827,19 +834,19 @@ flowchart TB
 | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | Caminhos `/lab05-a/`, `/fuxa/lab05-a/`, `/ntfy`, `/avisos/`             | ✅                                                                               |
 | Nomes `mosquitto`, `ntfy`, `lab05-a-nodered`                            | ✅ (fluxos e conexões do FUXA valem nos dois)                                    |
-| Variáveis `NTFY_URL`, `NTFY_TOPIC`, `NTFY_TOKEN`, `WASTEBIN_*`          | ✅ (o fluxo de exemplo roda igual; o wastebin é o do laboratório, pela internet) |
+| Variáveis `NTFY_URL`, `NTFY_TOPIC`, `NTFY_TOKEN`, `MICROBIN_*`          | ✅ (o fluxo de exemplo roda igual; o MicroBin é o do laboratório, pela internet) |
 | Usuário e senha                                                         | ✅ a mesma do grupo (lida de `lab05\.segredos.json`)                             |
 | `credentialSecret` do Node-RED                                          | ✅ o mesmo (credenciais dos nós continuam legíveis)                              |
 | Gitea                                                                   | usa o **do laboratório**, pelo endereço público                                  |
-| Professor/notas, wastebin próprio, `lab05-avisos`, MQTT Explorer, túnel | ❌ não fazem parte do kit                                                        |
+| Professor/notas, MicroBin próprio, `lab05-avisos`, MQTT Explorer, túnel | ❌ não fazem parte do kit                                                        |
 
 **Gerar** (no servidor, em `C:\lab`, onde está a pasta `lab05`):
 
 ```powershell
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --grupos 10 --kit todos      # todos os grupos
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --kit a                      # só o grupo A
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --kit a --ponte-mqtt 192.168.0.102   # com ponte MQTT
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --kit a --porta-http 8080    # porta 80 ocupada no PC do aluno
+py .\gen_iot_scada_portal.py --lab lab05 --grupos 10 --kit todos      # todos os grupos
+py .\gen_iot_scada_portal.py --lab lab05 --kit a                      # só o grupo A
+py .\gen_iot_scada_portal.py --lab lab05 --kit a --ponte-mqtt 192.168.0.102   # com ponte MQTT
+py .\gen_iot_scada_portal.py --lab lab05 --kit a --porta-http 8080    # porta 80 ocupada no PC do aluno
 ```
 
 ```text
@@ -877,7 +884,7 @@ tiver Python e `bcrypt`.
 | Editores Node-RED                           | exigem login (usuário do grupo ou `-view`)                                                                                                                      |
 | FUXA                                        | editar exige login do grupo (ou do professor); **as telas podem ser vistas sem login**, a menos que use `--proteger-http`; o `admin`/`123456` padrão não existe |
 | Gitea                                       | exige login; sem cadastro público                                                                                                                               |
-| wastebin                                    | exige o login de algum usuário do lab (nginx)                                                                                                                   |
+| MicroBin                                    | exige o login de algum usuário do lab (nginx); administração só com o login do professor                                                                        |
 | **Dashboards e endpoints HTTP do Node-RED** | **abertos** por padrão. Use `--proteger-http` para pedir a senha do grupo. Nesse caso, um ESP32 que chame endpoints HTTP também precisa enviá-la.               |
 | ntfy                                        | sem login não lê nem publica (`deny-all`); cada grupo só nos próprios tópicos; tokens só no Node-RED do grupo e no `credenciais.txt`                            |
 | Broker MQTT e MQTT Explorer                 | **não** são publicados; só na rede do lab                                                                                                                       |
@@ -932,7 +939,7 @@ tar -czf ".\backup\pastas_$d.tgz" data fuxa settings credenciais.txt .segredos.j
 
 # Repositórios Git, pastes e histórico do ntfy
 docker run --rm -v lab05_gitea_data:/v    -v "${PWD}\backup:/b" alpine tar czf /b/gitea_$d.tgz -C /v .
-docker run --rm -v lab05_wastebin_data:/v -v "${PWD}\backup:/b" alpine tar czf /b/wastebin_$d.tgz -C /v .
+docker run --rm -v lab05_microbin_data:/v -v "${PWD}\backup:/b" alpine tar czf /b/microbin_$d.tgz -C /v .
 docker run --rm -v lab05_ntfy_data:/v     -v "${PWD}\backup:/b" alpine tar czf /b/ntfy_$d.tgz -C /v .
 ```
 
@@ -950,7 +957,7 @@ docker compose start lab05-a-nodered
 # FUXA (regerar recria usuários e configurações)
 docker compose stop lab05-a-fuxa
 Rename-Item fuxa\lab05-a lab05-a.old
-cd C:\lab; py .\gen_iot_scada_ntfy_portal.py --lab lab05 --grupos 10 --ip 192.168.0.102; cd lab05
+cd C:\lab; py .\gen_iot_scada_portal.py --lab lab05 --grupos 10 --ip 192.168.0.102; cd lab05
 docker compose start lab05-a-fuxa
 ```
 
@@ -1139,7 +1146,7 @@ dados do Gitea.
 - A **letra do seu grupo** (ex.: `a`, então seu grupo é `lab05-a`).
 - O **usuário e a senha** do grupo, no **README do repositório privado do grupo no GitHub**
   (`ELT85B-N21-2026-2/lab05-grupo-a`), junto com os endereços e as configurações. **A mesma senha vale
-  para o Node-RED, o FUXA, o Gitea, o wastebin e o ntfy (avisos).**
+  para o Node-RED, o FUXA, o Gitea, o MicroBin e o ntfy (avisos).**
 - Opcionalmente, o **kit do grupo** (`lab05-a.zip`) para rodar tudo no seu computador.
 
 | Onde você está               | Abra                                     |
@@ -1156,12 +1163,12 @@ endereço público passa pela internet e pelo VPS.
 
 :::danger[A senha é do grupo]
 Não copie a senha para fora do repositório do grupo, não a coloque em fluxos públicos nem no
-wastebin.
+MicroBin.
 :::
 
 ### 2. Portal e Node-RED
 
-1. Abra o endereço base. Aparecem cartões para cada grupo, professor, notas, wastebin, Gitea,
+1. Abra o endereço base. Aparecem cartões para cada grupo, professor, notas, MicroBin, Gitea,
    MQTT Explorer, FUXA e avisos (ntfy), e logo abaixo os links do **FUXA** de cada grupo.
 2. Clique no cartão do **seu grupo** e entre com o usuário e a senha do grupo.
 
@@ -1259,20 +1266,32 @@ Se preferir HTTP em vez de MQTT, o FUXA tem o tipo de conexão **WebAPI**: apont
 do Node-RED do grupo, `http://lab05-a-nodered:1880/lab05-a/<endpoint>` (nó **http in**). Para levar a
 tela para outro FUXA, use **Salvar Projeto Como...** (gera um `.json`) e **Abrir Projeto** no outro.
 
-### 4. wastebin: colar e compartilhar código
+### 4. MicroBin: colar código e enviar arquivos
 
 Em **`/bin/`**, entre com o usuário e a senha do grupo, cole o trecho (código, log, fluxo exportado
-do Node-RED), escolha a **validade** e clique para salvar. Copie o link e mande para quem precisa ver:
-qualquer pessoa do lab abre o link com o login do próprio grupo.
+do Node-RED) **ou** anexe um arquivo, escolha a **validade**, a **privacidade** e, se quiser, a
+**linguagem** para destacar a sintaxe, e clique em **Save**. Use **Copy URL** (ou o **QR** para o
+celular) e mande o link para quem precisa ver: qualquer pessoa do lab abre com o login do próprio grupo.
+
+| Privacidade          | Quem vê                                             |
+| -------------------- | --------------------------------------------------- |
+| _public_             | aparece na lista (**List**) para todo o lab         |
+| _unlisted_           | só quem tem o link                                  |
+| _readonly_           | qualquer um com o link lê; editar/apagar pede senha |
+| _private_ / _secret_ | pede senha para abrir (criptografado)               |
 
 Pela linha de comando (PowerShell ou Git Bash):
 
 ```bash
-curl -u lab05-a:SENHA -H "Content-Type: application/json" -d '{"text":"print(42)"}' https://iot.adrianoruseler.com/bin/
+curl -i -u lab05-a:SENHA -F content='print(42)' -F syntax_highlight=py -F expiration=24hour -F privacy=unlisted https://iot.adrianoruseler.com/bin/upload
+# resposta "302 Found" com  location: /bin/upload/ape-wasp-cobra
 ```
 
-:::warning[O wastebin é compartilhado]
-Todo o laboratório pode abrir um link do wastebin. Não cole senhas nem dados pessoais.
+Arquivo: troque `-F content=...` por `-F file=@foto.jpg`.
+
+:::warning[O MicroBin é compartilhado]
+Todo o laboratório pode abrir um link do MicroBin. Não cole senhas nem dados pessoais (ou use a
+privacidade _private_ com senha).
 :::
 
 ### 5. Avisos no celular (ntfy)
@@ -1329,21 +1348,21 @@ return msg;
 ```
 
 Para não copiar à mão: baixe **`/avisos/exemplo-node-red.json`** e importe (_Menu → Import_). O
-exemplo traz também o caminho **wastebin + ntfy** (próxima seção).
+exemplo traz também o caminho **MicroBin + ntfy** (próxima seção).
 
 :::tip[Avise só o que importa]
 Use prioridade 4–5 só para alarmes de verdade e um tópico separado (`lab05-a-debug`) para testes.
 Um nó **rbe/filter** antes do aviso evita mandar a mesma mensagem a cada leitura do sensor.
 :::
 
-#### 5.4 Texto longo: wastebin + ntfy
+#### 5.4 Texto longo: MicroBin + ntfy
 
 Uma notificação aceita até 4 KB. Para logs, relatórios ou um fluxo inteiro, **guarde o texto no
-wastebin e mande só o link no aviso**: no celular aparece o botão **"Abrir no wastebin"**.
+MicroBin e mande só o link no aviso**: no celular aparece o botão **"Abrir no MicroBin"**.
 
-- Na página `/avisos/`: marque _Texto longo: guardar no wastebin e mandar o link_.
-- No Node-RED: o exemplo `exemplo-node-red.json` faz "colar no wastebin → avisar com link" usando
-  `WASTEBIN_URL`, `WASTEBIN_AUTH` e `WASTEBIN_LINK`, já definidas no seu Node-RED.
+- Na página `/avisos/`: marque _Texto longo: guardar no MicroBin e mandar o link_.
+- No Node-RED: o exemplo `exemplo-node-red.json` faz "colar no MicroBin → avisar com link" usando
+  `MICROBIN_URL`, `MICROBIN_AUTH` e `MICROBIN_LINK`, já definidas no seu Node-RED.
 
 ### 6. MQTT
 
@@ -1540,8 +1559,8 @@ Para o ESP32 alcançar o broker do seu PC, permita a porta 1883 quando o Windows
 | Fluxos (alternativa) | Node-RED → menu → _Export_ → _Download_; no outro lado, _Import_                                                                                  |
 | Telas do FUXA        | **Salvar Projeto Como...** (`.json`) e **Abrir Projeto** no outro FUXA                                                                            |
 
-Como os nomes (`mosquitto`, `ntfy`), as variáveis (`NTFY_*`, `WASTEBIN_*`) e os tópicos são iguais,
-nada precisa ser ajustado. No kit, o wastebin usado pelo Node-RED é o do laboratório (precisa de internet).
+Como os nomes (`mosquitto`, `ntfy`), as variáveis (`NTFY_*`, `MICROBIN_*`) e os tópicos são iguais,
+nada precisa ser ajustado. No kit, o MicroBin usado pelo Node-RED é o do laboratório (precisa de internet).
 
 **10.4 Ponte MQTT com o laboratório (se o professor ativou)**
 
@@ -1566,29 +1585,30 @@ e use `http://localhost:8080/`.
 - Dê **Deploy** com frequência e teste com nós **debug**.
 - Faça commit e push no Gitea ao fim de cada aula (e de cada sessão em casa, no kit).
 - Use sempre o prefixo do grupo nos tópicos MQTT, no Node-RED e nas tags do FUXA.
-- Não guarde senhas reais em nós `function` ou `template`, nem no wastebin. Lembre que o dashboard e as
+- Não guarde senhas reais em nós `function` ou `template`, nem no MicroBin. Lembre que o dashboard e as
   telas do FUXA podem estar acessíveis pela internet.
 
 ### 12. Problemas comuns
 
-| Sintoma                                    | Causa provável                             | O que fazer                                                                             |
-| ------------------------------------------ | ------------------------------------------ | --------------------------------------------------------------------------------------- |
-| "O laboratório está desligado no momento"  | servidor do lab desligado ou sem internet  | tente mais tarde; no lab, use o IP; em casa, use o kit                                  |
-| O IP não abre, no laboratório              | rede diferente (ex.: Wi-Fi de visitantes)  | conecte-se à rede do laboratório                                                        |
-| Login recusado                             | usuário ou senha errados                   | o usuário é `lab05-a` (sem `-view`); diferencia maiúsculas                              |
-| Nó MQTT em _disconnected_                  | servidor errado no nó                      | use `mosquitto` e porta `1883`                                                          |
-| FUXA: conexão MQTT vermelha                | endereço sem `mqtt://` ou com IP/localhost | use `mqtt://mosquitto:1883`                                                             |
-| FUXA: não consigo editar                   | não entrou com o login                     | ícone de usuário → login do grupo                                                       |
-| FUXA: tag sem valor                        | tópico diferente do publicado              | confira no MQTT Explorer o tópico exato (`lab05-a/...`)                                 |
-| ESP32 não conecta                          | fora da rede do lab ou IP errado           | o broker do lab só existe na rede do laboratório; em casa, use o IP do seu PC com o kit |
-| MQTT Explorer não abre de casa             | ele é só local                             | use-o no laboratório ou o app no seu PC                                                 |
-| Clone no Node-RED falha                    | URL errada para o lugar                    | no lab: `http://gitea:3000/...`; no kit: `https://iot.adrianoruseler.com/git/...`       |
-| "Repository not found"                     | organização de outro grupo                 | cada grupo só acessa a sua                                                              |
-| wastebin pede senha de novo                | login errado                               | use o usuário e a senha de um grupo                                                     |
-| ntfy: 403 ao publicar                      | tópico de outro grupo ou sem hífen         | use `lab05-a` ou `lab05-a-algo`                                                         |
-| ntfy: app não recebe                       | servidor sem `/ntfy` ou sem login no app   | servidor `https://iot.adrianoruseler.com/ntfy` + usuário em _Configurações → Usuários_  |
-| ntfy: "attachments not allowed" (HTTP 400) | mensagem com mais de 4 KB                  | mande o texto para o wastebin e o link no aviso                                         |
-| Kit: "port is already allocated"           | porta 80 ou 1883 em uso no seu PC          | troque a porta no `docker-compose.yml` ou feche o outro programa                        |
+| Sintoma                                        | Causa provável                             | O que fazer                                                                             |
+| ---------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |
+| "O laboratório está desligado no momento"      | servidor do lab desligado ou sem internet  | tente mais tarde; no lab, use o IP; em casa, use o kit                                  |
+| O IP não abre, no laboratório                  | rede diferente (ex.: Wi-Fi de visitantes)  | conecte-se à rede do laboratório                                                        |
+| Login recusado                                 | usuário ou senha errados                   | o usuário é `lab05-a` (sem `-view`); diferencia maiúsculas                              |
+| Nó MQTT em _disconnected_                      | servidor errado no nó                      | use `mosquitto` e porta `1883`                                                          |
+| FUXA: conexão MQTT vermelha                    | endereço sem `mqtt://` ou com IP/localhost | use `mqtt://mosquitto:1883`                                                             |
+| FUXA: não consigo editar                       | não entrou com o login                     | ícone de usuário → login do grupo                                                       |
+| FUXA: tag sem valor                            | tópico diferente do publicado              | confira no MQTT Explorer o tópico exato (`lab05-a/...`)                                 |
+| ESP32 não conecta                              | fora da rede do lab ou IP errado           | o broker do lab só existe na rede do laboratório; em casa, use o IP do seu PC com o kit |
+| MQTT Explorer não abre de casa                 | ele é só local                             | use-o no laboratório ou o app no seu PC                                                 |
+| Clone no Node-RED falha                        | URL errada para o lugar                    | no lab: `http://gitea:3000/...`; no kit: `https://iot.adrianoruseler.com/git/...`       |
+| "Repository not found"                         | organização de outro grupo                 | cada grupo só acessa a sua                                                              |
+| MicroBin pede senha de novo                    | login errado                               | use o usuário e a senha de um grupo                                                     |
+| MicroBin: "Expiration exceeds maximum allowed" | validade maior que 1 mês                   | escolha até `1month`                                                                    |
+| ntfy: 403 ao publicar                          | tópico de outro grupo ou sem hífen         | use `lab05-a` ou `lab05-a-algo`                                                         |
+| ntfy: app não recebe                           | servidor sem `/ntfy` ou sem login no app   | servidor `https://iot.adrianoruseler.com/ntfy` + usuário em _Configurações → Usuários_  |
+| ntfy: "attachments not allowed" (HTTP 400)     | mensagem com mais de 4 KB                  | mande o texto para o MicroBin e o link no aviso                                         |
+| Kit: "port is already allocated"               | porta 80 ou 1883 em uso no seu PC          | troque a porta no `docker-compose.yml` ou feche o outro programa                        |
 
 ---
 
@@ -1601,7 +1621,7 @@ e use `http://localhost:8080/`.
 # no servidor do laboratório (uma vez)
 py -m pip install bcrypt
 cd C:\lab
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --grupos 10 --ip 192.168.0.102
+py .\gen_iot_scada_portal.py --lab lab05 --grupos 10 --ip 192.168.0.102
 cd .\lab05
 docker compose run --rm --no-deps --build tunel chave
 ssh ubuntu@iot.adrianoruseler.com mkdir -p iot-lab
@@ -1616,7 +1636,7 @@ bash publicar-acessos-github.sh
 
 # kits dos grupos (em C:\lab)
 cd C:\lab
-py .\gen_iot_scada_ntfy_portal.py --lab lab05 --grupos 10 --kit todos
+py .\gen_iot_scada_portal.py --lab lab05 --grupos 10 --kit todos
 ```
 
 </TabItem>
@@ -1630,7 +1650,7 @@ py .\gen_iot_scada_ntfy_portal.py --lab lab05 --grupos 10 --kit todos
 | Node-RED do grupo              | `/lab05-<letra>/`                                                                            |
 | FUXA do grupo                  | `/fuxa/lab05-<letra>/` (editor: `.../editor`)                                                |
 | Gitea                          | `/git/` (mesma senha)                                                                        |
-| wastebin                       | `/bin/` (mesma senha)                                                                        |
+| MicroBin                       | `/bin/` (mesma senha)                                                                        |
 | Avisos (ntfy) no navegador     | `/avisos/` (mesma senha)                                                                     |
 | App ntfy (celular)             | servidor `https://iot.adrianoruseler.com/ntfy`, tópicos `lab05-<letra>`, `lab05-avisos`      |
 | ntfy no Node-RED               | `env.get("NTFY_URL")`, `NTFY_TOPIC`, `NTFY_TOKEN` · exemplo: `/avisos/exemplo-node-red.json` |

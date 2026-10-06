@@ -168,6 +168,7 @@ const config: Config = {
       {
         id: "infra", // Unique ID for this docs instance
         path: "infra-docs", // Path to your infra docs folder
+        exclude: ['**/docker/**'],
         routeBasePath: "infra", // Base URL for these docs (e.g., yoursite.com/infra/...)
         sidebarPath: require.resolve("./sidebarsinfra.ts"), // Separate sidebar for infra docs
         // 👇 Add this line for the last update time
