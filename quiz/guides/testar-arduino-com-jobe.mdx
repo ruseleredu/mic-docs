@@ -12,9 +12,6 @@ keywords:
   - esp32
 ---
 
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-
 # Testar código Arduino no Jobe (sem Moodle)
 
 O Jobe executa código no **compilador do host** (`g++`), não no ESP32. Então há uma fronteira clara:
@@ -262,7 +259,7 @@ O check monta o fonte (mock + `arquivo` do aluno + `harness`) e chama o Jobe; pa
 - Cubra no mock **apenas o que os exercícios usam**. Se um lab usa uma função nova do Arduino, adicione-a ao `Arduino.h`.
 - Diferenças de tamanho de tipo: o host geralmente é 64 bits; se um exercício depende de `int` de 32 bits (como no ESP32), fixe os tipos no teste (`int32_t`, `uint8_t`) para o resultado bater.
 
-Para tudo que precisa de hardware de verdade, o caminho continua sendo **`pio run` + Wokwi**. Veja também a [API REST do Jobe](/ead/guides/jobe-api).
+Para tudo que precisa de hardware de verdade, o caminho continua sendo **`pio run` + Wokwi**. Veja também a [API REST do Jobe](/quiz/guides/jobe-api).
 
 ---
 
