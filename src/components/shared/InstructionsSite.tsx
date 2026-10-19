@@ -287,6 +287,12 @@ export function DevTools() {
                             {`pio project init -b esp32dev -O "framework=arduino" -O "monitor_speed=115200" --ide vscode --sample-code`}
                         </ThemeCodeBlock>
                     </li>
+                    <li>
+                        <p>System Prune:</p>
+                        <ThemeCodeBlock className="language-bash">
+                            {`pio system prune -f`}
+                        </ThemeCodeBlock>
+                    </li>
                 </ul>
             </TabItem>
             <TabItem value="esp32-drivers" label="Drivers">
