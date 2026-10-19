@@ -274,17 +274,22 @@ export function DevTools() {
                         </ThemeCodeBlock>
                     </li>
                     <li>
-                        <p>Instale a plataforma espressif32:</p>
-                        <ThemeCodeBlock className="language-bash">
-                            {`pio platform install espressif32`}
-                        </ThemeCodeBlock>
+                        <p>Torne o comando <code>pio</code> disponível no sistema:</p>
                         <p>Você precisa editar a variável de ambiente do sistema chamada <b>Path</b> e adicionar o caminho <b>%USERPROFILE%\.platformio\penv\Scripts\</b> no início da lista.</p>
-
+                        <ThemeCodeBlock className="language-bash">
+                            {`%USERPROFILE%\\.platformio\\penv\\Scripts\\`}
+                        </ThemeCodeBlock>
                     </li>
                     <li>
-                        <p>Inicie o projeto no PlatformIO:</p>
+                        <p>Inicie o projeto no PlatformIO (Arduino):</p>
                         <ThemeCodeBlock className="language-bash">
                             {`pio project init -b esp32dev -O "framework=arduino" -O "monitor_speed=115200" --ide vscode --sample-code`}
+                        </ThemeCodeBlock>
+                    </li>
+                    <li>
+                        <p>Inicie o projeto no PlatformIO (Espressif):</p>
+                        <ThemeCodeBlock className="language-bash">
+                            {`pio project init -b esp32dev -O "framework=espidf" -O "monitor_speed=115200" --ide vscode --sample-code`}
                         </ThemeCodeBlock>
                     </li>
                     <li>
