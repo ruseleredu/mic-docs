@@ -77,6 +77,12 @@ export default function LabTeamMembers({
                         <ThemeCodeBlock className="language-bash">
                             {`git status && code . --profile "${vscodeProfile}"`}
                         </ThemeCodeBlock>
+                        <p>
+                            <b>4.</b> Abrir o conteúdo do repositório já clonado no perfil {`${vscodeProfile}`} do VS Code :
+                        </p>
+                        <ThemeCodeBlock className="language-bash">
+                            {`cd /d "%USERPROFILE%\${HOMEFOLDER}\${repoName}" && code . --profile "${vscodeProfile}"`}
+                        </ThemeCodeBlock>
                     </TabItem>
                 );
             })}
