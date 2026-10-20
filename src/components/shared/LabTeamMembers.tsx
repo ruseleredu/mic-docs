@@ -75,7 +75,7 @@ export default function LabTeamMembers({
                             <b>3.</b> Abra o conteúdo do repositório no perfil {`${vscodeProfile}`} do VS Code e compile:
                         </p>
                         <ThemeCodeBlock className="language-bash">
-                            {`cd /d "%USERPROFILE%\\${HOMEFOLDER}\\${repoName}" && code . --profile "${vscodeProfile}" && pio run`}
+                            {`cd /d "%USERPROFILE%\\${HOMEFOLDER}\\${repoName}" && code . --profile "${vscodeProfile}"`}
                         </ThemeCodeBlock>
                     </TabItem>
                 );
