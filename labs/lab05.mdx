@@ -543,7 +543,7 @@ Enquanto a simulação roda, assine o tópico. Use o **MQTT Explorer** da stack 
     {
       codeTitle: "Terminal — Assinar via Docker",
       command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com \\
-  -t '{course}/lab06/grupo-{group}/#' -v -C 5 | tee evidencias/t4-mqtt.txt`,
+  -t '{course}/lab05/grupo-{group}/#' -v -C 5 | tee evidencias/t4-mqtt.txt`,
     },
   ]}
 />
@@ -582,7 +582,7 @@ E o que aconteceria se dois grupos esquecessem de trocar o `GRUPO` e ficassem am
 
 ## Parte 5 — Node-RED: receber e visualizar {/* #parte-5 */}
 
-Suba a stack Docker do curso e abra o Node-RED em `http://localhost:1880`. Crie uma aba
+Suba a [Stack Docker](/infra/setup/gen_iot_aluno#lab-05) e abra o Node-RED em [localhost](http://localhost). Crie uma aba
 nova chamada **Lab 05** e monte:
 
 ```mermaid
@@ -692,7 +692,7 @@ sequenceDiagram
     {
       codeTitle: "Terminal — Assinar via Docker",
       command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com \\
-  -t '{course}/lab06/grupo-{group}' -v | tee evidencias/t6-status.txt`,
+  -t '{course}/lab05/grupo-{group}' -v | tee evidencias/t6-status.txt`,
     },
   ]}
 />
