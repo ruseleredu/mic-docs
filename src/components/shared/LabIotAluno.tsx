@@ -94,7 +94,7 @@ type LabIotAlunoProps = {
     /** Sobrescreve/complementa o preset do laboratório */
     opcoes?: GenIotOpcoes;
     /** Grupos exibidos (padrão: GROUPS de constants) */
-    grupos?: string[];
+    grupos?: readonly string[];
 };
 
 const GRUPO_VALIDO = /^[a-z]$/; // o script aceita uma letra a..z, exceto p e n
@@ -148,7 +148,8 @@ export default function LabIotAluno({
             )}
 
             <Tabs>
-                {grupos.map((group) => {
+                {/* P (professor) e N (notas) não são grupos de alunos: sem aba */}
+                {grupos.filter((g) => !["p", "n"].includes(g.toLowerCase())).map((group) => {
                     const letra = group.toLowerCase();
                     const conta = `${lab}-${letra}`;
                     // repositório do grupo (mesmo nome do LabTeamMembers), já clonado na pasta-mãe
