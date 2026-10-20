@@ -74,6 +74,18 @@ py gen_iot_aluno.py --lab lab04 --grupo x
 
 ### LAB 07
 
+import LabIotAluno from "@site/src/components/shared/LabIotAluno";
+
+<LabIotAluno labName="lab07" />
+
+---
+
+{/* preset + ajustes da página */}
+
+<LabIotAluno labName="lab05" opcoes={{ portaHttp: 8080, captura: true }} />
+
+---
+
 ```bash
 py gen_iot_aluno.py --lab lab07 --grupo x --sem-gitea --sem-microbin --sem-fuxa --sem-ntfy
 ```
