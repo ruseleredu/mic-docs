@@ -81,6 +81,18 @@ options:
 py gen_iot_scada_portal.py --lab lab04 --grupos 13 --ip 192.168.0.102 --sem-gitea --sem-microbin --sem-fuxa --sem-ntfy
 ```
 
+import LabIotProfessor from "@site/src/components/shared/LabIotProfessor";
+
+<LabIotProfessor labName="lab04" ip="192.168.0.10" />
+
+---
+
+<LabIotProfessor
+  labName="lab05"
+  grupos={8}
+  opcoes={{ semTunel: true, giteaDb: "sqlite" }}
+/>
+
 ### LAB 05
 
 ```bash
