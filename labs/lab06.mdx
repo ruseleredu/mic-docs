@@ -1,319 +1,928 @@
 ---
-sidebar_position: 9
 title: Laboratório 06
-description: Introdução as aulas de laboratório
+sidebar_position: 9
 ---
 
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-import { LABsApoio } from "@site/src/components/shared/AvisosSite";
-import {
-  DevToolsv2,
-  GitConfig,
-  GitCommit,
-  NewBranch,
-} from "@site/src/components/shared/InstructionsSite";
+## Checklist — SSD1306, MQTT nos dois sentidos e dashboard {/* #checklist */}
 
-# Laboratório 06
+- [ ] `platformio.ini` com Adafruit SSD1306 + GFX; `diagram.json` com o OLED em SDA 21 / SCL 22 (T1)
+- [ ] Tela local desenhada só quando muda (`telaSuja`), fora do callback do temporizador (T2)
+- [ ] Intervalo alterado por MQTT (`.../cmd/intervalo`, 2–60 s) e tela espelhada em texto em `.../oled` (T3)
+- [ ] Dashboard mínimo no Node-RED: réplica do OLED em texto, status e slider do intervalo (T4)
+- [ ] Framebuffer do SSD1306 em `.../oled/fb` desenhado pixel a pixel no dashboard (T5)
+- [ ] Previsões P1–P3 respondidas no `README.md`
+- [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
 
-{/* Info de que este conteúdo é de apoio! */}
+:::info[Pontuação]
+**T1…T5 = 100 pts** (esta aula não tem desafios): T1 10 · T2 20 · T3 25 · T4 20 · T5 25.
+O autograder normaliza para 0–10. Vale o commit `Tn:` mais recente de cada tarefa.
+:::
 
-<LABsApoio />
+<LabSetup />
 
-{/* Tabela com link para atividade, inicio, fim e descrição do LAB! */}
+### Configuração do ambiente de desenvolvimento {/* #setup */}
 
-<div style={{ display: "flex", justifyContent: "center" }}>
-  <LabTable index={6} internal={false} />
-</div>
-
----
-
-## Conteúdo
-
-Uso do STM32CubeMonitor; Visualização de variáveis;
-
-- [ ] Verifique sua conta no [my.st.com](https://www.st.com/content/st_com/en/user-registration.html);
-- [ ] Instale o [STM32CubeMonitor](https://www.st.com/en/development-tools/stm32cubemonitor.html#get-software);
-- [ ] Instale o [Node.js](https://nodejs.org/en/download/current);
-- [ ] Instale o [STM32CubeProg](https://www.st.com/en/development-tools/stm32cubeprog.html#get-software);
-
-## Verifique o seu ambiente de desenvolvimento
-
-{/* List of Dev Tools */}
-
-<DevToolsv2 />
-
-{/* Configure o git */}
-
-<GitConfig />
+<DevTools />
 
 ---
 
-## Crie um novo repositório com base no template do LAB06 {/* #new-repo-from-tpl */}
+Esta aula continua o **Lab 05**: o mesmo nó de telemetria (DHT22 + `Ticker` + MQTT + LWT)
+ganha um **display OLED SSD1306**. O MQTT passa a funcionar **nos dois sentidos**: o ESP32
+publica as leituras e o conteúdo da tela, e o Node-RED manda comandos de volta, como o
+intervalo de leitura. No Node-RED, um **dashboard mínimo** mostra a tela do OLED de duas formas:
+como **texto** e **pixel a pixel**, a partir do framebuffer. Gravar as leituras num banco
+(SQLite) fica para o **Lab 08**.
 
-Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub:
+```mermaid
+flowchart LR
+  DHT[DHT22] -->|GPIO15| ESP[ESP32]
+  ESP -->|I2C 21/22| OLED[SSD1306 128x64]
+  ESP -->|dht · oled · oled/fb · status| BRK[(broker.hivemq.com:1883)]
+  BRK --> NR[Node-RED]
+  NR --> DASH[Dashboard: réplica do OLED + intervalo]
+  DASH -->|cmd/intervalo| BRK
+  BRK -->|cmd/intervalo| ESP
+```
 
-{/* Gera instruções para criar o repositório no GitHub por grupo com base no template do laboratório. */}
+## Objetivos
 
-<LabFromTemplate labNumber="LAB06" opts="-c" />
+- Ligar um **display SSD1306 (I2C)** ao ESP32 e entender o **framebuffer**: o desenho acontece
+  na RAM, e só `display()` envia os 1024 bytes pelo barramento.
+- Atualizar a tela **só quando algo muda** (flag `telaSuja`), sem bloquear o `loop()`.
+- Usar MQTT **nos dois sentidos**: assinar um tópico de comando e mudar o **intervalo** do
+  temporizador remotamente.
+- Visualizar o **SSD1306 no dashboard** do Node-RED: réplica em texto (T4) e réplica fiel,
+  pixel a pixel, a partir do framebuffer (T5), com o mínimo de nós.
 
-{/* Git Commit */}
+## Material
 
-<GitCommit />
+- VS Code + PlatformIO + extensão **Wokwi** (ESP32 **simulado**, sem placa física).
+- Stack Docker do curso: nesta aula usamos o **Node-RED** com o **Dashboard 2.0**
+  (`@flowfuse/node-red-dashboard`), já instalado na imagem.
+- Bibliotecas novas (baixadas pelo PlatformIO): `adafruit/Adafruit SSD1306` e
+  `adafruit/Adafruit GFX Library`. As do Lab 05 continuam.
 
-## Instruções do LAB
+:::info[Por que Wokwi (e não placa física)?]
+O Wokwi simula o **SSD1306 por I2C** além do DHT22 e do Wi-Fi, então a aula roda inteira
+nele. Numa placa física o firmware é o mesmo. Confira só o **endereço I2C** do seu módulo:
+a maioria é `0x3C`, alguns são `0x3D`.
+:::
 
-Esta atividade de laboratório tem como objetivo utilizar o STM32CubeMonitor. Cada item equivale a 10% da nota.
+## Clonar o repositório do grupo {/* #clonar */}
 
-- [ ] Crie um repositório (LAB06) via template (https://github.com/ELT73A-LAB-TPL/LAB06) na organização e clone;
-- [ ] Importe e compile o código da pasta TIM2EXTI0ADC1PWM
-- [ ] Verifique a configuração dos periféricos;
-- [ ] Verifique o STM32CubeMonitor;
-- [ ] Configure o executável e probes no STM32CubeMonitor;
-- [ ] Deploy e Dashboard no STM32CubeMonitor;
-- [ ] Adicione Write Panel para a variável BLUELED;
-- [ ] Adicione Single value para o LED;
-- [ ] Commit e push do Node-RED export flow;
-- [ ] Envie o link do repositório no GitHub (hyperlink);
+<LabTeamMembers labName="lab06" />
 
-## Avaliação
+## Envie o link do repositório do seu grupo no Moodle: {/* #moodle-link */}
 
-- [ ] Uso do template e código - 30%
-- [ ] Configuração do STM32CubeMonitor - 20%
-- [ ] Write Panel para a variável BLUELED - 10%
-- [ ] Single value para o LED - 10%
-- [ ] Commit e push do Node-RED export flow - 10%
-- [ ] Link do repositório no GitHub (hyperlink) - 10%
+<LabSubmit labName="lab06" />
 
-## Diagrama de pinos do STM32F4x1
+<details>
+<summary><strong>Mapa de tarefas</strong> — 5 tarefas · 100 pts</summary>
+
+- [T1 — Circuito e dependencias do SSD1306](#t1) · 10 pts
+- [T2 — Tela local no OLED](#t2) · 20 pts
+- [T3 — MQTT nos dois sentidos](#t3) · 25 pts
+- [T4 — Node-RED: replica do OLED e comando do intervalo](#t4) · 20 pts
+- [T5 — Framebuffer pixel a pixel no dashboard](#t5) · 25 pts
+
+</details>
+
+O repositório do grupo nasce do `lab06-template`, que já traz o **firmware final do Lab 05**
+(com LWT) em `src/main.cpp`:
+
+<FileTree
+  details={true}
+  defaultOpen={false}
+  title="Estrutura de Arquivos do Projeto"
+  root="lab06-grupo-X"
+  files={[
+    "platformio.ini u",
+    "src/main.cpp u",
+    "diagram.json u",
+    "wokwi.toml r",
+    ".gitignore r",
+    ".vscode/extensions.json r",
+    "nodered/flows-lab06.json c",
+    "evidencias/t2-serial.txt c",
+    "evidencias/t2-oled.png c",
+    "evidencias/t3-mqtt.txt c",
+    "evidencias/t4-dashboard.png c",
+    "evidencias/t5-fb.txt c",
+    "evidencias/t5-oled.png c",
+    "README.md u",
+  ]}
+/>
+
+:::info[Tópicos do Lab 06]
+Tudo fica sob `elt73a/lab06/grupo-X/`. Troque o `X` (e o `#define GRUPO`) pela letra do seu grupo.
+
+| Tópico              | Sentido        | Payload                                                                       |
+| ------------------- | -------------- | ----------------------------------------------------------------------------- |
+| `.../dht`           | ESP32 → broker | `{"grupo":"a","seq":7,"t":24.5,"h":55.0,"uptime_ms":35210,"intervalo_s":5.0}` |
+| `.../status`        | ESP32 → broker | `online` / `offline` (retido, LWT)                                            |
+| `.../oled`          | ESP32 → broker | `{"linhas":["LAB06 grupo a","T: 24.5 C", ...]}` (T3)                          |
+| `.../oled/fb`       | ESP32 → broker | 1024 bytes do framebuffer em **base64** (T5)                                  |
+| `.../cmd/intervalo` | broker → ESP32 | `10` (segundos, 2–60)                                                         |
+
+:::
 
 ---
 
-![STM32F4x1 microcontroller pinout diagram;](/img/MiniSTM32F4x1/STM32F4x1_PinoutDiagram_RichardBalint.png)
+## Parte 1 — SSD1306 no circuito {/* #parte-1 */}
 
-O debugger [ST-LINK/V2](/docs/st-link) possue um conector IDC de 10 pinos. A pinagem é descrita na figura a seguir.
+### 1.1 Circuito no Wokwi
 
-![ST-LINK/V2 Clone](/img/ST-LINK_V2_Clone_Header.png)
+O SSD1306 do Wokwi (`board-ssd1306`) é um módulo **I2C** de 4 pinos: `GND`, `VCC`, `SCL` e
+`SDA`. No ESP32, o I2C padrão usa **GPIO21 = SDA** e **GPIO22 = SCL**. Acrescente o display
+ao `diagram.json` do Lab 05:
 
----
+<FileTree root="lab06-grupo-X" files={["diagram.json u"]} />
 
-## Implemente o código para piscar o LED via interrupção do User KEY e leitura do ADC com atualização do PWM
-
-### Uso do flag BLUELED
-
-Implemente a lógica para acionar o LED azul via flag BLUELED:
-
-```c title="Src/main.c"
-/* USER CODE BEGIN Includes */
-// highlight-next-line
-#include <stdbool.h>
-/* USER CODE END Includes */
-```
-
-```c title="Src/main.c"
-/* USER CODE BEGIN PV */
-// highlight-next-line
-bool BLUELED = 0;
-/* USER CODE END PV */
-```
-
-```c title="Scr/main.c"
-/* Infinite loop */
-/* USER CODE BEGIN WHILE */
-while (1)
+```json title="diagram.json"
 {
-// highlight-start
-  // Verify BLUELED Flag
-    if (BLUELED)
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET); // LED ON
-    else
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET); // LED OFF
-    // highlight-end
-  /* USER CODE END WHILE */
-
-  /* USER CODE BEGIN 3 */
-
-}
-/* USER CODE END 3 */
-```
-
-```c title="Src/stm32f4xx_it.c"
-/* USER CODE BEGIN PV */
-// highlight-next-line
-extern bool BLUELED;
-/* USER CODE END PV */
-```
-
-```c title="Src/stm32f4xx_it.c"
-void EXTI0_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
-  // Toggle BLUELED FLAG
-  // highlight-next-line
-  BLUELED = !BLUELED;
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(User_KEY_EXTI0_Pin);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-  /* USER CODE END EXTI0_IRQn 1 */
-}
-```
-
-### Timer 2 com interrupção e saída PWM no canal 1
-
-Inicialize o Timer 2 com suporte a rotina de interrupção e saída PWM no canal 1:
-
-```c title="Src/main.c"
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_ADC1_Init();
-  MX_TIM2_Init();
-  /* USER CODE BEGIN 2 */
-  // highlight-next-line
-  HAL_TIM_PWM_Start_IT(&htim2,TIM_CHANNEL_1);
-  /* USER CODE END 2 */
-```
-
-### ADC1 na interrupção do Timer 2
-
-Inicie o ADC1 na interrupção do Timer 2:
-
-```c title="Src/stm32f4xx_it.c"
-void TIM2_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM2_IRQn 0 */
-
-  /* USER CODE END TIM2_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim2);
-  /* USER CODE BEGIN TIM2_IRQn 1 */
-  // highlight-next-line
-  HAL_ADC_Start_IT(&hadc1);
-  /* USER CODE END TIM2_IRQn 1 */
-}
-```
-
-### Leitura do AN1 e atualização do valor de comparação do PWM
-
-Na interrupção do ADC1, faça a leitura do AN1 e atualize o valor de comparação do PWM:
-
-```c title="Src/main.c"
-/* USER CODE BEGIN PV */
-// highlight-start
-uint16_t ADC1IN1 = 0; // Variable to store ADC value
-float voltage1 = 0.0f; // Variable to store calculated voltage
-// highlight-end
-/* USER CODE END PV */
-```
-
-```c title="Src/stm32f4xx_it.c"
-/* USER CODE BEGIN PV */
-extern bool BLUELED; // Flag to control the blue LED
-// highlight-start
-extern uint16_t ADC1IN1; // Variable to store ADC value
-extern float voltage1; // Variable to store calculated voltage
-// highlight-end
-/* USER CODE END PV */
-```
-
-```c title="Src/stm32f4xx_it.c"
-void ADC_IRQHandler(void)
-{
-  /* USER CODE BEGIN ADC_IRQn 0 */
-
-  /* USER CODE END ADC_IRQn 0 */
-  HAL_ADC_IRQHandler(&hadc1);
-  /* USER CODE BEGIN ADC_IRQn 1 */
-  // highlight-start
-  ADC1IN1 = HAL_ADC_GetValue(&hadc1); // Read ADC value
-  TIM2->CCR1 = ADC1IN1; // Update PWM duty cycle
-  voltage1 = (ADC1IN1*3.3)/4095; // Convert ADC value to voltage
-  // highlight-end
-  /* USER CODE END ADC_IRQn 1 */
-}
-```
-
-## VS Code Terminal Configuration
-
-Configure `Git Bash` como terminal integrado do Visual Studio Code para evitar problemas de formatação de texto e comandos:
-
-```json title=".vscode/settings.json"
-"terminal.integrated.defaultProfile.windows": "Git Bash",
-```
-
-## Crie um [gh alias](/docs/github-cli#aliases) para deploy-debug
-
-```bash
-gh alias set deploy-debug 'tag="$1"; cp ./build/Debug/*.elf ./firmware-debug.elf && gh release create "$tag" ./firmware-debug.elf --generate-notes && rm ./firmware-debug.elf' --shell
-```
-
-Como funciona:
-
-- Considera a etiqueta de lançamento como $1.
-- Copia o ELF de ./build/Debug/\*.elf → ./firmware-debug.elf.
-- Executa gh release create com o arquivo renomeado.
-- Limpa removendo o arquivo renomeado temporário.
-
-Uso:
-
-```bash
-gh deploy-debug v1.0.0
-```
-
-### Rápida verificação do upload
-
-Assim que o comando terminar, você poderá verificar o upload diretamente em seu terminal usando:
-
-```bash
-gh release view v1.0.0 --web
-```
-
-## [STM32CubeMonitor](https://www.st.com/en/development-tools/stm32cubemonitor.html#section-get-software-table) - Monitoramento e Depuração em Tempo Real para STM32
-
-O STM32CubeMonitor é uma ferramenta de monitoramento e depuração em tempo real para microcontroladores STM32. Ele permite que os desenvolvedores visualizem variáveis, monitorem o desempenho do sistema e depurem aplicativos de forma eficiente. Com uma interface intuitiva, o STM32CubeMonitor facilita a análise de dados e a identificação de problemas em projetos baseados em STM32, tornando-o uma escolha essencial para engenheiros e entusiastas que trabalham com esses microcontroladores.
-
-- https://jsonformatter.org/
-
-```json
-{
-  "payload": {
-    "variablelist": [
-      {
-        "address": "0x200000bc",
-        "type": 1,
-        "value": "0"
-      }
-    ],
-    "accesspoint": 0
-  },
-  "topic": "write"
-}
-```
-
-```json
-{
-  "payload": {
-    "variablelist": [
-      {
-        "address": "0x200000bc",
-        "type": 1,
-        "value": "1"
-      }
-    ],
-    "accesspoint": 0
-  },
-  "topic": "write"
-}
-```
-
-```json
-{
-  "variablelist": [
+  "version": 1,
+  "author": "elt73a - Lab 06",
+  "editor": "wokwi",
+  "parts": [
     {
-      "address": "0x200000bc",
-      "type": 1,
-      "value": "{{payload}}"
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -76.5,
+      "left": 157.8,
+      "attrs": { "temperature": "24.5", "humidity": "55" }
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": 108.74,
+      "left": 172.23,
+      "attrs": { "i2cAddress": "0x3c" }
     }
   ],
-  "accesspoint": 0
+  "connections": [
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []],
+    ["dht1:VCC", "esp:3V3", "red", []],
+    ["dht1:GND", "esp:GND.2", "black", []],
+    ["dht1:SDA", "esp:15", "green", []],
+    ["oled1:VCC", "esp:3V3", "red", []],
+    ["oled1:GND", "esp:GND.2", "black", []],
+    ["oled1:SDA", "esp:21", "blue", []],
+    ["oled1:SCL", "esp:22", "purple", []]
+  ],
+  "dependencies": {}
 }
 ```
+
+### 1.2 Bibliotecas
+
+<FileTree root="lab06-grupo-X" files={["platformio.ini u"]} />
+
+```ini title="platformio.ini"
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+monitor_speed = 115200
+#highlight-start
+lib_deps =
+    adafruit/DHT sensor library@^1.4.6
+    adafruit/Adafruit Unified Sensor@^1.1.14
+    knolleary/PubSubClient@^2.8
+    adafruit/Adafruit SSD1306@^2.5.13
+    adafruit/Adafruit GFX Library@^1.11.11
+#highlight-end
+```
+
+A **GFX** é a biblioteca de desenho (texto, linhas, retângulos, círculos). A **SSD1306** guarda
+o framebuffer e conversa com o controlador do display pelo I2C.
+
+<CommitPoint
+  id="t1"
+  task="Circuito e dependencias do SSD1306"
+  pontos={10}
+  files="platformio.ini diagram.json"
+/>
+
+---
+
+## Parte 2 — Tela local {/* #parte-2 */}
+
+### 2.1 Como o SSD1306 desenha
+
+O display tem 128 × 64 pixels monocromáticos: **1 bit por pixel**, 1024 bytes no total. A
+biblioteca guarda essa imagem num **framebuffer na RAM** do ESP32:
+
+- `clearDisplay()`, `print()`, `drawRect()`, `fillRect()`… **só alteram a RAM**. São rápidas
+  e nada aparece ainda.
+- `display()` envia os **1024 bytes pelo I2C** para o controlador do display. Isso leva alguns
+  milissegundos e só deve ser feito quando a imagem mudou.
+
+Por isso usamos o mesmo padrão do temporizador do Lab 05: quem detecta a mudança só marca uma
+**flag**, e o `loop()` redesenha.
+
+```mermaid
+sequenceDiagram
+  participant T as Ticker
+  participant L as loop()
+  participant R as framebuffer (RAM)
+  participant D as SSD1306 (I2C)
+  T->>L: leituraPendente = true
+  L->>L: lê DHT22, publica, telaSuja = true
+  L->>R: clearDisplay / print / fillRect ...
+  L->>D: display() (1024 bytes)
+  L->>L: telaSuja = false
+```
+
+### 2.2 Código
+
+Acrescente ao firmware do Lab 05:
+
+<FileTree root="lab06-grupo-X" files={["src/main.cpp u"]} />
+
+```cpp title="src/main.cpp (trechos novos da T2)"
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define OLED_SDA  21
+#define OLED_SCL  22
+#define OLED_ADDR 0x3C
+#define OLED_W    128
+#define OLED_H    64
+
+Adafruit_SSD1306 oled(OLED_W, OLED_H, &Wire, -1);   // -1 = sem pino de reset
+
+float ultimaT = NAN, ultimaH = NAN;   // última leitura válida (a tela mostra estes)
+bool telaSuja = true;                 // redesenhar na próxima volta do loop()
+
+// Quadradinho com letra: cheio = conectado, vazado = desconectado
+void indicador(int x, const char *letra, bool ok) {
+  if (ok) {
+    oled.fillRect(x, 0, 13, 9, SSD1306_WHITE);
+    oled.setTextColor(SSD1306_BLACK);
+  } else {
+    oled.drawRect(x, 0, 13, 9, SSD1306_WHITE);
+    oled.setTextColor(SSD1306_WHITE);
+  }
+  oled.setCursor(x + 4, 1);
+  oled.print(letra);
+  oled.setTextColor(SSD1306_WHITE);
+}
+
+void desenharTela() {
+  oled.clearDisplay();
+  oled.setTextColor(SSD1306_WHITE);
+
+  oled.setTextSize(1);                               // cabeçalho
+  oled.setCursor(0, 1);
+  oled.print("LAB06 grupo " GRUPO);
+  indicador(98, "W", WiFi.status() == WL_CONNECTED);
+  indicador(114, "M", mqtt.connected());
+  oled.drawFastHLine(0, 11, OLED_W, SSD1306_WHITE);
+
+  oled.setTextSize(2);                               // temperatura (fonte 12x16)
+  oled.setCursor(0, 16);
+  if (isnan(ultimaT)) oled.print("--.-");
+  else oled.printf("%4.1f", ultimaT);
+  oled.drawCircle(53, 18, 2, SSD1306_WHITE);         // símbolo de grau
+  oled.setCursor(58, 16);
+  oled.print("C");
+
+  oled.setCursor(0, 36);                             // umidade + barra
+  if (isnan(ultimaH)) oled.print("--.-%");
+  else oled.printf("%4.1f%%", ultimaH);
+  oled.drawRect(72, 37, 56, 12, SSD1306_WHITE);
+  if (!isnan(ultimaH)) oled.fillRect(74, 39, (int)(52 * ultimaH / 100.0), 8, SSD1306_WHITE);
+
+  oled.setTextSize(1);                               // rodapé
+  oled.setCursor(0, 56);
+  oled.printf("seq %lu   int %.0f s", (unsigned long)seq, INTERVALO_S);
+  oled.display();                                    // <- só aqui vai para o display
+}
+
+// em setup(), depois de dht.begin():
+//   Wire.begin(OLED_SDA, OLED_SCL);
+//   if (!oled.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR))
+//     Serial.println("[OLED] SSD1306 nao encontrado - confira SDA/SCL/endereco");
+//   desenharTela();
+//
+// em lerEPublicar(), depois de validar t e h:
+//   ultimaT = t;  ultimaH = h;  telaSuja = true;
+//
+// no fim de loop():
+//   if (telaSuja) { telaSuja = false; desenharTela(); }
+//
+// em conectarMQTT(), logo depois do connect bem-sucedido:
+//   telaSuja = true;      // o indicador "M" muda
+```
+
+**Tela esperada** depois da primeira leitura:
+
+```text title="SSD1306 (128 x 64)"
+LAB06 grupo a          [W] [M]
+-------------------------------
+24.5 °C
+55.0%    [██████████        ]
+seq 1   int 5 s
+```
+
+As linhas de temperatura e umidade usam a fonte em tamanho 2 (12 × 16 px). `[W]` e `[M]`
+aparecem cheios quando Wi-Fi e MQTT estão conectados.
+
+:::tip[Preveja antes de rodar]
+
+- **P1:** por que `desenharTela()` não pode ser chamada **dentro** de `aoEstourarTemporizador()`?
+  E se ela fosse chamada **em toda volta** do `loop()`, sem a flag `telaSuja`? Estime o tempo de
+  um `display()`: 1024 bytes a 400 kHz, com ~9 bits por byte no I2C. Pense no que acontece com
+  o `mqtt.loop()`.
+
+Anote as previsões e o que observou no `README.md`.
+:::
+
+**Evidências:** salve o monitor serial com pelo menos 3 leituras em `evidencias/t2-serial.txt`
+e uma captura do Wokwi com o display em `evidencias/t2-oled.png`.
+
+<FileTree
+  root="lab06-grupo-X"
+  files={["evidencias/t2-serial.txt c", "evidencias/t2-oled.png c"]}
+/>
+
+<CommitPoint
+  id="t2"
+  task="Tela local no OLED"
+  pontos={20}
+  files="src/main.cpp evidencias/t2-serial.txt evidencias/t2-oled.png"
+/>
+
+---
+
+## Parte 3 — MQTT nos dois sentidos {/* #parte-3 */}
+
+Até aqui o ESP32 só **publicava**. Agora ele também **assina** um tópico de comando:
+o Node-RED (ou qualquer cliente) muda o **intervalo de leitura** sem regravar o firmware.
+E a cada redesenho o ESP32 publica o **conteúdo da tela** em texto, para o dashboard copiar.
+
+```mermaid
+sequenceDiagram
+  participant N as Node-RED / mosquitto_pub
+  participant B as Broker
+  participant E as ESP32
+  E->>B: SUBSCRIBE .../cmd/intervalo
+  N->>B: PUBLISH .../cmd/intervalo = 10
+  B->>E: 10
+  E->>E: valida 2..60, detach() + attach(10 s), telaSuja = true
+  E->>B: PUBLISH .../oled (tela em texto)
+  E->>B: PUBLISH .../dht com "intervalo_s":10.0
+```
+
+### 3.1 O que muda
+
+- `INTERVALO_S` deixa de ser `const`: vira `float intervaloS`, que o comando altera.
+- **Callback** `aoReceberMensagem()`: o PubSubClient a chama **dentro de `mqtt.loop()`**,
+  ou seja, no contexto do `loop()`. Ali pode usar `Serial` e o `Ticker` à vontade, ao
+  contrário do callback do temporizador.
+- O payload **não** termina com `'\0'`: copie para um buffer e termine a string antes do `atof()`.
+- **Valide** o comando. O broker é público: qualquer pessoa pode publicar `0` ou `abc` no seu tópico.
+- **Assine dentro de `conectarMQTT()`**: a sessão é limpa, então depois de uma reconexão o
+  broker não lembra das assinaturas antigas.
+- O JSON das leituras ganha `intervalo_s`, que **confirma** ao Node-RED o valor em uso.
+
+### 3.2 Código completo até aqui
+
+<FileTree root="lab06-grupo-X" files={["src/main.cpp u"]} />
+
+```cpp title="src/main.cpp (T3)"
+// elt73a - Lab 06 (T3): DHT22 + SSD1306 + MQTT nos dois sentidos
+#include <Arduino.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <Ticker.h>
+#include <DHT.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define GRUPO     "a"                    // troque pela letra do seu grupo
+#define DHT_PIN   15
+#define DHT_TIPO  DHT22
+#define OLED_SDA  21
+#define OLED_SCL  22
+#define OLED_ADDR 0x3C
+#define OLED_W    128
+#define OLED_H    64
+
+const char *WIFI_SSID  = "Wokwi-GUEST";
+const char *WIFI_SENHA = "";
+const char *MQTT_HOST  = "broker.hivemq.com";
+const uint16_t MQTT_PORTA = 1883;
+
+#define BASE "elt73a/lab06/grupo-" GRUPO
+const char *TOPICO_DADOS     = BASE "/dht";
+const char *TOPICO_STATUS    = BASE "/status";
+const char *TOPICO_OLED      = BASE "/oled";            // tela em texto (JSON)
+const char *TOPICO_INTERVALO = BASE "/cmd/intervalo";   // Node-RED -> ESP32
+
+DHT dht(DHT_PIN, DHT_TIPO);
+Adafruit_SSD1306 oled(OLED_W, OLED_H, &Wire, -1);
+WiFiClient wifiClient;
+PubSubClient mqtt(wifiClient);
+Ticker temporizador;
+
+volatile bool leituraPendente = false;
+float intervaloS = 5.0;                  // alterado por MQTT (2..60 s)
+uint32_t seq = 0;
+float ultimaT = NAN, ultimaH = NAN;
+bool telaSuja = true;                    // redesenhar na próxima volta do loop()
+char clientId[32];
+
+void aoEstourarTemporizador() {
+  leituraPendente = true;
+}
+
+// ---------------------------------------------------------------------- OLED
+void indicador(int x, const char *letra, bool ok) {
+  if (ok) {
+    oled.fillRect(x, 0, 13, 9, SSD1306_WHITE);
+    oled.setTextColor(SSD1306_BLACK);
+  } else {
+    oled.drawRect(x, 0, 13, 9, SSD1306_WHITE);
+    oled.setTextColor(SSD1306_WHITE);
+  }
+  oled.setCursor(x + 4, 1);
+  oled.print(letra);
+  oled.setTextColor(SSD1306_WHITE);
+}
+
+void desenharTela() {
+  oled.clearDisplay();
+  oled.setTextColor(SSD1306_WHITE);
+
+  oled.setTextSize(1);                               // cabeçalho
+  oled.setCursor(0, 1);
+  oled.print("LAB06 grupo " GRUPO);
+  indicador(98, "W", WiFi.status() == WL_CONNECTED);
+  indicador(114, "M", mqtt.connected());
+  oled.drawFastHLine(0, 11, OLED_W, SSD1306_WHITE);
+
+  oled.setTextSize(2);                               // temperatura
+  oled.setCursor(0, 16);
+  if (isnan(ultimaT)) oled.print("--.-");
+  else oled.printf("%4.1f", ultimaT);
+  oled.drawCircle(53, 18, 2, SSD1306_WHITE);         // símbolo de grau
+  oled.setCursor(58, 16);
+  oled.print("C");
+
+  oled.setCursor(0, 36);                             // umidade + barra
+  if (isnan(ultimaH)) oled.print("--.-%");
+  else oled.printf("%4.1f%%", ultimaH);
+  oled.drawRect(72, 37, 56, 12, SSD1306_WHITE);
+  if (!isnan(ultimaH)) oled.fillRect(74, 39, (int)(52 * ultimaH / 100.0), 8, SSD1306_WHITE);
+
+  oled.setTextSize(1);                               // rodapé
+  oled.setCursor(0, 56);
+  oled.printf("seq %lu   int %.0f s", (unsigned long)seq, intervaloS);
+  oled.display();
+}
+
+// ------------------------------------------------------ espelho da tela (T3)
+void publicarTelaTexto() {
+  char t[8] = "--.-", h[8] = "--.-";            // antes da 1ª leitura: sem número
+  if (!isnan(ultimaT)) snprintf(t, sizeof(t), "%.1f", ultimaT);
+  if (!isnan(ultimaH)) snprintf(h, sizeof(h), "%.1f", ultimaH);
+  char payload[200];
+  snprintf(payload, sizeof(payload),
+           "{\"linhas\":[\"LAB06 grupo %s\",\"T: %s C\",\"UR: %s %%\","
+           "\"seq %lu | %.0f s\",\"WiFi %s | MQTT %s\"]}",
+           GRUPO, t, h, (unsigned long)seq, intervaloS,
+           WiFi.status() == WL_CONNECTED ? "ok" : "--", mqtt.connected() ? "ok" : "--");
+  mqtt.publish(TOPICO_OLED, payload);
+}
+
+// ---------------------------------------------------------------- comandos
+void aoReceberMensagem(char *topico, byte *payload, unsigned int tam) {
+  char txt[16];
+  size_t n = tam < sizeof(txt) - 1 ? tam : sizeof(txt) - 1;
+  memcpy(txt, payload, n);
+  txt[n] = '\0';
+  Serial.printf("[CMD] %s <- '%s'\r\n", topico, txt);
+
+  if (strcmp(topico, TOPICO_INTERVALO) == 0) {
+    float v = atof(txt);
+    if (v < 2.0 || v > 60.0) {
+      Serial.println("[CMD] intervalo fora de 2..60 s - ignorado");
+      return;
+    }
+    intervaloS = v;
+    temporizador.detach();
+    temporizador.attach(intervaloS, aoEstourarTemporizador);
+    Serial.printf("[CMD] novo intervalo: %.1f s\r\n", intervaloS);
+    telaSuja = true;
+  }
+}
+
+// ------------------------------------------------------------ Wi-Fi e MQTT
+void conectarWiFi() {
+  Serial.printf("[WiFi] conectando a %s", WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_SENHA, 6);  // canal 6 acelera no Wokwi
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(250);
+    Serial.print('.');
+  }
+  Serial.printf("\r\n[WiFi] conectado, IP %s\r\n", WiFi.localIP().toString().c_str());
+}
+
+void conectarMQTT() {
+  while (!mqtt.connected()) {
+    Serial.printf("[MQTT] conectando a %s como %s ... ", MQTT_HOST, clientId);
+    if (mqtt.connect(clientId, TOPICO_STATUS, 1, true, "offline")) {
+      Serial.println("ok");
+      mqtt.publish(TOPICO_STATUS, "online", true);
+      mqtt.subscribe(TOPICO_INTERVALO);  // (re)assina a cada conexão
+      telaSuja = true;
+    } else {
+      Serial.printf("falhou (rc=%d), nova tentativa em 2 s\r\n", mqtt.state());
+      delay(2000);
+    }
+  }
+}
+
+void lerEPublicar() {
+  float t = dht.readTemperature();
+  float h = dht.readHumidity();
+  if (isnan(t) || isnan(h)) {
+    Serial.println("[DHT] falha na leitura (NaN) - descartada");
+    return;
+  }
+  seq++;
+  ultimaT = t;
+  ultimaH = h;
+  char payload[160];
+  snprintf(payload, sizeof(payload),
+           "{\"grupo\":\"%s\",\"seq\":%lu,\"t\":%.1f,\"h\":%.1f,\"uptime_ms\":%lu,\"intervalo_s\":%.1f}",
+           GRUPO, (unsigned long)seq, t, h, (unsigned long)millis(), intervaloS);
+  bool ok = mqtt.publish(TOPICO_DADOS, payload);
+  Serial.printf("[PUB] %s %s -> %s\r\n", ok ? "ok" : "ERRO", TOPICO_DADOS, payload);
+  telaSuja = true;
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+  Serial.println("\r\n=== Lab 06 - DHT22 + SSD1306 + MQTT ===");
+  dht.begin();
+
+  Wire.begin(OLED_SDA, OLED_SCL);
+  if (!oled.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+    Serial.println("[OLED] SSD1306 nao encontrado - confira SDA/SCL/endereco");
+  }
+  desenharTela();
+
+  uint64_t mac = ESP.getEfuseMac();
+  snprintf(clientId, sizeof(clientId), "lab06-%s-%04X", GRUPO, (uint16_t)(mac >> 32));
+
+  conectarWiFi();
+  mqtt.setServer(MQTT_HOST, MQTT_PORTA);
+  mqtt.setCallback(aoReceberMensagem);
+  conectarMQTT();
+
+  temporizador.attach(intervaloS, aoEstourarTemporizador);
+}
+
+void loop() {
+  if (WiFi.status() != WL_CONNECTED) conectarWiFi();
+  if (!mqtt.connected()) conectarMQTT();
+  mqtt.loop();
+
+  if (leituraPendente) {
+    leituraPendente = false;
+    lerEPublicar();
+  }
+
+  if (telaSuja) {
+    telaSuja = false;
+    desenharTela();
+    publicarTelaTexto();
+  }
+}
+```
+
+### 3.3 Testando pelo terminal
+
+Num terminal, assine **todos** os tópicos do grupo. Num segundo terminal, mande o comando:
+
+<GroupCommands
+  commands={[
+    {
+      codeTitle: "Terminal 1 — Assinar via Docker",
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com \\
+-t '{course}/lab06/grupo-{group}/#' -v | tee evidencias/t3-mqtt.txt`,
+    },
+    {
+      codeTitle: "Terminal 2 — comandar via Docker",
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com \\
+  -t '{course}/lab06/grupo-{group}/cmd/intervalo' -m 10`,
+    },
+    {
+      codeTitle: "Terminal 2 — comandar via Docker",
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com \\
+  -t '{course}/lab06/grupo-{group}/cmd/intervalo' -m 1      # fora da faixa: deve ser ignorado`,
+    },
+  ]}
+/>
+
+**Saída esperada** (trecho; encerre o Terminal 1 com Ctrl+C depois de umas 8 linhas):
+
+<FileTree root="lab06-grupo-X" files={["evidencias/t3-mqtt.txt c"]} />
+
+<GroupCommands
+  language="text"
+  commands={[
+    {
+      title: "Exemplo de Evidência de Saída",
+      codeTitle: "evidencias/t3-mqtt.txt",
+      command: `{course}/lab06/grupo-{group}/status online
+{course}/lab06/grupo-{group}/dht {"grupo":"{group}","seq":3,"t":24.5,"h":55.0,"uptime_ms":16288,"intervalo_s":5.0}
+{course}/lab06/grupo-{group}/oled {"linhas":["LAB06 grupo {group}","T: 24.5 C","UR: 55.0 %","seq 3 | 5 s","WiFi ok | MQTT ok"]}
+{course}/lab06/grupo-{group}/cmd/intervalo 10
+{course}/lab06/grupo-{group}/oled {"linhas":["LAB06 grupo {group}","T: 24.5 C","UR: 55.0 %","seq 3 | 10 s","WiFi ok | MQTT ok"]}
+{course}/lab06/grupo-{group}/dht {"grupo":"{group}","seq":4,"t":24.5,"h":55.0,"uptime_ms":26290,"intervalo_s":10.0}
+{course}/lab06/grupo-{group}/cmd/intervalo 1
+{course}/lab06/grupo-{group}/dht {"grupo":"{group}","seq":5,"t":24.5,"h":55.0,"uptime_ms":36290,"intervalo_s":10.0}`,
+    },
+  ]}
+/>
+
+No monitor serial do Wokwi aparecem `[CMD] novo intervalo: 10.0 s` e, depois,
+`[CMD] intervalo fora de 2..60 s - ignorado`.
+
+:::tip[Preveja antes de rodar]
+**P2:** e se o comando fosse publicado com **retain** (`mosquitto_pub -r`)? O que acontece
+quando o ESP32 **reinicia**? Isso é bom ou ruim para um "intervalo de configuração"? E se o
+valor retido for inválido, como o `1`? (Para apagar uma mensagem retida, publique um payload
+vazio com `-r -n`.)
+:::
+
+<CommitPoint
+  id="t3"
+  task="MQTT nos dois sentidos"
+  pontos={25}
+  files="src/main.cpp evidencias/t3-mqtt.txt"
+/>
+
+---
+
+## Parte 4 — Node-RED: réplica do OLED e comando do intervalo {/* #parte-4 */}
+
+O Node-RED desta aula é **mínimo**: três fluxos curtos, sem nenhum nó _function_. Ele só
+**mostra** o que o ESP32 publica e **devolve** o comando do intervalo. Guardar as leituras num
+banco e consultar o histórico fica para o **Lab 08**.
+
+No **Dashboard 2.0** da stack (`My Dashboard`, em `http://localhost:1880/dashboard`), crie uma
+**página** _Lab 06_ (caminho `/lab06`) com dois **grupos**: _Tela OLED (SSD1306)_ (largura 6) e
+_ESP32_ (largura 3).
+
+```mermaid
+flowchart LR
+  O[mqtt in .../oled · JSON] --> TO[ui-template: OLED em texto]
+  S[mqtt in .../status · String] --> TX[ui-text ESP32]
+  D[mqtt in .../dht · JSON] --> CH[change: payload = payload.intervalo_s] --> RB[filter: só se mudou] --> SL[ui-slider intervalo]
+  SL --> MO[mqtt out .../cmd/intervalo]
+```
+
+Todos os **mqtt in** usam o mesmo broker do Lab 05 (`broker.hivemq.com:1883`).
+
+### 4.1 Réplica do OLED em texto
+
+**mqtt in** `elt73a/lab06/grupo-x/oled` (_Output_: **a parsed JSON object**) → **ui-template**
+"OLED em texto" (grupo _Tela OLED_, largura 3, altura 4). O ESP32 manda **só o conteúdo**, e o
+navegador desenha com a fonte dele:
+
+```html title="ui-template: OLED em texto"
+<template>
+  <!-- Réplica em TEXTO: o ESP32 manda só o conteúdo (JSON) e o navegador desenha -->
+  <div class="oled-txt">
+    <div v-for="(l, i) in linhas" :key="i">{{ l }}</div>
+  </div>
+</template>
+
+<script>
+  export default {
+    computed: {
+      linhas() {
+        return this.msg?.payload?.linhas ?? ["(aguardando o ESP32...)"];
+      },
+    },
+  };
+</script>
+
+<style scoped>
+  .oled-txt {
+    background: #000;
+    color: #dff3ff;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    line-height: 1.35;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 6px solid #1c1c1c;
+    white-space: pre;
+  }
+</style>
+```
+
+### 4.2 Status e intervalo
+
+| Nó                                       | Configuração                                                                                                                      |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **mqtt in** "status (LWT)"               | `elt73a/lab06/grupo-x/status`, _Output_ **a String** → **ui-text** "ESP32" (grupo _ESP32_)                                        |
+| **mqtt in** "leituras DHT22"             | `elt73a/lab06/grupo-x/dht`, _Output_ **a parsed JSON object**                                                                     |
+| **change** "payload = intervalo_s"       | _Set_ `msg.payload` _to the value_ `msg.payload.intervalo_s`                                                                      |
+| **filter** "só se mudou"                 | _Mode_ **block unless value changes** (só deixa passar quando o intervalo **muda**)                                               |
+| **ui-slider** "Intervalo de leitura (s)" | grupo _ESP32_, 2 a 60, passo 1, _Topic_ `elt73a/lab06/grupo-x/cmd/intervalo`, _Output_ **on release**, **pass-through desligado** |
+| **mqtt out**                             | tópico **vazio** (usa o `msg.topic` do slider)                                                                                    |
+
+:::note[Por que o slider não "briga" com o ESP32?]
+Com **pass-through desligado**, uma mensagem que **chega** no slider só move o cursor: ela
+**não** sai pelo `mqtt out`. E o _filter_ só deixa passar o `intervalo_s` quando o ESP32
+**confirma** um valor novo. Assim o slider mostra o valor **em uso**, e não só o último pedido.
+:::
+
+Abra `http://localhost:1880/dashboard/lab06`, mova o slider para 10 s e confira:
+
+- o **rodapé do OLED** no Wokwi e a réplica em texto mudam para `int 10 s`;
+- o monitor serial mostra `[CMD] novo intervalo: 10.0 s`;
+- as leituras passam a chegar a cada 10 s.
+
+**Evidências:** captura do dashboard em `evidencias/t4-dashboard.png` e a aba **Lab 06**
+exportada (menu → _Export_ → _Current flow_) em `nodered/flows-lab06.json`.
+
+<FileTree
+  root="lab06-grupo-X"
+  files={["nodered/flows-lab06.json c", "evidencias/t4-dashboard.png c"]}
+/>
+
+<CommitPoint
+  id="t4"
+  task="Node-RED: replica do OLED e comando do intervalo"
+  pontos={20}
+  files="nodered/flows-lab06.json evidencias/t4-dashboard.png"
+/>
+
+---
+
+## Projeto integrador — framebuffer pixel a pixel {/* #integrador */}
+
+A réplica em texto da T4 **não é** a tela do ESP32. Ela não tem o grau desenhado com
+`drawCircle`, a barra de umidade, os indicadores `[W]` `[M]` nem a fonte grande. Para ver
+**exatamente** o que o display mostra, o ESP32 envia o próprio **framebuffer**: os 1024 bytes
+que acabaram de ir para o SSD1306 pelo I2C.
+
+### Como os 1024 bytes estão organizados
+
+O SSD1306 divide a tela em **8 páginas** de 8 linhas. Cada byte é uma **coluna de 8 pixels**
+dentro de uma página, com o **bit 0 em cima**:
+
+```text title="Mapa do framebuffer (128 x 64)"
+byte  0 .. 127   -> página 0 (linhas  0..7),  um byte por coluna x = 0..127
+byte 128 .. 255  -> página 1 (linhas  8..15)
+...
+byte 896 .. 1023 -> página 7 (linhas 56..63)
+
+pixel (x, y) aceso  <=>  fb[(y / 8) * 128 + x]  &  (1 << (y % 8))
+```
+
+Como o MQTT/JSON é texto, os bytes viajam em **base64**: 3 bytes viram 4 caracteres, logo
+1024 bytes viram **1368** caracteres.
+
+### Requisitos
+
+1. **Firmware**
+   - Novo tópico `elt73a/lab06/grupo-X/oled/fb`.
+   - Depois de **cada** `desenharTela()`, codificar `oled.getBuffer()` (1024 bytes) em base64 e
+     publicar nesse tópico.
+   - Aumentar o buffer do PubSubClient, que por padrão tem **256 bytes**.
+2. **Node-RED**
+   - **mqtt in** `.../oled/fb` (_Output_: **a String**) → **ui-template** no grupo _Tela OLED_,
+     ao lado da réplica em texto da T4, que desenha os pixels num `<canvas>` (escala 3: 384 × 192 px).
+   - Exporte o fluxo de novo por cima de `nodered/flows-lab06.json`.
+3. **Evidências**
+   - `evidencias/t5-oled.png`: Wokwi e dashboard **lado a lado**, mostrando a mesma tela.
+   - `evidencias/t5-fb.txt`: tamanho de **uma** mensagem do framebuffer, pelo terminal:
+
+<GroupCommands
+  commands={[
+    {
+      codeTitle: "Terminal — Assinar via Docker",
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com \\
+  -t '{course}/lab06/grupo-{group}/oled/fb' -C 1 | wc -c | tee evidencias/t5-fb.txt`,
+    },
+  ]}
+/>
+
+```text title="evidencias/t5-fb.txt"
+1369
+```
+
+São 1368 caracteres base64 mais a quebra de linha que o `mosquitto_sub` acrescenta.
+
+### Dicas de API
+
+```cpp title="Trechos úteis (firmware)"
+#include "mbedtls/base64.h"          // já vem com o core do ESP32
+
+const char *TOPICO_OLED_FB = BASE "/oled/fb";
+
+void publicarFramebuffer() {
+  static unsigned char b64[1400];    // 1368 + '\0' (static: fora da pilha)
+  size_t n = 0;
+  mbedtls_base64_encode(b64, sizeof(b64), &n, oled.getBuffer(), OLED_W * OLED_H / 8);
+  if (!mqtt.publish(TOPICO_OLED_FB, b64, n, false))
+    Serial.println("[FB] publish falhou: aumente mqtt.setBufferSize()");
+}
+
+// em setup(), antes de conectarMQTT():
+//   mqtt.setBufferSize(1600);   // cabeçalho + tópico + 1368 de payload
+```
+
+```html title="Esqueleto do ui-template (complete o desenhar())"
+<template>
+  <div class="fb-wrap">
+    <canvas ref="tela" width="384" height="192" class="oled-fb"></canvas>
+  </div>
+</template>
+
+<script>
+  export default {
+    watch: {
+      msg() {
+        this.desenhar();
+      },
+    }, // roda a cada mensagem nova
+    mounted() {
+      this.desenhar();
+    }, // e quando a página abre
+    methods: {
+      desenhar() {
+        const b64 = this.msg?.payload;
+        if (typeof b64 !== "string" || !this.$refs.tela) return;
+        const fb = atob(b64); // string com 1024 "bytes": fb.charCodeAt(i)
+        const ctx = this.$refs.tela.getContext("2d");
+        // 1) pinte tudo de preto
+        // 2) para cada página (0..7), coluna x (0..127) e bit (0..7):
+        //    se o bit estiver aceso, pinte um quadrado 3x3 em (x*3, (pagina*8 + bit)*3)
+      },
+    },
+  };
+</script>
+
+<style scoped>
+  .oled-fb {
+    display: block;
+    width: 100%;
+    max-width: 384px;
+    aspect-ratio: 2 / 1;
+    image-rendering: pixelated;
+    background: #000;
+    border: 6px solid #1c1c1c;
+    border-radius: 6px;
+  }
+</style>
+```
+
+:::tip[Preveja antes de rodar]
+**P3:** quantos bytes cada atualização da tela custa no broker em cada versão: texto (`.../oled`)
+× framebuffer (`.../oled/fb`)? Qual das duas daria para **guardar num banco e consultar** com
+SQL (como no Lab 08), e qual mostra **fielmente** o que o usuário vê no display? O que
+aconteceria se você esquecesse o `setBufferSize()`? Onde isso apareceria: no serial, no broker
+ou no dashboard?
+:::
+
+<FileTree
+  root="lab06-grupo-X"
+  files={[
+    "src/main.cpp u",
+    "nodered/flows-lab06.json u",
+    "evidencias/t5-fb.txt c",
+    "evidencias/t5-oled.png c",
+  ]}
+/>
+
+<CommitPoint
+  id="t5"
+  task="Framebuffer pixel a pixel no dashboard"
+  pontos={25}
+  files="src/main.cpp nodered/flows-lab06.json evidencias/t5-fb.txt evidencias/t5-oled.png"
+/>
+
+---
+
+<LabLogout />

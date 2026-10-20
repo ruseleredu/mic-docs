@@ -1,447 +1,1328 @@
 ---
-sidebar_position: 10
 title: Laboratório 07
-description: Introdução as aulas de laboratório
+sidebar_position: 10
 ---
 
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-import { LABsApoio } from "@site/src/components/shared/AvisosSite";
-import {
-  DevToolsv2,
-  GitConfig,
-  GitCommit,
-  NewBranch,
-} from "@site/src/components/shared/InstructionsSite";
+## Checklist — ADC, PWM, modos de operação e controle ON/OFF {/* #checklist */}
 
-# Laboratório 07
+- [ ] `diagram.json` com potenciômetro no GPIO34 e LEDs "aquecedor" (GPIO25) e "ventilador" (GPIO26) com resistores, mais o analisador lógico (T1)
+- [ ] ADC: média de 16 amostras, leitura em mV e setpoint de 20 a 55 °C em passos de 0,5 °C (T2)
+- [ ] PWM (LEDC): dois canais de 8 bits, a 5 Hz e 25 kHz, com o potenciômetro como _dimmer_ (T3)
+- [ ] MQTT: `.../adc` com banda morta, `.../pwm` a cada mudança e comandos `.../cmd/modo`, `.../cmd/aquecedor`, `.../cmd/ventilador` (T4)
+- [ ] Node-RED: dashboard mínimo com a tela, o estado, os botões de modo e os sliders (T5)
+- [ ] Modo `auto`: aquecedor ON/OFF com histerese e ventilador proporcional (T6)
+- [ ] Previsões P1–P4 respondidas no `README.md`
+- [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
 
-{/* Info de que este conteúdo é de apoio! */}
+:::info[Pontuação]
+**T1…T6 = 100 pts** (esta aula não tem desafios): T1 10 · T2 15 · T3 20 · T4 20 · T5 15 ·
+T6 20. O autograder normaliza para 0–10. Vale o commit `Tn:` mais recente de cada tarefa.
+:::
 
-<LABsApoio />
+<LabSetup />
 
-{/* Tabela com link para atividade, inicio, fim e descrição do LAB! */}
+### Configuração do ambiente de desenvolvimento {/* #setup */}
 
-<div style={{ display: "flex", justifyContent: "center" }}>
-  <LabTable index={7} internal={false} />
-</div>
-
----
-
-## Conteúdo
-
-Esta atividade de laboratório tem como objetivo utilizar o DMA, MQTT e STM32CubeMonitor. Cada item equivale a 10% da nota.
-
-- [ ] Crie um repositório (LAB07) via template (https://github.com/ELT73A-LAB-TPL/LAB07) na organização e clone;
-- [ ] Importe e compile o código da pasta TIM2EXTI0ADC1PWMDMA
-- [ ] Verifique a configuração dos periféricos;
-- [ ] Configure o executável e probes no STM32CubeMonitor;
-- [ ] Configure o MQTT no Node-RED;
-- [ ] Teste de injeção de dados no MQTT;
-- [ ] Comfiguração do APP para MQTT;
-- [ ] Acionamento do LED via MQTT;
-- [ ] Commit e push do Node-RED export flow;
-- [ ] Envie o link do repositório no GitHub (hyperlink);
-
-## Avaliação
-
-- [ ] Uso do template e código - 20%
-- [ ] Configuração do STM32CubeMonitor - 20%
-- [ ] Configuração e teste do MQTT - 20%
-- [ ] Comfiguração do APP e acionamento do LED - 20%
-- [ ] Commit e push do Node-RED export flow - 20%
-- [ ] Link do repositório no GitHub (hyperlink) - 10%
-
-## Verifique o seu ambiente de desenvolvimento
-
-{/* List of Dev Tools */}
-
-<DevToolsv2 />
-
-{/* Configure o git */}
-
-<GitConfig />
+<DevTools />
 
 ---
 
-## Crie um novo repositório com base no template do LAB07 {/* #new-repo-from-tpl */}
+Esta aula continua o **Lab 06**. Até agora o ESP32 só **lia** o mundo, com o DHT22 (digital).
+Agora ele passa a ler uma **grandeza analógica**, a posição de um potenciômetro, pelo
+**ADC**. E passa também a **agir**: dois canais de **PWM** acionam um "aquecedor" e um
+"ventilador", representados por LEDs. Com MQTT e um dashboard mínimo no Node-RED, o nó vira o
+embrião de uma **câmara climática**: o potenciômetro define o **setpoint**, e o ESP32 liga o aquecedor
+quando a temperatura está abaixo dele.
 
-Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub:
-
-{/* Gera instruções para criar o repositório no GitHub por grupo com base no template do laboratório. */}
-
-<LabFromTemplate labNumber="LAB07" opts="-c" />
-
-{/* Git Commit */}
-
-<GitCommit />
-
-## Diagrama de pinos do STM32F4x1
-
----
-
-![STM32F4x1 microcontroller pinout diagram;](/img/MiniSTM32F4x1/STM32F4x1_PinoutDiagram_RichardBalint.png)
-
-O debugger [ST-LINK/V2](/docs/st-link) possue um conector IDC de 10 pinos. A pinagem é descrita na figura a seguir.
-
-![ST-LINK/V2 Clone](/img/ST-LINK_V2_Clone_Header.png)
-
----
-
-## Acesso Direto à Memória
-
-O DMA (Direct Memory Access, ou Acesso Direto à Memória) no microcontrolador STM32F411CEU6 é um periférico projetado para transferir dados em alta velocidade entre memórias e periféricos sem a intervenção da CPU.
-Isso é especialmente útil para operações que exigem grandes volumes de dados, como leitura de sensores, comunicação serial ou manipulação de buffers de áudio/vídeo, onde a CPU pode ficar sobrecarregada se tiver que gerenciar cada byte de dados.
-O DMA pode ser configurado para transferir dados de uma fonte (como um periférico ou memória) para um destino (outra memória ou periférico) de forma eficiente, liberando a CPU para realizar outras tarefas enquanto a transferência ocorre em segundo plano.
-
-## User Code
-
-- https://deepbluembedded.com/stm32-adc-multi-channel-scan-continuous-mode-dma-poll-examples/
-
-### Src/main.c
-
-Implemente a lógica para acionar o LED azul via flag BLUELED:
-
-```c title="Src/main.c"
-/* USER CODE BEGIN Includes */
-// highlight-next-line
-#include <stdbool.h>
-/* USER CODE END Includes */
+```mermaid
+flowchart LR
+  POT[Potenciômetro] -->|ADC1 · GPIO34| ESP[ESP32]
+  DHT[DHT22] -->|GPIO15| ESP
+  ESP -->|LEDC canal 0 · 5 Hz| AQ[LED aquecedor · GPIO25]
+  ESP -->|LEDC canal 1 · 25 kHz| VE[LED ventilador · GPIO26]
+  ESP -->|I2C| OLED[SSD1306]
+  ESP -->|adc · pwm · dht · oled · status| BRK[(broker.hivemq.com)]
+  BRK --> NR[Node-RED: dashboard]
+  NR -->|cmd/modo · cmd/aquecedor · cmd/ventilador| BRK --> ESP
 ```
 
-```c title="Src/main.c"
-/* USER CODE BEGIN PV */
-// highlight-start
-bool BLUELED = 0;
-uint32_t AD_RES_BUFFER[2];
-uint16_t ADC1IN1,ADC1IN2;
-float voltage1,voltage2;
-// highlight-end
-/* USER CODE END PV */
-```
+## Objetivos
 
-Inicialize o Timer 2 com suporte a rotina de interrupção e saída PWM no canal 1:
+- Ler um sinal analógico com o **ADC** do ESP32: resolução (12 bits), **atenuação**, leitura
+  em **milivolts** calibrada e por que o potenciômetro precisa estar num pino do **ADC1**.
+- Reduzir o ruído com **média de amostras** e não inundar o broker com uma **banda morta**.
+- Gerar **PWM** com o periférico **LEDC**: canal, frequência, resolução e _duty cycle_, e a
+  troca entre **frequência e resolução**.
+- Organizar o firmware em **modos de operação** (`pot`, `remoto`, `auto`) comandados por MQTT.
+- No Node-RED, montar um **dashboard mínimo de comando** (modo e sliders) que mostra o estado
+  **confirmado** pelo ESP32. Registrar as mudanças num banco fica para o **Lab 08**.
+- (Integrador) Implementar um **controle ON/OFF com histerese**.
 
-```c title="Src/main.c"
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_ADC1_Init();
-  MX_TIM2_Init();
-  /* USER CODE BEGIN 2 */
-  // highlight-start
-  HAL_TIM_PWM_Start_IT(&htim2,TIM_CHANNEL_1);
-  // highlight-end
-  /* USER CODE END 2 */
-```
+## Material
 
-Toggle no LED interno via interrupção do User Key:
+- VS Code + PlatformIO + extensão **Wokwi** (ESP32 **simulado**).
+- Stack Docker do curso: **Node-RED** com o **Dashboard 2.0**.
+- **Nenhuma biblioteca nova**: o ADC e o LEDC fazem parte do core Arduino do ESP32. O
+  `platformio.ini` é o mesmo do Lab 06.
 
-```c title="Scr/main.c"
-/* Infinite loop */
-/* USER CODE BEGIN WHILE */
-while (1)
+:::info[O que o Wokwi simula (e o que não)]
+O Wokwi simula o **ADC** (o potenciômetro gira de verdade), o **LEDC** (o brilho do LED
+acompanha o _duty_) e um **analisador lógico** para medir o PWM. Mas o ADC simulado é
+**ideal**: linear e sem ruído. Numa placa física, a média de amostras e a banda morta da T2/T4
+fazem diferença visível. E o "aquecedor" não esquenta o DHT22: na T6, **você** faz o papel da
+planta, mexendo no slider do sensor.
+:::
+
+## Clonar o repositório do grupo {/* #clonar */}
+
+<LabTeamMembers labName="lab07" />
+
+## Envie o link do repositório do seu grupo no Moodle: {/* #moodle-link */}
+
+<LabSubmit labName="lab07" />
+
+<details>
+<summary><strong>Mapa de tarefas</strong> — 6 tarefas · 100 pts</summary>
+
+- [T1 — Circuito: potenciometro, LEDs e analisador logico](#t1) · 10 pts
+- [T2 — Leitura do potenciometro com o ADC](#t2) · 15 pts
+- [T3 — PWM com o LEDC](#t3) · 20 pts
+- [T4 — ADC e PWM no MQTT, modos pot e remoto](#t4) · 20 pts
+- [T5 — Node-RED: dashboard de comando](#t5) · 15 pts
+- [T6 — Modo auto: controle ON/OFF com histerese](#t6) · 20 pts
+
+</details>
+
+O repositório do grupo nasce do `lab07-template`, que já traz o **firmware final do Lab 06**
+(com o framebuffer) em `src/main.cpp`:
+
+<FileTree
+  details={true}
+  defaultOpen={false}
+  title="Estrutura de Arquivos do Projeto"
+  root="lab07-grupo-X"
+  files={[
+    "platformio.ini r",
+    "src/main.cpp u",
+    "diagram.json u",
+    "wokwi.toml r",
+    ".gitignore r",
+    ".vscode/extensions.json r",
+    "nodered/flows-lab07.json c",
+    "evidencias/t2-serial.txt c",
+    "evidencias/t3-pwm.png c",
+    "evidencias/t4-mqtt.txt c",
+    "evidencias/t5-dashboard.png c",
+    "evidencias/t6-serial.txt c",
+    "evidencias/t6-dashboard.png c",
+    "README.md u",
+  ]}
+/>
+
+:::info[Tópicos do Lab 07]
+Tudo fica sob `elt73a/lab07/grupo-X/`. Troque o `X` (e o `#define GRUPO`) pela letra do seu
+grupo. `dht`, `status`, `oled`, `oled/fb` e `cmd/intervalo` continuam como no Lab 06.
+
+| Tópico               | Sentido        | Payload                                                                                             |
+| -------------------- | -------------- | --------------------------------------------------------------------------------------------------- |
+| `.../adc`            | ESP32 → broker | `{"raw":2048,"mv":1650,"sp":37.5}`                                                                  |
+| `.../pwm`            | ESP32 → broker | `{"modo":"auto","estado":"AQUECENDO","aq":100,"ve":0,"aq_duty":255,"ve_duty":0,"sp":37.5,"t":24.5}` |
+| `.../cmd/modo`       | broker → ESP32 | `pot`, `remoto` ou `auto` (T6)                                                                      |
+| `.../cmd/aquecedor`  | broker → ESP32 | `0` a `100` (%), vale no modo `remoto`                                                              |
+| `.../cmd/ventilador` | broker → ESP32 | `0` a `100` (%), vale no modo `remoto`                                                              |
+
+:::
+
+---
+
+## Parte 1 — Circuito {/* #parte-1 */}
+
+Acrescente ao circuito do Lab 06:
+
+- **Potenciômetro** (`wokwi-potentiometer`): `VCC → 3V3`, `GND → GND`, `SIG → GPIO34`.
+- **LED laranja "aquecedor"** no **GPIO25** e **LED azul "ventilador"** no **GPIO26**, cada um
+  com um **resistor de 220 Ω** em série (o GPIO fornece no máximo ~40 mA; o resistor limita
+  a corrente do LED a ~6 mA).
+- **Analisador lógico** (`wokwi-logic-analyzer`): `D0 → GPIO25`, `D1 → GPIO26`, `GND → GND`.
+  Ele grava os dois sinais de PWM para você medir frequência e _duty_ na T3.
+
+<FileTree root="lab07-grupo-X" files={["diagram.json u"]} />
+
+```json title="diagram.json"
 {
-// highlight-start
-  // Verify BLUELED Flag
-    if (BLUELED)
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET); // LED ON
-    else
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET); // LED OFF
-    // highlight-end
-  /* USER CODE END WHILE */
-
-  /* USER CODE BEGIN 3 */
-
-}
-/* USER CODE END 3 */
-```
-
-### Src/stm32f4xx_it.c
-
-```c title="Src/stm32f4xx_it.c"
-/* USER CODE BEGIN Includes */
-// highlight-next-line
-#include <stdbool.h>
-/* USER CODE END Includes */
-```
-
-```c title="Src/stm32f4xx_it.c"
-/* USER CODE BEGIN PV */
-// highlight-start
-extern bool BLUELED;
-extern uint32_t AD_RES_BUFFER[2];
-extern uint16_t ADC1IN1,ADC1IN2;
-extern float voltage1,voltage2;
- // highlight-end
-/* USER CODE END PV */
-```
-
-```c title="Src/stm32f4xx_it.c"
-void EXTI0_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
-  // Toggle BLUELED FLAG
-  // highlight-next-line
-  BLUELED = !BLUELED;
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(User_KEY_EXTI0_Pin);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-  /* USER CODE END EXTI0_IRQn 1 */
-}
-```
-
-Inicie o ADC1 na interrupção do Timer 2:
-
-```c title="Src/stm32f4xx_it.c"
-void TIM2_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM2_IRQn 0 */
-
-  /* USER CODE END TIM2_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim2);
-  /* USER CODE BEGIN TIM2_IRQn 1 */
-  // highlight-next-line
-  HAL_ADC_Start_DMA(&hadc1, AD_RES_BUFFER, 2);
-  /* USER CODE END TIM2_IRQn 1 */
-}
-```
-
-- `HAL_ADC_ConvCpltCallback()` é uma função de alto nível fornecida pela ST (STMicroelectronics) para facilitar a vida do desenvolvedor.
-  Ela é chamada automaticamente quando uma conversão ADC é concluída e os dados estão prontos para serem processados. O uso dessa função é recomendado porque ela abstrai a complexidade de lidar diretamente com as interrupções de ADC e o gerenciamento de buffers, permitindo que o desenvolvedor se concentre na lógica de aplicação em vez de detalhes de baixo nível.
-
-```c title="Src/stm32f4xx_it.c"
-/* USER CODE BEGIN 1 */
-// highlight-start
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-  // Conversion Complete & DMA Transfer Complete As Well
-  ADC1IN1 = AD_RES_BUFFER[0];
-  ADC1IN2 = AD_RES_BUFFER[1];
-  voltage1 = (ADC1IN1 * 3.3) / 4095;
-  voltage2 = (ADC1IN2 * 3.3) / 4095;
-  TIM2->CCR1 = ADC1IN1;  // PWM CH1 duty cycle update based on ADC1IN1
-}
-// highlight-end
-/* USER CODE END 1 */
-```
-
-### SQLite
-
-- https://sqlite.org/
-- https://inloop.github.io/sqlite-viewer/
-- https://flows.nodered.org/node/node-red-node-sqlite
-- https://databaseschool.com/series/high-performance-sqlite/videos/1
-
-```SQL
-CREATE TABLE IF NOT EXISTS sensor_data (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    ADC1IN1 INTEGER,
-    voltage1 REAL,
-    ADC1IN2 INTEGER,
-    voltage2 REAL,
-    BLUELED INTEGER
-);
-```
-
-```js
-let ADC1IN1 = Math.floor(Math.random() * 4096);
-let ADC1IN2 = Math.floor(Math.random() * 4096);
-let voltage1 = (ADC1IN1 * 3.3) / 4095;
-let voltage2 = (ADC1IN2 * 3.3) / 4095;
-let BLUELED = Math.round(Math.random());
-
-// Create the SQL Insert Statement
-// Replace 'sensor_data' with your actual table name
-msg.topic = `INSERT INTO sensor_data (ADC1IN1, voltage1, ADC1IN2, voltage2, BLUELED) 
-             VALUES (${ADC1IN1}, ${voltage1}, ${ADC1IN2}, ${voltage2}, ${BLUELED});`;
-
-return msg;
-```
-
-### The SQL Query
-
-```SQL
-SELECT * FROM sensor_data ORDER BY timestamp DESC LIMIT 1;
-```
-
-SQLite always returns data as an Array of Objects, even if there is only one result.
-
-```js
-// Check if data actually exists to avoid errors
-if (msg.payload.length > 0) {
-  // Take the first element of the array
-  // msg.payload = msg.payload[0];
-  msg.payload = msg.payload[0].voltage1;
-  return msg;
+  "version": 1,
+  "author": "elt73a - Lab 07",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -76.5,
+      "left": 157.8,
+      "attrs": { "temperature": "24.5", "humidity": "55" }
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": 108.74,
+      "left": 172.23,
+      "attrs": { "i2cAddress": "0x3c" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot1",
+      "top": 30,
+      "left": -150,
+      "attrs": { "value": "511" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 215,
+      "left": 120,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_aq",
+      "top": 170,
+      "left": 230,
+      "attrs": { "color": "orange", "label": "aquecedor" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 265,
+      "left": 120,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_ve",
+      "top": 220,
+      "left": 300,
+      "attrs": { "color": "blue", "label": "ventilador" }
+    },
+    {
+      "type": "wokwi-logic-analyzer",
+      "id": "logic1",
+      "top": 320,
+      "left": 120,
+      "attrs": {
+        "channelNames": "aquecedor,ventilador",
+        "filename": "lab07-pwm"
+      }
+    }
+  ],
+  "connections": [
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []],
+    ["dht1:VCC", "esp:3V3", "red", []],
+    ["dht1:GND", "esp:GND.2", "black", []],
+    ["dht1:SDA", "esp:15", "green", []],
+    ["oled1:VCC", "esp:3V3", "red", []],
+    ["oled1:GND", "esp:GND.2", "black", []],
+    ["oled1:SDA", "esp:21", "blue", []],
+    ["oled1:SCL", "esp:22", "purple", []],
+    ["pot1:VCC", "esp:3V3", "red", []],
+    ["pot1:GND", "esp:GND.2", "black", []],
+    ["pot1:SIG", "esp:34", "orange", []],
+    ["esp:25", "r1:1", "orange", []],
+    ["r1:2", "led_aq:A", "orange", []],
+    ["led_aq:C", "esp:GND.2", "black", []],
+    ["esp:26", "r2:1", "blue", []],
+    ["r2:2", "led_ve:A", "blue", []],
+    ["led_ve:C", "esp:GND.2", "black", []],
+    ["logic1:D0", "esp:25", "orange", []],
+    ["logic1:D1", "esp:26", "blue", []],
+    ["logic1:GND", "esp:GND.2", "black", []]
+  ],
+  "dependencies": {}
 }
 ```
 
-## SQLite to insert data into the database
+:::warning[Por que GPIO34 e não qualquer pino?]
+O ESP32 tem dois ADCs. O **ADC2** (GPIOs 0, 2, 4, 12–15 e 25–27) é usado pelo **rádio
+Wi-Fi**: com o Wi-Fi ligado, `analogRead()` num pino do ADC2 falha. Por isso o potenciômetro
+vai num pino do **ADC1** (GPIOs 32–39). O GPIO34 é **somente entrada**, sem pull-up interno,
+o que é perfeito para um sinal analógico.
+:::
 
-```js
-const d = msg.payload;
+<CommitPoint
+  id="t1"
+  task="Circuito: potenciometro, LEDs e analisador logico"
+  pontos={10}
+  files="diagram.json"
+/>
 
-// Constructing the query with rounded voltage values
-msg.topic = `INSERT INTO sensor_readings (ADC1IN1, ADC1IN2, BLUELED, voltage1, voltage2) 
-             VALUES (${d.ADC1IN1}, ${d.ADC1IN2}, ${d.BLUELED}, ${d.voltage1.toFixed(2)}, ${d.voltage2.toFixed(2)});`;
+---
 
-// Ensure payload is an empty array so the SQLite node executes the topic string
-msg.payload = [];
+## Parte 2 — ADC: lendo o potenciômetro {/* #parte-2 */}
 
-return msg;
+### 2.1 Como o ADC do ESP32 enxerga uma tensão
+
+O ADC é do tipo **SAR, de 12 bits**: converte a tensão do pino num número de **0 a 4095**.
+Três detalhes importam:
+
+- **Atenuação.** O conversor só mede ~1,1 V internamente. Para medir até perto de 3,3 V, o
+  sinal passa por um atenuador. Com `ADC_11db`, a faixa vai de ~0 a ~3,1 V. A Espressif
+  recomenda usar só até ~2,45 V se precisar de linearidade.
+- **Calibração.** `analogRead()` devolve o número cru. `analogReadMilliVolts()` usa a
+  calibração gravada de fábrica no chip (eFuse) e devolve **milivolts**: é ela que você usa
+  quando o valor tem significado físico.
+- **Ruído.** Numa placa real, leituras seguidas do mesmo potenciômetro parado variam algumas
+  dezenas de unidades. Uma **média de 16 amostras** reduz esse ruído para ~1/4.
+
+O potenciômetro vira o **setpoint** da câmara, de 20 a 55 °C em passos de 0,5 °C:
+
+```text title="Conversão"
+setpoint = 20 + raw × (55 − 20) / 4095        → arredondado para 0,5 °C
+raw = 0     → 20,0 °C
+raw = 2048  → 37,5 °C
+raw = 4095  → 55,0 °C
 ```
 
-Create DB
+### 2.2 Código
 
-```sql
-CREATE TABLE IF NOT EXISTS sensor_readings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ADC1IN1 INTEGER,
-    ADC1IN2 INTEGER,
-    BLUELED INTEGER,
-    voltage1 REAL,
-    voltage2 REAL,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+A leitura é disparada por um **segundo `Ticker`**, a 10 Hz, com o mesmo padrão de flag do
+Lab 05: o callback só marca `adcPendente`, e o `loop()` lê.
+
+<FileTree root="lab07-grupo-X" files={["src/main.cpp u"]} />
+
+```cpp title="src/main.cpp (trechos novos da T2)"
+// ---- ADC: potenciômetro no GPIO34 (ADC1_CH6 - o ADC1 funciona junto com o Wi-Fi)
+#define POT_PIN      34
+#define ADC_AMOSTRAS 16                  // média de 16 leituras (reduz o ruído)
+#define ADC_BANDA    40                  // só reage se mudar mais que ~1 % (40/4095)
+#define SP_MIN       20.0f               // faixa do setpoint (°C)
+#define SP_MAX       55.0f
+
+Ticker temporizadorAdc;                  // leitura do potenciômetro
+volatile bool adcPendente = false;
+int adcRaw = 0, adcMv = 0;               // média das leituras
+float setpoint = SP_MIN;                 // °C, vem do potenciômetro
+int rawPublicado = -10000;               // último raw "aceito" (banda morta)
+
+void aoEstourarTemporizadorAdc() { adcPendente = true; }
+
+void lerAdc() {
+  uint32_t somaRaw = 0, somaMv = 0;
+  for (int i = 0; i < ADC_AMOSTRAS; i++) {
+    somaRaw += analogRead(POT_PIN);
+    somaMv += analogReadMilliVolts(POT_PIN);
+  }
+  adcRaw = somaRaw / ADC_AMOSTRAS;
+  adcMv = somaMv / ADC_AMOSTRAS;
+  float sp = SP_MIN + adcRaw * (SP_MAX - SP_MIN) / 4095.0f;
+  setpoint = roundf(sp * 2) / 2;         // passos de 0,5 °C
+}
+
+// em setup(), depois de dht.begin():
+//   analogReadResolution(12);                       // 0..4095
+//   analogSetPinAttenuation(POT_PIN, ADC_11db);     // faixa de ~0 a 3,1 V
+//   lerAdc();
+//   ... e no fim do setup():
+//   temporizadorAdc.attach_ms(100, aoEstourarTemporizadorAdc);   // 10 Hz
+//
+// no loop():
+//   if (adcPendente) {
+//     adcPendente = false;
+//     lerAdc();
+//     if (abs(adcRaw - rawPublicado) > ADC_BANDA) {   // banda morta: ignora o ruído
+//       rawPublicado = adcRaw;
+//       Serial.printf("[ADC] raw=%4d  %4d mV  SP=%.1f C\r\n", adcRaw, adcMv, setpoint);
+//       telaSuja = true;
+//     }
+//   }
 ```
 
-### Versão simplificada sem as colunas de tensão:
+Na tela, mostre o `SP` e os `mV` à direita da temperatura. O desenho final, com as barras
+de PWM que entram na T3, está no código completo da T4:
 
-```js
-const d = msg.payload;
-
-// Constructing the query with rounded voltage values
-msg.topic = `INSERT INTO sensor_readings (ADC1IN1, ADC1IN2, BLUELED) 
-             VALUES (${d.ADC1IN1}, ${d.ADC1IN2}, ${d.BLUELED});`;
-
-// Ensure payload is an empty array so the SQLite node executes the topic string
-msg.payload = [];
-
-return msg;
+```text title="SSD1306 (128 x 64) — a partir da T3"
+LAB07 grupo a          [W] [M]
+-------------------------------
+24.5 °C            SP 37.5
+                   1650 mV
+AQ [██████████          ]  50%
+VE [██████████          ]  50%
+pot: MANUAL
 ```
 
-Create DB
+Gire o potenciômetro no Wokwi e veja o serial:
 
-```sql
-CREATE TABLE IF NOT EXISTS sensor_readings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ADC1IN1 INTEGER,
-    ADC1IN2 INTEGER,
-    BLUELED INTEGER,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+```text title="Monitor serial"
+=== Lab 07 - ADC + PWM + MQTT ===
+[ADC] raw=2047  1650 mV  SP=37.5 C
+[ADC] raw=3001  2420 mV  SP=45.5 C
+[ADC] raw=1200   968 mV  SP=30.5 C
 ```
 
-Calculation Node (Function after the SQLite node):
+Os valores em mV dependem da calibração e podem variar um pouco no seu simulador.
 
-```js
-msg.topic = "SELECT ADC1IN1 FROM sensor_readings ORDER BY id DESC LIMIT 1;";
-return msg;
+:::tip[Preveja antes de rodar]
+
+- **P1:** troque o `POT_PIN` para **GPIO4** (que é do ADC2), religue o fio e rode com o Wi-Fi
+  conectado. O que `analogRead()` devolve? E se você comentar o `conectarWiFi()`? Depois volte
+  para o GPIO34. Por que, num pino de ADC, um potenciômetro precisa de **VCC e GND**, e não
+  só do fio de sinal?
+
+Anote as previsões e o que observou no `README.md`.
+:::
+
+**Evidência:** salve o serial girando o potenciômetro de um extremo ao outro (pelo menos 5
+linhas `[ADC]`) em `evidencias/t2-serial.txt`.
+
+<FileTree root="lab07-grupo-X" files={["evidencias/t2-serial.txt c"]} />
+
+<CommitPoint
+  id="t2"
+  task="Leitura do potenciometro com o ADC"
+  pontos={15}
+  files="src/main.cpp evidencias/t2-serial.txt"
+/>
+
+---
+
+## Parte 3 — PWM com o LEDC {/* #parte-3 */}
+
+### 3.1 O que é o PWM e como o LEDC gera
+
+Um pino digital só fica em 0 V ou 3,3 V. O **PWM** liga e desliga esse pino muito rápido, e
+a **fração do tempo ligado** (o _duty cycle_) controla a **potência média** entregue à carga:
+
+```text title="PWM de 8 bits: duty 0..255"
+duty  64 (25 %)  ▇▁▁▁▇▁▁▁▇▁▁▁    potência média = 25 %
+duty 191 (75 %)  ▇▇▇▁▇▇▇▁▇▇▇▁    potência média = 75 %
+                 |<-T->|         frequência = 1/T
 ```
 
-```js
-if (msg.payload.length > 0) {
-  let adc_1 = msg.payload[0].ADC1IN1;
+No ESP32 quem gera o PWM é o periférico **LEDC**: 16 **canais**, cada um com frequência e
+**resolução** (bits do _duty_) próprias, ligados a qualquer GPIO de saída. O PWM roda **em
+hardware**: depois de configurado, não ocupa a CPU.
 
-  // Perform the conversion
-  let voltage1 = (adc_1 * 3.3) / 4095;
+Frequência e resolução **disputam** o mesmo relógio de 80 MHz:
 
-  // Return the result rounded to 2 decimal places
-  msg.payload = voltage1.toFixed(2);
+```text title="Limite do LEDC (relógio de 80 MHz)"
+frequência máxima = 80 MHz / 2^bits
+ 8 bits (0..255)    → até 312,5 kHz
+10 bits (0..1023)   → até  78,1 kHz
+12 bits (0..4095)   → até  19,5 kHz   ← não serve para 25 kHz!
+```
 
-  return msg;
+Usamos frequências bem diferentes nos dois canais, de propósito:
+
+| Canal | Pino   | Carga real (na câmara)                         | Frequência | Por quê                                                                                     |
+| ----- | ------ | ---------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| 0     | GPIO25 | resistência via relé de estado sólido / MOSFET | **5 Hz**   | a resistência tem inércia térmica de segundos; chavear devagar reduz perdas e interferência |
+| 1     | GPIO26 | ventoinha de 4 fios                            | **25 kHz** | é o padrão das ventoinhas PWM: acima da faixa audível, sem zumbido                          |
+
+### 3.2 A API mudou entre as versões do core
+
+O PlatformIO usa hoje o **core Arduino 2.x**. O core **3.x**, usado pela Arduino IDE recente,
+mudou as funções do LEDC. Para o mesmo código compilar nos dois, encapsule:
+
+| Core 2.x                       | Core 3.x                                     |
+| ------------------------------ | -------------------------------------------- |
+| `ledcSetup(canal, freq, bits)` | `ledcAttachChannel(pino, freq, bits, canal)` |
+| `ledcAttachPin(pino, canal)`   | (feito pela linha acima)                     |
+| `ledcWrite(canal, duty)`       | `ledcWrite(pino, duty)`                      |
+
+<FileTree root="lab07-grupo-X" files={["src/main.cpp u"]} />
+
+```cpp title="src/main.cpp (trechos novos da T3)"
+// ---- PWM (LEDC): dois canais com frequências bem diferentes
+#define AQ_PIN     25                    // "aquecedor": resistência -> PWM lento
+#define VE_PIN     26                    // "ventilador": ventoinha 4 fios -> 25 kHz
+#define AQ_CANAL   0
+#define VE_CANAL   1
+#define AQ_FREQ_HZ 5
+#define VE_FREQ_HZ 25000
+#define PWM_BITS   8                     // duty de 0 a 255
+#define PWM_MAX    ((1 << PWM_BITS) - 1)
+
+float aqPct = -1, vePct = -1;            // % aplicados (-1: ainda não aplicado)
+const char *estado = "---";
+
+void pwmIniciar(uint8_t pino, uint8_t canal, uint32_t freq) {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+  ledcAttachChannel(pino, freq, PWM_BITS, canal);
+#else
+  ledcSetup(canal, freq, PWM_BITS);
+  ledcAttachPin(pino, canal);
+#endif
+}
+
+void pwmEscrever(uint8_t pino, uint8_t canal, uint32_t duty) {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+  (void)canal;
+  ledcWrite(pino, duty);                 // 3.x: endereça pelo pino
+#else
+  (void)pino;
+  ledcWrite(canal, duty);                // 2.x: endereça pelo canal
+#endif
+}
+
+uint32_t dutyDe(float pct) { return (uint32_t)lroundf(pct * PWM_MAX / 100.0f); }
+
+// Decide os atuadores. Na T3 só existe o modo "potenciômetro = dimmer".
+void controlar() {
+  float aq = roundf(adcRaw * 100.0f / 4095.0f);
+  float ve = aq;
+  if (aq == aqPct && ve == vePct) return;     // nada mudou: não reescreve
+  aqPct = aq;
+  vePct = ve;
+  estado = "MANUAL";
+  pwmEscrever(AQ_PIN, AQ_CANAL, dutyDe(aqPct));
+  pwmEscrever(VE_PIN, VE_CANAL, dutyDe(vePct));
+  Serial.printf("[PWM] aq=%.0f%% (duty %lu)  ve=%.0f%% (duty %lu)\r\n",
+                aqPct, (unsigned long)dutyDe(aqPct), vePct, (unsigned long)dutyDe(vePct));
+  telaSuja = true;
+}
+
+// em setup(), antes de lerAdc():
+//   pwmIniciar(AQ_PIN, AQ_CANAL, AQ_FREQ_HZ);
+//   pwmIniciar(VE_PIN, VE_CANAL, VE_FREQ_HZ);
+//   ... e depois de lerAdc():  controlar();
+//
+// no loop(), dentro do if da banda morta do ADC:   controlar();
+```
+
+Gire o potenciômetro e observe os dois LEDs: o **azul** muda de brilho suavemente, e o
+**laranja** **pisca** 5 vezes por segundo, com o tempo aceso proporcional ao _duty_.
+
+### 3.3 Medindo com o analisador lógico
+
+Deixe o potenciômetro em ~25 %, rode a simulação por alguns segundos e **pare**. No VS Code o
+Wokwi grava o arquivo **`wokwi.vcd`** na raiz do projeto. Abra-o no **PulseView** ou no
+**Surfer** (`app.surfer-project.org`, no navegador) e meça:
+
+- **D0 (aquecedor):** período ≈ 200 ms (5 Hz), tempo em nível alto ≈ 25 % do período.
+- **D1 (ventilador):** período ≈ 40 µs (25 kHz), mesmo _duty_. Dê zoom: em escala de
+  milissegundos ele parece um "borrão".
+
+:::tip[Preveja antes de rodar]
+**P2:** por que o LED do aquecedor **pisca** e o do ventilador não, se os dois recebem o mesmo
+_duty_? O que aconteceria numa ventoinha real acionada a 5 Hz? E numa resistência acionada por
+um relé de estado sólido a 25 kHz? Qual a **maior resolução** possível a 25 kHz?
+:::
+
+**Evidência:** captura do PulseView ou do Surfer com os dois canais e as medições, em
+`evidencias/t3-pwm.png`.
+
+<FileTree root="lab07-grupo-X" files={["evidencias/t3-pwm.png c"]} />
+
+<CommitPoint
+  id="t3"
+  task="PWM com o LEDC"
+  pontos={20}
+  files="src/main.cpp evidencias/t3-pwm.png"
+/>
+
+---
+
+## Parte 4 — ADC e PWM no MQTT, modos `pot` e `remoto` {/* #parte-4 */}
+
+Agora os atuadores podem ser comandados **de fora**. O firmware ganha **modos de operação**:
+
+| Modo     | Quem decide o PWM                                      | O potenciômetro é...      |
+| -------- | ------------------------------------------------------ | ------------------------- |
+| `pot`    | o potenciômetro (dimmer, como na T3)                   | o comando dos dois canais |
+| `remoto` | os comandos `.../cmd/aquecedor` e `.../cmd/ventilador` | só o setpoint (exibido)   |
+| `auto`   | o controle ON/OFF (T6)                                 | o **setpoint** da câmara  |
+
+```mermaid
+sequenceDiagram
+  participant N as Node-RED / mosquitto_pub
+  participant B as Broker
+  participant E as ESP32
+  E->>B: .../adc {"raw":2048,"mv":1650,"sp":37.5} (mudou > banda, ou a cada 10 s)
+  N->>B: .../cmd/modo = remoto
+  B->>E: remoto
+  E->>B: .../pwm {"modo":"remoto","aq":0,"ve":0,...}
+  N->>B: .../cmd/aquecedor = 30
+  B->>E: 30
+  E->>E: pwmEscrever(AQ, duty 77)
+  E->>B: .../pwm {"modo":"remoto","aq":30,...,"aq_duty":77}
+```
+
+### 4.1 O que muda
+
+- **`controlar()`** passa a olhar o `modo`. Ele só mexe no PWM, e só **publica** em
+  `.../pwm`, quando algo **mudou**: o broker recebe um evento por mudança, não um fluxo
+  constante.
+- **`.../adc`** é publicado quando a leitura sai da **banda morta** (±40 contagens) **ou** a
+  cada 10 s, como sinal de "ainda estou aqui" para quem acabou de abrir o dashboard.
+- **Comandos**: `cmd/modo` aceita só `pot` ou `remoto` (o `auto` entra na T6); `cmd/aquecedor`
+  e `cmd/ventilador` aceitam 0–100 e ficam **guardados** até o modo ser `remoto`.
+- Ao (re)conectar, o ESP32 publica `.../adc` e `.../pwm` com o estado atual.
+- A **tela** mostra o modo e o estado no rodapé, e o espelho em texto/framebuffer do Lab 06
+  continua funcionando.
+
+<FileTree root="lab07-grupo-X" files={["src/main.cpp u"]} />
+
+```cpp title="src/main.cpp (trechos novos da T4)"
+const char *TOPICO_ADC      = BASE "/adc";
+const char *TOPICO_PWM      = BASE "/pwm";
+const char *TOPICO_CMD_MODO = BASE "/cmd/modo";        // pot | remoto
+const char *TOPICO_CMD_AQ   = BASE "/cmd/aquecedor";   // 0..100 % (modo remoto)
+const char *TOPICO_CMD_VE   = BASE "/cmd/ventilador";  // 0..100 % (modo remoto)
+
+enum Modo { MODO_POT, MODO_REMOTO };
+const char *NOME_MODO[] = {"pot", "remoto"};
+const int N_MODOS = 2;
+Modo modo = MODO_POT;
+float aqRemoto = 0, veRemoto = 0;        // % pedidos por MQTT (modo remoto)
+
+void publicarPwm() {
+  char t[8] = "null";
+  if (!isnan(ultimaT)) snprintf(t, sizeof(t), "%.1f", ultimaT);
+  char payload[200];
+  snprintf(payload, sizeof(payload),
+           "{\"modo\":\"%s\",\"estado\":\"%s\",\"aq\":%.0f,\"ve\":%.0f,"
+           "\"aq_duty\":%lu,\"ve_duty\":%lu,\"sp\":%.1f,\"t\":%s}",
+           NOME_MODO[modo], estado, aqPct, vePct,
+           (unsigned long)dutyDe(aqPct), (unsigned long)dutyDe(vePct), setpoint, t);
+  mqtt.publish(TOPICO_PWM, payload);
+  Serial.printf("[PWM] %s\r\n", payload);
+}
+
+void controlar() {
+  float aq = 0, ve = 0;
+  const char *novoEstado;
+  switch (modo) {
+    case MODO_POT:                       // potenciômetro = "dimmer" dos dois canais
+      aq = ve = adcRaw * 100.0f / 4095.0f;
+      novoEstado = "MANUAL";
+      break;
+    case MODO_REMOTO:                    // valores vindos do MQTT
+    default:
+      aq = aqRemoto;
+      ve = veRemoto;
+      novoEstado = "REMOTO";
+      break;
+  }
+  aq = roundf(aq);
+  ve = roundf(ve);
+  if (aq == aqPct && ve == vePct && strcmp(novoEstado, estado) == 0) return;   // nada mudou
+  aqPct = aq;
+  vePct = ve;
+  estado = novoEstado;
+  pwmEscrever(AQ_PIN, AQ_CANAL, dutyDe(aqPct));
+  pwmEscrever(VE_PIN, VE_CANAL, dutyDe(vePct));
+  publicarPwm();
+  telaSuja = true;
+}
+
+// no callback aoReceberMensagem(), depois do if do intervalo:
+  } else if (strcmp(topico, TOPICO_CMD_MODO) == 0) {
+    int novo = -1;
+    for (int i = 0; i < N_MODOS; i++)
+      if (strcasecmp(txt, NOME_MODO[i]) == 0) novo = i;
+    if (novo < 0) {
+      Serial.println("[CMD] modo invalido (use pot ou remoto)");
+      return;
+    }
+    modo = (Modo)novo;
+    controlar();
+    telaSuja = true;
+  } else if (strcmp(topico, TOPICO_CMD_AQ) == 0 || strcmp(topico, TOPICO_CMD_VE) == 0) {
+    char *fim;
+    float v = strtof(txt, &fim);
+    if (fim == txt || v < 0 || v > 100) {
+      Serial.println("[CMD] use 0..100 (%)");
+      return;
+    }
+    if (strcmp(topico, TOPICO_CMD_AQ) == 0) aqRemoto = v;
+    else veRemoto = v;
+    if (modo == MODO_REMOTO) controlar();
+    else Serial.println("[CMD] guardado; vale no modo remoto");
+  }
+```
+
+`strtof()` com o ponteiro `fim` detecta texto que **não é número**: se nada foi convertido,
+`fim == txt`. O `atof()` da T3 do Lab 06 devolveria `0` em silêncio.
+
+<details>
+<summary><strong>Código completo até a T4</strong> (clique para abrir)</summary>
+
+<FileTree root="lab07-grupo-X" files={["src/main.cpp u"]} />
+
+```cpp title="src/main.cpp (T4)"
+// elt73a - Lab 07 (T4): ADC (potenciômetro) + PWM (LEDC) + modos pot/remoto via MQTT
+#include <Arduino.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <Ticker.h>
+#include <DHT.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include "mbedtls/base64.h"
+
+#define GRUPO     "a"                    // troque pela letra do seu grupo
+#define DHT_PIN   15
+#define DHT_TIPO  DHT22
+#define OLED_SDA  21
+#define OLED_SCL  22
+#define OLED_ADDR 0x3C
+#define OLED_W    128
+#define OLED_H    64
+
+// ---- ADC: potenciômetro no GPIO34 (ADC1_CH6 - o ADC1 funciona junto com o Wi-Fi)
+#define POT_PIN      34
+#define ADC_AMOSTRAS 16                  // média de 16 leituras (reduz o ruído)
+#define ADC_BANDA    40                  // publica só se mudar mais que ~1 % (40/4095)...
+#define ADC_REPUB_MS 10000               // ...ou a cada 10 s, para quem acabou de chegar
+#define SP_MIN       20.0f               // faixa do setpoint (°C)
+#define SP_MAX       55.0f
+
+// ---- PWM (LEDC): dois canais com frequências bem diferentes
+#define AQ_PIN     25                    // "aquecedor": resistência -> PWM lento
+#define VE_PIN     26                    // "ventilador": ventoinha 4 fios -> 25 kHz
+#define AQ_CANAL   0
+#define VE_CANAL   1
+#define AQ_FREQ_HZ 5
+#define VE_FREQ_HZ 25000
+#define PWM_BITS   8                     // duty de 0 a 255
+#define PWM_MAX    ((1 << PWM_BITS) - 1)
+
+const char *WIFI_SSID  = "Wokwi-GUEST";
+const char *WIFI_SENHA = "";
+const char *MQTT_HOST  = "broker.hivemq.com";
+const uint16_t MQTT_PORTA = 1883;
+
+#define BASE "elt73a/lab07/grupo-" GRUPO
+const char *TOPICO_DADOS      = BASE "/dht";
+const char *TOPICO_STATUS     = BASE "/status";
+const char *TOPICO_OLED       = BASE "/oled";
+const char *TOPICO_OLED_FB    = BASE "/oled/fb";         // (Lab 06)
+const char *TOPICO_ADC        = BASE "/adc";             // T4
+const char *TOPICO_PWM        = BASE "/pwm";             // T4
+const char *TOPICO_INTERVALO  = BASE "/cmd/intervalo";
+const char *TOPICO_CMD_MODO   = BASE "/cmd/modo";        // T4: pot | remoto
+const char *TOPICO_CMD_AQ     = BASE "/cmd/aquecedor";   // T4: 0..100 % (modo remoto)
+const char *TOPICO_CMD_VE     = BASE "/cmd/ventilador";  // T4: 0..100 % (modo remoto)
+
+DHT dht(DHT_PIN, DHT_TIPO);
+Adafruit_SSD1306 oled(OLED_W, OLED_H, &Wire, -1);
+WiFiClient wifiClient;
+PubSubClient mqtt(wifiClient);
+Ticker temporizador;                     // leitura do DHT22
+Ticker temporizadorAdc;                  // leitura do potenciômetro
+
+volatile bool leituraPendente = false;
+volatile bool adcPendente = false;
+float intervaloS = 5.0;
+uint32_t seq = 0;
+float ultimaT = NAN, ultimaH = NAN;
+bool telaSuja = true;
+char clientId[32];
+
+enum Modo { MODO_POT, MODO_REMOTO };
+const char *NOME_MODO[] = {"pot", "remoto"};
+const int N_MODOS = 2;
+Modo modo = MODO_POT;
+
+int adcRaw = 0, adcMv = 0;               // média das leituras
+float setpoint = SP_MIN;                 // °C, vem do potenciômetro
+int rawPublicado = -10000;               // último raw enviado (banda morta)
+unsigned long tAdcPublicado = 0;
+float aqPct = -1, vePct = -1;            // % aplicados (-1: ainda não aplicado)
+float aqRemoto = 0, veRemoto = 0;        // % pedidos por MQTT (modo remoto)
+const char *estado = "---";
+
+void aoEstourarTemporizador() { leituraPendente = true; }
+void aoEstourarTemporizadorAdc() { adcPendente = true; }
+
+// ------------------------------------------------- PWM: core 2.x e 3.x (T3)
+void pwmIniciar(uint8_t pino, uint8_t canal, uint32_t freq) {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+  ledcAttachChannel(pino, freq, PWM_BITS, canal);
+#else
+  ledcSetup(canal, freq, PWM_BITS);
+  ledcAttachPin(pino, canal);
+#endif
+}
+
+void pwmEscrever(uint8_t pino, uint8_t canal, uint32_t duty) {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+  (void)canal;
+  ledcWrite(pino, duty);                 // 3.x: endereça pelo pino
+#else
+  (void)pino;
+  ledcWrite(canal, duty);                // 2.x: endereça pelo canal
+#endif
+}
+
+uint32_t dutyDe(float pct) { return (uint32_t)lroundf(pct * PWM_MAX / 100.0f); }
+
+// ---------------------------------------------------------------- ADC (T2)
+void lerAdc() {
+  uint32_t somaRaw = 0, somaMv = 0;
+  for (int i = 0; i < ADC_AMOSTRAS; i++) {
+    somaRaw += analogRead(POT_PIN);
+    somaMv += analogReadMilliVolts(POT_PIN);
+  }
+  adcRaw = somaRaw / ADC_AMOSTRAS;
+  adcMv = somaMv / ADC_AMOSTRAS;
+  float sp = SP_MIN + adcRaw * (SP_MAX - SP_MIN) / 4095.0f;
+  setpoint = roundf(sp * 2) / 2;         // passos de 0,5 °C
+}
+
+// ------------------------------------------------------------- OLED
+void indicador(int x, const char *letra, bool ok) {
+  if (ok) {
+    oled.fillRect(x, 0, 13, 9, SSD1306_WHITE);
+    oled.setTextColor(SSD1306_BLACK);
+  } else {
+    oled.drawRect(x, 0, 13, 9, SSD1306_WHITE);
+    oled.setTextColor(SSD1306_WHITE);
+  }
+  oled.setCursor(x + 4, 1);
+  oled.print(letra);
+  oled.setTextColor(SSD1306_WHITE);
+}
+
+void barra(int y, const char *rotulo, float pct) {
+  oled.setCursor(0, y);
+  oled.print(rotulo);
+  oled.drawRect(16, y, 80, 8, SSD1306_WHITE);
+  oled.fillRect(18, y + 2, (int)(76 * pct / 100.0f), 4, SSD1306_WHITE);
+  oled.setCursor(100, y);
+  oled.printf("%3.0f%%", pct);
+}
+
+void desenharTela() {
+  oled.clearDisplay();
+  oled.setTextColor(SSD1306_WHITE);
+
+  oled.setTextSize(1);                               // cabeçalho
+  oled.setCursor(0, 1);
+  oled.print("LAB07 grupo " GRUPO);
+  indicador(98, "W", WiFi.status() == WL_CONNECTED);
+  indicador(114, "M", mqtt.connected());
+  oled.drawFastHLine(0, 11, OLED_W, SSD1306_WHITE);
+
+  oled.setTextSize(2);                               // temperatura medida
+  oled.setCursor(0, 15);
+  if (isnan(ultimaT)) oled.print("--.-");
+  else oled.printf("%4.1f", ultimaT);
+  oled.drawCircle(53, 17, 2, SSD1306_WHITE);
+  oled.setCursor(58, 15);
+  oled.print("C");
+
+  oled.setTextSize(1);                               // setpoint e ADC
+  oled.setCursor(76, 15);
+  oled.printf("SP %4.1f", setpoint);
+  oled.setCursor(76, 24);
+  oled.printf("%4d mV", adcMv);
+
+  barra(35, "AQ", aqPct < 0 ? 0 : aqPct);           // atuadores
+  barra(45, "VE", vePct < 0 ? 0 : vePct);
+
+  oled.setCursor(0, 56);                             // modo e estado
+  oled.printf("%s: %s", NOME_MODO[modo], estado);
+  oled.display();
+}
+
+void publicarTelaTexto() {
+  char t[8] = "--.-";
+  if (!isnan(ultimaT)) snprintf(t, sizeof(t), "%.1f", ultimaT);
+  char payload[220];
+  snprintf(payload, sizeof(payload),
+           "{\"linhas\":[\"LAB07 grupo %s\",\"T: %s C  SP: %.1f C\",\"AQ: %.0f %%  VE: %.0f %%\","
+           "\"modo %s | %s\",\"WiFi %s | MQTT %s\"]}",
+           GRUPO, t, setpoint, aqPct < 0 ? 0 : aqPct, vePct < 0 ? 0 : vePct,
+           NOME_MODO[modo], estado,
+           WiFi.status() == WL_CONNECTED ? "ok" : "--", mqtt.connected() ? "ok" : "--");
+  mqtt.publish(TOPICO_OLED, payload);
+}
+
+void publicarFramebuffer() {
+  static unsigned char b64[1400];
+  size_t n = 0;
+  mbedtls_base64_encode(b64, sizeof(b64), &n, oled.getBuffer(), OLED_W * OLED_H / 8);
+  if (!mqtt.publish(TOPICO_OLED_FB, b64, n, false))
+    Serial.println("[FB] publish falhou: aumente mqtt.setBufferSize()");
+}
+
+// ------------------------------------------------- publicação de ADC e PWM (T4)
+void publicarAdc() {
+  char payload[96];
+  snprintf(payload, sizeof(payload), "{\"raw\":%d,\"mv\":%d,\"sp\":%.1f}", adcRaw, adcMv, setpoint);
+  mqtt.publish(TOPICO_ADC, payload);
+  rawPublicado = adcRaw;
+  tAdcPublicado = millis();
+}
+
+void publicarPwm() {
+  char t[8] = "null";
+  if (!isnan(ultimaT)) snprintf(t, sizeof(t), "%.1f", ultimaT);
+  char payload[200];
+  snprintf(payload, sizeof(payload),
+           "{\"modo\":\"%s\",\"estado\":\"%s\",\"aq\":%.0f,\"ve\":%.0f,"
+           "\"aq_duty\":%lu,\"ve_duty\":%lu,\"sp\":%.1f,\"t\":%s}",
+           NOME_MODO[modo], estado, aqPct, vePct,
+           (unsigned long)dutyDe(aqPct), (unsigned long)dutyDe(vePct), setpoint, t);
+  mqtt.publish(TOPICO_PWM, payload);
+  Serial.printf("[PWM] %s\r\n", payload);
+}
+
+// ------------------------------------------------- decisão dos atuadores (T3/T4)
+void controlar() {
+  float aq = 0, ve = 0;
+  const char *novoEstado;
+  switch (modo) {
+    case MODO_POT:                       // T3: potenciômetro = "dimmer" dos dois canais
+      aq = ve = adcRaw * 100.0f / 4095.0f;
+      novoEstado = "MANUAL";
+      break;
+    case MODO_REMOTO:                    // T4: valores vindos do MQTT
+    default:
+      aq = aqRemoto;
+      ve = veRemoto;
+      novoEstado = "REMOTO";
+      break;
+  }
+  aq = roundf(aq);
+  ve = roundf(ve);
+  if (aq == aqPct && ve == vePct && strcmp(novoEstado, estado) == 0) return;   // nada mudou
+  aqPct = aq;
+  vePct = ve;
+  estado = novoEstado;
+  pwmEscrever(AQ_PIN, AQ_CANAL, dutyDe(aqPct));
+  pwmEscrever(VE_PIN, VE_CANAL, dutyDe(vePct));
+  publicarPwm();
+  telaSuja = true;
+}
+
+// ---------------------------------------------------------------- comandos
+void aoReceberMensagem(char *topico, byte *payload, unsigned int tam) {
+  char txt[16];
+  size_t n = tam < sizeof(txt) - 1 ? tam : sizeof(txt) - 1;
+  memcpy(txt, payload, n);
+  txt[n] = '\0';
+  Serial.printf("[CMD] %s <- '%s'\r\n", topico, txt);
+
+  if (strcmp(topico, TOPICO_INTERVALO) == 0) {
+    float v = atof(txt);
+    if (v < 2.0 || v > 60.0) {
+      Serial.println("[CMD] intervalo fora de 2..60 s - ignorado");
+      return;
+    }
+    intervaloS = v;
+    temporizador.detach();
+    temporizador.attach(intervaloS, aoEstourarTemporizador);
+    telaSuja = true;
+  } else if (strcmp(topico, TOPICO_CMD_MODO) == 0) {
+    int novo = -1;
+    for (int i = 0; i < N_MODOS; i++)
+      if (strcasecmp(txt, NOME_MODO[i]) == 0) novo = i;
+    if (novo < 0) {
+      Serial.println("[CMD] modo invalido (use pot ou remoto)");
+      return;
+    }
+    modo = (Modo)novo;
+    controlar();
+    telaSuja = true;
+  } else if (strcmp(topico, TOPICO_CMD_AQ) == 0 || strcmp(topico, TOPICO_CMD_VE) == 0) {
+    char *fim;
+    float v = strtof(txt, &fim);
+    if (fim == txt || v < 0 || v > 100) {
+      Serial.println("[CMD] use 0..100 (%)");
+      return;
+    }
+    if (strcmp(topico, TOPICO_CMD_AQ) == 0) aqRemoto = v;
+    else veRemoto = v;
+    if (modo == MODO_REMOTO) controlar();
+    else Serial.println("[CMD] guardado; vale no modo remoto");
+  }
+}
+
+// ------------------------------------------------------------ Wi-Fi e MQTT
+void conectarWiFi() {
+  Serial.printf("[WiFi] conectando a %s", WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_SENHA, 6);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(250);
+    Serial.print('.');
+  }
+  Serial.printf("\r\n[WiFi] conectado, IP %s\r\n", WiFi.localIP().toString().c_str());
+}
+
+void conectarMQTT() {
+  while (!mqtt.connected()) {
+    Serial.printf("[MQTT] conectando a %s como %s ... ", MQTT_HOST, clientId);
+    if (mqtt.connect(clientId, TOPICO_STATUS, 1, true, "offline")) {
+      Serial.println("ok");
+      mqtt.publish(TOPICO_STATUS, "online", true);
+      mqtt.subscribe(TOPICO_INTERVALO);
+      mqtt.subscribe(TOPICO_CMD_MODO);
+      mqtt.subscribe(TOPICO_CMD_AQ);
+      mqtt.subscribe(TOPICO_CMD_VE);
+      publicarAdc();                     // estado atual para quem acabou de chegar
+      publicarPwm();
+      telaSuja = true;
+    } else {
+      Serial.printf("falhou (rc=%d), nova tentativa em 2 s\r\n", mqtt.state());
+      delay(2000);
+    }
+  }
+}
+
+void lerEPublicar() {
+  float t = dht.readTemperature();
+  float h = dht.readHumidity();
+  if (isnan(t) || isnan(h)) {
+    Serial.println("[DHT] falha na leitura (NaN) - descartada");
+    return;
+  }
+  seq++;
+  ultimaT = t;
+  ultimaH = h;
+  char payload[160];
+  snprintf(payload, sizeof(payload),
+           "{\"grupo\":\"%s\",\"seq\":%lu,\"t\":%.1f,\"h\":%.1f,\"uptime_ms\":%lu,\"intervalo_s\":%.1f}",
+           GRUPO, (unsigned long)seq, t, h, (unsigned long)millis(), intervaloS);
+  bool ok = mqtt.publish(TOPICO_DADOS, payload);
+  Serial.printf("[PUB] %s %s -> %s\r\n", ok ? "ok" : "ERRO", TOPICO_DADOS, payload);
+  telaSuja = true;
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+  Serial.println("\r\n=== Lab 07 - ADC + PWM + MQTT ===");
+  dht.begin();
+
+  analogReadResolution(12);              // 0..4095
+  analogSetPinAttenuation(POT_PIN, ADC_11db);   // faixa de ~0 a 3,1 V
+  pwmIniciar(AQ_PIN, AQ_CANAL, AQ_FREQ_HZ);
+  pwmIniciar(VE_PIN, VE_CANAL, VE_FREQ_HZ);
+  lerAdc();
+  controlar();
+
+  Wire.begin(OLED_SDA, OLED_SCL);
+  if (!oled.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+    Serial.println("[OLED] SSD1306 nao encontrado - confira SDA/SCL/endereco");
+  }
+  desenharTela();
+
+  uint64_t mac = ESP.getEfuseMac();
+  snprintf(clientId, sizeof(clientId), "lab07-%s-%04X", GRUPO, (uint16_t)(mac >> 32));
+
+  conectarWiFi();
+  mqtt.setServer(MQTT_HOST, MQTT_PORTA);
+  mqtt.setCallback(aoReceberMensagem);
+  mqtt.setBufferSize(1600);
+  conectarMQTT();
+
+  temporizador.attach(intervaloS, aoEstourarTemporizador);
+  temporizadorAdc.attach_ms(100, aoEstourarTemporizadorAdc);   // 10 Hz
+}
+
+void loop() {
+  if (WiFi.status() != WL_CONNECTED) conectarWiFi();
+  if (!mqtt.connected()) conectarMQTT();
+  mqtt.loop();
+
+  if (adcPendente) {
+    adcPendente = false;
+    lerAdc();
+    if (abs(adcRaw - rawPublicado) > ADC_BANDA) {   // banda morta: ignora o ruído
+      publicarAdc();
+      controlar();
+      telaSuja = true;
+    } else if (millis() - tAdcPublicado >= ADC_REPUB_MS) {
+      publicarAdc();                                 // sem mudança: só "ainda estou aqui"
+    }
+  }
+
+  if (leituraPendente) {
+    leituraPendente = false;
+    lerEPublicar();
+  }
+
+  if (telaSuja) {
+    telaSuja = false;
+    desenharTela();
+    publicarTelaTexto();
+    publicarFramebuffer();
+  }
 }
 ```
 
-Or:
+</details>
 
-```js
-// The math: (adc1 * 3.3) / 4095
-msg.topic =
-  "SELECT (ADC1IN1 * 3.3 / 4095) AS voltage1 FROM sensor_readings ORDER BY id DESC LIMIT 1;";
-return msg;
+### 4.2 Testando pelo terminal
+
+<GroupCommands
+  language="bash"
+  commands={[
+    {
+      title: "1. Assinar tópicos (sem o framebuffer)",
+      codeTitle: "Terminal 1 — assinar (sem o framebuffer)",
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com \\
+  -t '{course}/lab07/grupo-{group}/adc' -t '{course}/lab07/grupo-{group}/pwm' \\
+  -t '{course}/lab07/grupo-{group}/cmd/#' -v | tee evidencias/t4-mqtt.txt`,
+    },
+    {
+      title: "2. Comandar via MQTT",
+      codeTitle: "Terminal 2 — comandar",
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/modo -m remoto
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/aquecedor -m 30
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/ventilador -m 80
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/aquecedor -m 150   # fora da faixa
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/modo -m turbo      # modo inválido
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/modo -m pot`,
+    },
+  ]}
+/>
+
+**Saída esperada** (gire o potenciômetro antes dos comandos):
+
+<GroupCommands
+  language="text"
+  commands={[
+    {
+      title: "Exemplo de Evidência de Saída",
+      codeTitle: "evidencias/t4-mqtt.txt",
+      command: `{course}/lab07/grupo-{group}/adc {"raw":3000,"mv":2420,"sp":45.5}
+{course}/lab07/grupo-{group}/pwm {"modo":"pot","estado":"MANUAL","aq":73,"ve":73,"aq_duty":186,"ve_duty":186,"sp":45.5,"t":24.5}
+{course}/lab07/grupo-{group}/cmd/modo remoto
+{course}/lab07/grupo-{group}/pwm {"modo":"remoto","estado":"REMOTO","aq":0,"ve":0,"aq_duty":0,"ve_duty":0,"sp":45.5,"t":24.5}
+{course}/lab07/grupo-{group}/cmd/aquecedor 30
+{course}/lab07/grupo-{group}/pwm {"modo":"remoto","estado":"REMOTO","aq":30,"ve":0,"aq_duty":77,"ve_duty":0,"sp":45.5,"t":24.5}
+{course}/lab07/grupo-{group}/cmd/ventilador 80
+{course}/lab07/grupo-{group}/pwm {"modo":"remoto","estado":"REMOTO","aq":30,"ve":80,"aq_duty":77,"ve_duty":204,"sp":45.5,"t":24.5}
+{course}/lab07/grupo-{group}/cmd/aquecedor 150
+{course}/lab07/grupo-{group}/cmd/modo turbo
+{course}/lab07/grupo-{group}/cmd/modo pot
+{course}/lab07/grupo-{group}/pwm {"modo":"pot","estado":"MANUAL","aq":73,"ve":73,"aq_duty":186,"ve_duty":186,"sp":45.5,"t":24.5}`,
+    },
+  ]}
+/>
+
+Repare que `aquecedor 150` e `modo turbo` **não** geram `.../pwm`: o ESP32 recusou os dois.
+
+:::tip[Preveja antes de rodar]
+**P3:** com `ADC_BANDA = 0`, quantas mensagens por segundo iriam para `.../adc` numa **placa
+real**, com o potenciômetro parado? E no Wokwi, cujo ADC não tem ruído? Por que, mesmo com a
+banda morta, vale publicar `.../adc` a cada 10 s? Pense no dashboard aberto **depois** da
+última mudança.
+:::
+
+<FileTree
+  root="lab07-grupo-X"
+  files={["src/main.cpp u", "evidencias/t4-mqtt.txt c"]}
+/>
+
+<CommitPoint
+  id="t4"
+  task="ADC e PWM no MQTT, modos pot e remoto"
+  pontos={20}
+  files="src/main.cpp evidencias/t4-mqtt.txt"
+/>
+
+---
+
+## Parte 5 — Node-RED: dashboard de comando {/* #parte-5 */}
+
+O Node-RED desta aula é **mínimo**: ele mostra a tela e o estado do ESP32 e manda os comandos de
+modo e de PWM. Registrar cada mudança dos atuadores num banco e calcular tempo e energia fica
+para o **Lab 08**.
+
+Na página **Lab 07** (caminho `/lab07`) do `My Dashboard`, crie dois grupos: _ESP32 (OLED)_ e
+_Comando_ (largura 4 cada).
+
+```mermaid
+flowchart LR
+  FB[mqtt in .../oled/fb] --> T[ui-template: OLED pixel a pixel]
+  S[mqtt in .../status] --> TX1[ui-text ESP32]
+  P[mqtt in .../pwm · JSON] --> F[function: pwm → widgets · 4 saídas]
+  F --> TX2[ui-text Estado] & BG[ui-button-group Modo] & SL[ui-sliders aquecedor/ventilador]
+  BG & SL --> MO[mqtt out .../cmd/...]
 ```
 
-Average of the Last "X" Records
+### 5.1 Tela e status
 
-```js
-msg.topic = `SELECT AVG(ADC1IN1) AS mean_adc1 
-             FROM (SELECT ADC1IN1 FROM sensor_readings ORDER BY id DESC LIMIT 5);`;
-return msg;
+Copie da aba Lab 06 o **mqtt in** do framebuffer e o **ui-template** "OLED pixel a pixel". Troque
+o tópico para `elt73a/lab07/grupo-x/oled/fb` e coloque o template no grupo _ESP32 (OLED)_. Logo
+abaixo, um **mqtt in** `.../status` (_a String_) → **ui-text** "ESP32".
+
+### 5.2 Estado, modo e sliders
+
+**mqtt in** `elt73a/lab07/grupo-x/pwm` (_a parsed JSON object_) → **function** com **4 saídas**:
+
+```js title="function: pwm -> widgets (4 saídas)"
+// .../pwm -> estado e sincronia dos comandos (só o que mudou)
+const p = msg.payload;
+if (typeof p?.aq !== "number") return null;
+const ant = context.get("ant") || {};
+context.set("ant", p);
+const mudou = (k) => ant[k] !== p[k];
+return [
+  { payload: `${p.estado} · AQ ${p.aq} % · VE ${p.ve} %` },
+  mudou("modo") ? { payload: p.modo } : null, // botões do modo
+  p.modo === "remoto" && mudou("aq") ? { payload: p.aq } : null, // sliders só no remoto
+  p.modo === "remoto" && mudou("ve") ? { payload: p.ve } : null,
+];
 ```
 
-## InfluxDB Test
+| Saída | Nó                                                                                                                                                                                 |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | **ui-text** "Estado" (grupo _ESP32 (OLED)_)                                                                                                                                        |
+| 2     | **ui-button-group** "Modo" (grupo _Comando_): opções `pot` (Potenciômetro) e `remoto` (Remoto); _Topic_ `elt73a/lab07/grupo-x/cmd/modo`; pass-through **desligado**                |
+| 3, 4  | **ui-slider** "Aquecedor no remoto (%)" e "Ventilador no remoto (%)": 0–100, passo 5, _Topic_ `.../cmd/aquecedor` e `.../cmd/ventilador`, _on release_, pass-through **desligado** |
 
-```js
-let adc1Value = Math.floor(Math.random() * 4096);
-let adc2Value = Math.floor(Math.random() * 4096);
+Ligue o button-group e os dois sliders a um **mqtt out** com tópico **vazio**, que usa o
+`msg.topic` de cada um.
 
-msg.topic = "InfluxData";
-msg.payload = {
-  ADC1IN1: adc1Value,
-  voltage1: (adc1Value * 3.3) / 4095,
-  ADC1IN2: adc2Value,
-  voltage2: (adc2Value * 3.3) / 4095,
-  BLUELED: Math.round(Math.random()),
-};
-return msg;
+:::note[Por que a function só manda o que mudou?]
+Os widgets mostram o que o ESP32 **confirmou** em `.../pwm`, e não o último clique. Se a function
+reenviasse o valor a cada mensagem, um slider que você está arrastando "pularia" de volta. E os
+sliders só acompanham o ESP32 no modo `remoto`: no modo `pot`, quem manda é o knob.
+:::
+
+Com o dashboard aberto em `http://localhost:1880/dashboard/lab07`:
+
+- clique **Remoto** e mova os sliders: os LEDs no Wokwi, as barras no OLED e o texto "Estado"
+  mudam juntos;
+- clique **Potenciômetro** e gire o knob no Wokwi: os sliders **não** se mexem (eles só
+  acompanham o modo remoto).
+
+**Evidências:** a captura do dashboard em `evidencias/t5-dashboard.png` e a aba **Lab 07**
+exportada em `nodered/flows-lab07.json`.
+
+<FileTree
+  root="lab07-grupo-X"
+  files={["nodered/flows-lab07.json c", "evidencias/t5-dashboard.png c"]}
+/>
+
+<CommitPoint
+  id="t5"
+  task="Node-RED: dashboard de comando"
+  pontos={15}
+  files="nodered/flows-lab07.json evidencias/t5-dashboard.png"
+/>
+
+---
+
+## Projeto integrador — modo `auto`: controle ON/OFF com histerese {/* #integrador */}
+
+Agora o ESP32 decide sozinho. No modo **`auto`**, o potenciômetro é o **setpoint** (SP), e a
+cada leitura do DHT22:
+
+- o **aquecedor** liga (100 %) quando T fica abaixo de **SP − 0,5 °C** e desliga (0 %) quando
+  passa de **SP + 0,5 °C**. Entre os dois limites, **mantém** o que estava fazendo: isso é a
+  **histerese**;
+- o **ventilador** fica em 0 % até **SP + 1 °C** e sobe **25 % por °C** acima disso (controle
+  **proporcional**, limitado a 100 %).
+
+```mermaid
+stateDiagram-v2
+  [*] --> AQUECENDO: T < SP − 0,5
+  AQUECENDO --> ESTAVEL: T > SP + 0,5 (aquecedor desliga)
+  ESTAVEL --> AQUECENDO: T < SP − 0,5
+  ESTAVEL --> RESFRIANDO: T > SP + 1 (ventilador entra)
+  RESFRIANDO --> ESTAVEL: T ≤ SP + 1
 ```
 
-Ou sugerido peo Gemini:
-
-```js
-// Generate raw values
-const adc1 = Math.floor(Math.random() * 4096);
-const adc2 = Math.floor(Math.random() * 4096);
-
-// Helper to convert ADC to Voltage
-const toVolts = (val) => parseFloat(((val * 3.3) / 4095).toFixed(3));
-
-msg.topic = "sensor_data"; // Useful for organizing in Node-RED
-msg.payload = {
-  ADC1IN1: adc1,
-  voltage1: toVolts(adc1),
-  ADC1IN2: adc2,
-  voltage2: toVolts(adc2),
-  BLUELED: Math.random() > 0.5 ? 1 : 0,
-};
-
-return msg;
+```text title="Exemplo com SP = 37,5 °C"
+T = 24,5 °C  → AQUECENDO   aquecedor 100 %, ventilador  0 %
+T = 37,4 °C  → (mantém)    está dentro da faixa 37,0 … 38,0: continua aquecendo
+T = 38,2 °C  → ESTAVEL     aquecedor   0 %, ventilador  0 %
+T = 41,0 °C  → RESFRIANDO  aquecedor   0 %, ventilador 63 %   (41 − 38,5) × 25 = 62,5
 ```
 
-## VS Code Terminal Configuration
+### Requisitos
 
-Configure `Git Bash` como terminal integrado do Visual Studio Code para evitar problemas de formatação de texto e comandos:
+1. **Firmware**
+   - Terceiro modo `auto` (`N_MODOS = 3`), aceito em `.../cmd/modo`.
+   - Variável `aquecendo` que guarda o estado da histerese, zerada ao trocar de modo.
+   - Estados publicados: `AQUECENDO`, `ESTAVEL`, `RESFRIANDO` e `SEM DHT` (antes da primeira
+     leitura válida).
+   - Chamar `controlar()` também **depois de cada leitura do DHT22**, porque no modo `auto` a
+     temperatura nova pode mudar a decisão.
+2. **Node-RED**: terceira opção **Automático** no button-group (valor `auto`). Nenhum outro
+   nó muda: a function da T5 já repassa qualquer modo confirmado pelo ESP32.
+3. **Experimento no Wokwi** (você é a planta): modo `auto`, SP ≈ 37,5 °C, e leve a
+   temperatura do DHT22 por **24,5 → 37,4 → 38,2 → 41,0 → 37,8 → 36,8 °C**, esperando uma
+   leitura em cada valor.
+4. **Evidências**
+   - `evidencias/t6-serial.txt`: as linhas `[PWM]` do experimento.
+   - `evidencias/t6-dashboard.png`: o dashboard em **Automático**, com o estado `RESFRIANDO`
+     (passo 41,0 °C do experimento).
+   - O fluxo exportado de novo em `nodered/flows-lab07.json`.
 
-```json title=".vscode/settings.json"
-"terminal.integrated.defaultProfile.windows": "Git Bash",
+**Saída esperada** (trecho do serial):
+
+```text title="evidencias/t6-serial.txt"
+[PWM] {"modo":"auto","estado":"AQUECENDO","aq":100,"ve":0,"aq_duty":255,"ve_duty":0,"sp":37.5,"t":24.5}
+[PWM] {"modo":"auto","estado":"ESTAVEL","aq":0,"ve":0,"aq_duty":0,"ve_duty":0,"sp":37.5,"t":38.2}
+[PWM] {"modo":"auto","estado":"RESFRIANDO","aq":0,"ve":63,"aq_duty":0,"ve_duty":161,"sp":37.5,"t":41.0}
+[PWM] {"modo":"auto","estado":"ESTAVEL","aq":0,"ve":0,"aq_duty":0,"ve_duty":0,"sp":37.5,"t":37.8}
+[PWM] {"modo":"auto","estado":"AQUECENDO","aq":100,"ve":0,"aq_duty":255,"ve_duty":0,"sp":37.5,"t":36.8}
 ```
 
-## Crie um [gh alias](/docs/github-cli#aliases) para deploy-debug
+Em 37,4 °C não aparece linha nova: a histerese manteve o aquecedor ligado. Em 37,8 °C também
+não religou, porque ainda estava acima de SP − 0,5 = 37,0 °C.
 
-```bash
-gh alias set deploy-debug 'tag="$1"; cp ./build/Debug/*.elf ./firmware-debug.elf && gh release create "$tag" ./firmware-debug.elf --generate-notes && rm ./firmware-debug.elf' --shell
+### Dicas de API
+
+```cpp title="Trechos úteis (firmware)"
+#define HISTERESE 0.5f                   // ±0,5 °C
+
+enum Modo { MODO_POT, MODO_REMOTO, MODO_AUTO };
+const char *NOME_MODO[] = {"pot", "remoto", "auto"};
+const int N_MODOS = 3;
+bool aquecendo = false;                  // memória da histerese
+
+// novo case em controlar():
+    case MODO_AUTO:
+      if (isnan(ultimaT)) { novoEstado = "SEM DHT"; break; }
+      if (ultimaT < setpoint - HISTERESE) aquecendo = true;
+      else if (ultimaT > setpoint + HISTERESE) aquecendo = false;
+      // senão: mantém 'aquecendo' como está
+      aq = aquecendo ? 100 : 0;
+      ve = constrain((ultimaT - setpoint - 1.0f) * 25.0f, 0.0f, 100.0f);
+      novoEstado = ...;                  // AQUECENDO / RESFRIANDO / ESTAVEL
+      break;
 ```
 
-Como funciona:
+:::tip[Preveja antes de rodar]
+**P4:** com `HISTERESE = 0` e um sensor que oscila ±0,1 °C em torno do setpoint, o que
+aconteceria com o aquecedor? Por que isso é ruim para um relé ou contator real? Com o DHT22
+lido a cada 5 s, quantas vezes por minuto o aquecedor pode, **no máximo**, trocar de estado?
+(No Lab 08 você vai **medir** isso no banco: tempo em cada estado e energia do aquecedor.)
+:::
 
-- Considera a etiqueta de lançamento como $1.
-- Copia o ELF de ./build/Debug/\*.elf → ./firmware-debug.elf.
-- Executa gh release create com o arquivo renomeado.
-- Limpa removendo o arquivo renomeado temporário.
+<FileTree
+  root="lab07-grupo-X"
+  files={[
+    "src/main.cpp u",
+    "nodered/flows-lab07.json u",
+    "evidencias/t6-serial.txt c",
+    "evidencias/t6-dashboard.png c",
+  ]}
+/>
 
-Uso:
+<CommitPoint
+  id="t6"
+  task="Modo auto: controle ON/OFF com histerese"
+  pontos={20}
+  files="src/main.cpp nodered/flows-lab07.json evidencias/t6-serial.txt evidencias/t6-dashboard.png"
+/>
 
-```bash
-gh deploy-debug v1.0.0
-```
+---
 
-### Rápida verificação do upload
-
-Assim que o comando terminar, você poderá verificar o upload diretamente em seu terminal usando:
-
-```bash
-gh release view v1.0.0 --web
-```
+<LabLogout />

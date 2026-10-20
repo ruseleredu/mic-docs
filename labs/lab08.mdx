@@ -1,496 +1,854 @@
 ---
-sidebar_position: 11
 title: Laboratório 08
-description: Introdução as aulas de laboratório
+sidebar_position: 11
 ---
 
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-import { LABsApoio } from "@site/src/components/shared/AvisosSite";
-import {
-  DevToolsv2,
-  GitConfig,
-  GitCommit,
-  NewBranch,
-} from "@site/src/components/shared/InstructionsSite";
+## Checklist — Node-RED e SQLite: gravar, consultar e manter {/* #checklist */}
 
-# Laboratório 08
+- [ ] Firmware do Lab 07 publicando em `elt73a/lab08/...`; banco `lab08.sqlite` com as tabelas `leituras` e `atuacao` criadas em modo _Batch_ (T1)
+- [ ] Gravação com INSERT preparado, validação na function e `CHECK` no banco; ataque de injeção de SQL gravado como texto (T2)
+- [ ] Consultas das leituras: resumo por minuto (`GROUP BY`), falhas na sequência e intervalo real (`LAG()`) (T3)
+- [ ] Consultas da atuação: tempo em cada estado, energia por modo e trocas do aquecedor (`LEAD()`, `LAG()`) (T4)
+- [ ] Dashboard com histórico vindo do banco, período escolhido por _dropdown_ (`$janela`) e tabelas de resumo (T5)
+- [ ] Manutenção: índice e plano de consulta, resumo por minuto, retenção em transação e `VACUUM` (T6)
+- [ ] Previsões P1–P5 respondidas no `README.md`
+- [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
 
-{/* Info de que este conteúdo é de apoio! */}
+:::info[Pontuação]
+**T1…T6 = 100 pts** (esta aula não tem desafios): T1 10 · T2 20 · T3 15 · T4 15 · T5 20 ·
+T6 20. O autograder normaliza para 0–10. Vale o commit `Tn:` mais recente de cada tarefa.
+:::
 
-<LABsApoio />
+<LabSetup />
 
-{/* Tabela com link para atividade, inicio, fim e descrição do LAB! */}
+### Configuração do ambiente de desenvolvimento {/* #setup */}
 
-<div style={{ display: "flex", justifyContent: "center" }}>
-  <LabTable index={8} internal={false} />
-</div>
-
----
-
-## Conteúdo
-
-Esta atividade de laboratório tem como objetivo configurar a leitura do sensor de temperatura interna e utilizar o SQLite e STM32CubeMonitor.
-Cada item equivale a 10% da nota.
-
-- [ ] Crie um repositório (LAB08) via template (https://github.com/ELT73A-LAB-TPL/LAB08) na organização e clone;
-- [ ] Importe e compile o código da pasta TEMPSENSOR
-- [ ] Verifique a configuração dos periféricos;
-- [ ] Configure o executável e probes no STM32CubeMonitor;
-- [ ] Deploy e Dashboard no STM32CubeMonitor;
-- [ ] Configure o SQLite no Node-RED;
-- [ ] Teste de injeção de dados no SQLite;
-- [ ] Leitura do ADC e injeção de dados no SQLite;
-- [ ] Commit e push do Node-RED export flow;
-- [ ] Envie o link do repositório no GitHub (hyperlink);
-
-## Avaliação
-
-- [ ] Uso do template e código - 20%
-- [ ] Configuração do STM32CubeMonitor - 20%
-- [ ] Configuração e teste do SQLite - 20%
-- [ ] Leitura do ADC e injeção de dados no SQLite - 20%
-- [ ] Commit e push do Node-RED export flow - 20%
-- [ ] Link do repositório no GitHub (hyperlink) - 10%
-
-## Verifique o seu ambiente de desenvolvimento
-
-{/* List of Dev Tools */}
-
-<DevToolsv2 />
-
-{/* Configure o git */}
-
-<GitConfig />
+<DevTools />
 
 ---
 
-## Crie um novo repositório com base no template do LAB08 {/* #new-repo-from-tpl */}
+Nos Labs 06 e 07 o Node-RED só **mostrava** o presente: a tela do OLED, o estado dos atuadores, os
+sliders. Bastava fechar o dashboard para tudo sumir. Nesta aula o firmware **não muda** (é o do
+Lab 07, só com os tópicos em `lab08`). Quem trabalha é o **Node-RED**, que passa a **guardar**
+tudo num banco **SQLite** e a responder perguntas sobre o passado:
 
-Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub:
+- alguma leitura se perdeu? o ESP32 reiniciou?
+- quanto tempo o controle ficou aquecendo, e quanta **energia** o aquecedor gastou?
+- como era a temperatura **na última hora**, mesmo com o dashboard fechado?
+- e o banco: ele cresce para sempre? quanto ocupa? as consultas continuam rápidas?
 
-{/* Gera instruções para criar o repositório no GitHub por grupo com base no template do laboratório. */}
+```mermaid
+flowchart LR
+  ESP[ESP32 · firmware do Lab 07] -->|dht · pwm| BRK[(broker.hivemq.com)]
+  BRK --> V[function: valida e monta parâmetros]
+  V -->|INSERT preparado| DB[(SQLite · lab08.sqlite)]
+  INJ[inject: SQL] -->|SELECT · LAG · LEAD| DB
+  DB --> DBG[debug]
+  DD[dropdown: período] -->|$janela| DB
+  DB --> DASH[Dashboard: histórico e resumo]
+  M[inject a cada 5 min] -->|resumo + retenção| DB
+```
 
-<LabFromTemplate labNumber="LAB08" opts="-c" />
+## Objetivos
 
-{/* Git Commit */}
+- Criar um **esquema** com tipos, valores padrão e restrições `CHECK`, e saber quando usar cada
+  modo do nó **sqlite** (_Via msg.topic_, _Fixed_, _Prepared_, _Batch_).
+- Gravar dados vindos do MQTT com **INSERT preparado**, validando no Node-RED **e** no banco, e
+  ver na prática por que concatenar SQL é perigoso.
+- Responder perguntas com **SQL**: `GROUP BY`, funções de janela `LAG()` e `LEAD()`,
+  `UNION ALL` e médias ponderadas pelo tempo.
+- Montar um **dashboard** que carrega o histórico do banco, com consulta **parametrizada**.
+- **Manter** o banco: índice e `EXPLAIN QUERY PLAN`, tabela de resumo, retenção dentro de uma
+  **transação** e `VACUUM`.
 
-<GitCommit />
+## Material
 
-## Diagrama de pinos do STM32F4x1
+- VS Code + PlatformIO + extensão **Wokwi** (ESP32 **simulado**), com o circuito do Lab 07.
+- Stack Docker do curso: **Node-RED** com `node-red-node-sqlite` e o **Dashboard 2.0**, já
+  instalados na imagem.
+- O `mosquitto_pub` via Docker (`eclipse-mosquitto:2`), como nos labs anteriores.
+- **Nenhuma biblioteca nova** no firmware.
+
+:::info[Onde o banco fica]
+O SQLite é **um arquivo**. O banco desta aula é `/data/sqlite/lab08.sqlite` **dentro** do
+container do Node-RED. Como `/data` é uma pasta montada do seu computador, o arquivo sobrevive a
+um restart e você pode copiá-lo. Se o Node-RED reclamar `failed to open /data/sqlite/...`, a pasta
+`sqlite` não existe: crie-a (`docker exec <container-do-node-red> mkdir -p /data/sqlite`) e faça
+o _Deploy_ de novo.
+:::
+
+## Clonar o repositório do grupo {/* #clonar */}
+
+<LabTeamMembers labName="lab08" />
+
+## Envie o link do repositório do seu grupo no Moodle: {/* #moodle-link */}
+
+<LabSubmit labName="lab08" />
+
+<details>
+<summary><strong>Mapa de tarefas</strong> — 6 tarefas · 100 pts</summary>
+
+- [T1 — Banco e esquema](#t1) · 10 pts
+- [T2 — Gravacao segura](#t2) · 20 pts
+- [T3 — Consultas das leituras](#t3) · 15 pts
+- [T4 — Tempo e energia com LEAD](#t4) · 15 pts
+- [T5 — Dashboard com historico do banco](#t5) · 20 pts
+- [T6 — Manutencao do banco](#t6) · 20 pts
+
+</details>
+
+O repositório do grupo nasce do `lab08-template`, que já traz o **firmware final do Lab 07**
+(ADC + PWM + modos `pot`/`remoto`/`auto`) e o circuito:
+
+<FileTree
+  details={true}
+  defaultOpen={false}
+  title="Estrutura de Arquivos do Projeto"
+  root="lab08-grupo-X"
+  files={[
+    "platformio.ini r",
+    "src/main.cpp u",
+    "diagram.json r",
+    "wokwi.toml r",
+    ".gitignore r",
+    ".vscode/extensions.json r",
+    "nodered/flows-lab08.json c",
+    "evidencias/t1-esquema.txt c",
+    "evidencias/t2-sqlite.txt c",
+    "evidencias/t3-consultas.txt c",
+    "evidencias/t4-energia.txt c",
+    "evidencias/t5-dashboard.png c",
+    "evidencias/t6-plano.txt c",
+    "evidencias/t6-manutencao.txt c",
+    "README.md u",
+  ]}
+/>
+
+:::info[Tópicos do Lab 08]
+Os mesmos do Lab 07, sob `elt73a/lab08/grupo-X/`. Nesta aula o Node-RED **assina** dois deles e
+grava cada mensagem:
+
+| Tópico    | Vira uma linha em | Quando chega                                    |
+| --------- | ----------------- | ----------------------------------------------- |
+| `.../dht` | `leituras`        | a cada leitura do DHT22 (5 s, ou o `intervalo`) |
+| `.../pwm` | `atuacao`         | a cada **mudança** dos atuadores (evento)       |
+
+Para comandar o ESP32 (modo, intervalo) use o `mosquitto_pub`, como na T4 do Lab 07.
+:::
+
+### Copiando a evidência do debug
+
+Quase todas as evidências desta aula são **resultados de consultas**. No painel **debug** do
+Node-RED, passe o mouse sobre a mensagem e clique em **Copy value** (o ícone de copiar). Cole no
+arquivo `.txt` da tarefa, com uma linha de título antes de cada consulta:
+
+```text title="Formato das evidências (exemplo)"
+## Últimas 10 leituras
+[{"id":42,"recebido_em":"2026-10-20 15:53:10.193","grupo":"a","seq":30, ... }]
+```
 
 ---
 
-![STM32F4x1 microcontroller pinout diagram;](/img/MiniSTM32F4x1/STM32F4x1_PinoutDiagram_RichardBalint.png)
+## Parte 1 — Banco e esquema {/* #parte-1 */}
 
-O debugger [ST-LINK/V2](/docs/st-link) possue um conector IDC de 10 pinos. A pinagem é descrita na figura a seguir.
+### 1.1 Firmware no Lab 08
 
-![ST-LINK/V2 Clone](/img/ST-LINK_V2_Clone_Header.png)
+O firmware é o do Lab 07, sem nenhuma mudança de lógica. Só os tópicos e os textos passam para
+`lab08`. No VS Code, em `src/main.cpp`, use **Ctrl+H** com **Match Case** ligado (Alt+C) e troque
+`lab07` → `lab08` (`BASE` e `clientId`) e `LAB07` → `LAB08` (a tela e o espelho em texto).
+Aproveite e troque também o `Lab 07` do banner do serial.
 
----
-
-## STM32 Internal Temperature Sensor Reading
-
-Seguem algumas referências para leitura do sensor de temperatura interna do STM32F4x1:
-
-- https://deepbluembedded.com/stm32-internal-temperature-sensor-reading-example/
-- https://stm32world.com/wiki/STM32_internal_temperature_and_voltage_reference
-- https://github.com/lbthomsen/blackpill
-
-Abra o projeto gerado no VS Code:
-
-```bash
-code TEMPSENSOR --profile="STM32"
+```cpp title="src/main.cpp (linhas que mudam)"
+#define BASE "elt73a/lab08/grupo-" GRUPO
+// ...
+  oled.print("LAB08 grupo " GRUPO);
+// ...
+  snprintf(clientId, sizeof(clientId), "lab08-%s-%04X", GRUPO, (uint16_t)(mac >> 32));
 ```
 
-### Src/main.c
+Rode no Wokwi e confira no serial `[PUB] ok elt73a/lab08/grupo-a/dht -> {...}`.
 
-Implemente a lógica para acionar o LED azul via flag BLUELED:
+### 1.2 Os quatro modos do nó sqlite
 
-```c title="Src/main.c"
-/* USER CODE BEGIN Includes */
-// highlight-next-line
-#include <stdbool.h>
-/* USER CODE END Includes */
-```
+Todos os nós **sqlite** desta aula usam o mesmo nó de configuração **sqlitedb**: _Database_
+**`/data/sqlite/lab08.sqlite`**, _Mode_ **Read-Write-Create**. O que muda é o **SQL Query**:
 
-```c title="Src/main.c"
-/* USER CODE BEGIN PD */
-// highlight-start
-#define AVG_SLOPE   2.5f     // mV/°C
-#define V_AT_25C    0.76f    // Volts
-#define V_REF_INT   1.21f    // Internal reference voltage
-// highlight-end
-/* USER CODE END PD */
-```
+| Modo                       | De onde vem o SQL | Parâmetros             | Executa                                      | Use para                                     |
+| -------------------------- | ----------------- | ---------------------- | -------------------------------------------- | -------------------------------------------- |
+| **Via msg.topic**          | `msg.topic`       | não                    | **só o primeiro** comando; devolve as linhas | consultas disparadas por `inject`            |
+| **Fixed Statement**        | escrito no nó     | não                    | um comando; devolve as linhas                | a mesma consulta, sempre                     |
+| **Prepared Statement**     | escrito no nó     | `msg.params` (`$nome`) | um comando; devolve as linhas                | **tudo o que vem de fora** (MQTT, dashboard) |
+| **Batch without response** | `msg.topic`       | não                    | **todos** os comandos, separados por `;`     | criar o esquema, manutenção                  |
 
-```c title="Src/main.c"
-/* USER CODE BEGIN PV */
-// highlight-start
-bool BLUELED = 0;
-uint32_t AD_RES_BUFFER[3];
-uint16_t ADC1IN1,TEMPSENSOR,VREFINT;
-float voltage1,v_ref,v_sense,temp;
-// highlight-end
-/* USER CODE END PV */
-```
+:::warning[A armadilha do Via msg.topic]
+Mande dois `CREATE TABLE` num só `msg.topic` com o modo _Via msg.topic_ e **só a primeira tabela
+é criada**, sem erro nenhum. Para vários comandos, use **Batch**.
+:::
 
-Inicialize o Timer 2 com suporte a rotina de interrupção e saída PWM no canal 1:
+### 1.3 Esquema
 
-```c title="Src/main.c"
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_ADC1_Init();
-  MX_TIM2_Init();
-  /* USER CODE BEGIN 2 */
-  // highlight-start
-  HAL_TIM_PWM_Start_IT(&htim2,TIM_CHANNEL_1);
-  // highlight-end
-  /* USER CODE END 2 */
-```
+Crie um **inject** "Criar tabelas" (_Inject once after_ 0,5 s) com o SQL abaixo em `msg.topic`,
+ligado a um **sqlite** em modo **Batch without response**:
 
-Toggle no LED interno via interrupção do User Key:
+```sql title="msg.topic do inject 'Criar tabelas' (modo Batch)"
+CREATE TABLE IF NOT EXISTS leituras (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    recebido_em TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime')),
+    grupo       TEXT NOT NULL,
+    seq         INTEGER,
+    t           REAL NOT NULL CHECK (t BETWEEN -40 AND 80),
+    h           REAL NOT NULL CHECK (h BETWEEN 0 AND 100),
+    uptime_ms   INTEGER,
+    intervalo_s REAL,
+    origem      TEXT NOT NULL DEFAULT 'esp32' CHECK (origem IN ('esp32', 'manual'))
+);
 
-```c title="Scr/main.c"
-/* Infinite loop */
-/* USER CODE BEGIN WHILE */
-while (1)
-{
-// highlight-start
-  // Verify BLUELED Flag
-    if (BLUELED)
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET); // LED ON
-    else
-      HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET); // LED OFF
-  // highlight-end
-  /* USER CODE END WHILE */
-
-  /* USER CODE BEGIN 3 */
-
-}
-/* USER CODE END 3 */
-```
-
-### Src/stm32f4xx_it.c
-
-```c title="Src/stm32f4xx_it.c"
-/* USER CODE BEGIN Includes */
-// highlight-next-line
-#include <stdbool.h>
-/* USER CODE END Includes */
-```
-
-```c title="Src/stm32f4xx_it.c"
-/* USER CODE BEGIN PV */
-// highlight-start
-extern bool BLUELED;
-extern uint32_t AD_RES_BUFFER[3];
-extern uint16_t ADC1IN1,TEMPSENSOR,VREFINT;
-extern float voltage1,v_ref,v_sense,temp;
-// highlight-end
-/* USER CODE END PV */
-```
-
-```c title="Src/stm32f4xx_it.c"
-void EXTI0_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
-  // Toggle BLUELED FLAG
-  // highlight-next-line
-  BLUELED = !BLUELED;
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(User_KEY_EXTI0_Pin);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-  /* USER CODE END EXTI0_IRQn 1 */
-}
-```
-
-Inicie o ADC1 na interrupção do Timer 2:
-
-```c title="Src/stm32f4xx_it.c"
-void TIM2_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM2_IRQn 0 */
-
-  /* USER CODE END TIM2_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim2);
-  /* USER CODE BEGIN TIM2_IRQn 1 */
-  // highlight-next-line
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t *)AD_RES_BUFFER, 3);
-  /* USER CODE END TIM2_IRQn 1 */
-}
-```
-
-- `HAL_ADC_ConvCpltCallback()` é uma função de alto nível fornecida pela ST (STMicroelectronics) para facilitar a vida do desenvolvedor.
-  Ela é chamada automaticamente quando uma conversão ADC é concluída e os dados estão prontos para serem processados. O uso dessa função é recomendado porque ela abstrai a complexidade de lidar diretamente com as interrupções de ADC e o gerenciamento de buffers, permitindo que o desenvolvedor se concentre na lógica de aplicação em vez de detalhes de baixo nível.
-
-```c title="Src/stm32f4xx_it.c"
-/* USER CODE BEGIN 1 */
-// highlight-start
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-  // Conversion Complete & DMA Transfer Complete As Well
-  ADC1IN1 = AD_RES_BUFFER[0];
-  TEMPSENSOR = AD_RES_BUFFER[1];
-  VREFINT = AD_RES_BUFFER[2];
-  voltage1 = (ADC1IN1 * 3.3) / 4095;
-  // 1. Calculate the actual VREF (VDDA)
-  // This compensates for power supply fluctuations
-  v_ref = (V_REF_INT * 4095.0f) / (float)VREFINT;
-
-  // 2. Convert raw temperature sensor value to voltage
-  v_sense = ((float)TEMPSENSOR * v_ref) / 4095.0f;
-
-  // 3. Final Temperature in Celsius
-  // Note: Some datasheets use (V_sense - V_25) / Slope + 25.
-  // Check your specific RM; usually, if Slope is positive, it's (V_sense - V_at_25).
-  temp = ((v_sense - V_AT_25C) * 1000.0f / AVG_SLOPE) + 25.0f;
-  TIM2->CCR1 = ADC1IN1;  // PWM CH1 duty cycle update based on ADC1IN1
-}
-// highlight-end
-/* USER CODE END 1 */
-```
-
-### SQLite
-
-- https://sqlite.org/
-- https://inloop.github.io/sqlite-viewer/
-- https://flows.nodered.org/node/node-red-node-sqlite
-
-Formato de dados para injeção no SQLite:
-
-- https://jsonformatter.org/
-- https://jsonformatter.curiousconcept.com/
-
-```json
-{
-  "payload": {
-    "ADC1IN1": 1769,
-    "BLUELED": 0,
-    "temp": 18.937469482421875,
-    "TEMPSENSOR": 1004,
-    "v_ref": 3.037982940673828,
-    "v_sense": 0.7448436617851257,
-    "voltage1": 1.4255677461624146,
-    "VREFINT": 1631
-  },
-  "topic": "data"
-}
-```
-
-Template para a criação da tabela de dados do sensor:
-
-```SQL
-CREATE TABLE IF NOT EXISTS sensor_data (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    ADC1IN1 INTEGER,
-    BLUELED INTEGER,
-    TEMPSENSOR INTEGER,
-    VREFINT INTEGER,
-    voltage1 REAL,
-    v_ref REAL,
-    v_sense REAL,
-    temp REAL
+CREATE TABLE IF NOT EXISTS atuacao (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    recebido_em TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime')),
+    modo        TEXT NOT NULL CHECK (modo IN ('pot', 'remoto', 'auto')),
+    estado      TEXT,
+    aq          REAL NOT NULL CHECK (aq BETWEEN 0 AND 100),
+    ve          REAL NOT NULL CHECK (ve BETWEEN 0 AND 100),
+    aq_duty     INTEGER,
+    ve_duty     INTEGER,
+    sp          REAL,
+    t           REAL
 );
 ```
 
-Código para injeção de dados simulados no SQLite:
+Repare no que mudou em relação a uma tabela "solta":
 
-```js
-// Define the missing calibration constants (Typical STM32 values)
-const V_AT_25C = 0.76; // Volts at 25°C
-const AVG_SLOPE = 2.5; // mV/°C
+- `NOT NULL` e `CHECK`: o **banco** recusa uma temperatura de 999 °C ou um modo `turbo`, mesmo
+  que a validação do Node-RED falhe. É a segunda linha de defesa.
+- `DEFAULT (strftime(...))`: a hora de chegada é preenchida pelo banco, com milissegundos.
+  `'localtime'` usa o fuso do **container** (variável `TZ`).
+- `IF NOT EXISTS`: rodar o inject de novo não apaga nada.
 
-// Generate mock data
-let ADC1IN1 = Math.floor(Math.random() * 4096);
-let BLUELED = Math.round(Math.random());
-let voltage1 = (ADC1IN1 * 3.3) / 4095;
-let TEMPSENSOR = Math.floor(Math.random() * 1000) + 500;
+Crie agora o sqlite **"consultas"** (_Via msg.topic_) → **debug** "resultado". Todas as consultas
+da aula são **injects** com o SQL em `msg.topic`, ligados a ele. A primeira:
 
-let v_ref = (1.21 * 4095) / (Math.floor(Math.random() * 1000) + 1000);
-let v_sense = (TEMPSENSOR * v_ref) / 4095;
-
-// FIXED: Removed the 'f' suffixes from 1000.0 and 25.0
-let temp = ((v_sense - V_AT_25C) * 1000.0) / AVG_SLOPE + 25.0;
-let VREFINT = Math.floor(Math.random() * 1000) + 1000;
-
-// Format the decimals safely before sending to SQL
-voltage1 = Number(voltage1.toFixed(2));
-v_ref = Number(v_ref.toFixed(2));
-v_sense = Number(v_sense.toFixed(2));
-temp = Number(temp.toFixed(2));
-
-// Prepare the SQL query statement
-// Replace 'sensor_data' with your actual table name
-msg.topic = `INSERT INTO sensor_data (ADC1IN1, voltage1, BLUELED, TEMPSENSOR, v_ref, v_sense, temp, VREFINT)
-             VALUES (${ADC1IN1}, ${voltage1}, ${BLUELED}, ${TEMPSENSOR}, ${v_ref}, ${v_sense}, ${temp}, ${VREFINT});`;
-
-return msg;
+```sql title="inject 'Ver esquema'"
+SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type DESC, name;
 ```
 
-Função para a leitura de dados via aquisição com STLINK e injeção no SQLite:
+:::tip[Preveja antes de rodar]
+**P1:** o inject "Criar tabelas" roda **a cada Deploy** (_once after 0,5 s_). Isso é um
+problema? E se você **mudar** a definição de uma coluna no texto do `CREATE TABLE` e fizer o
+Deploy: a tabela que já existe muda? Por quê? Confira com "Ver esquema".
+:::
 
-```js
-// Navigate the nested structure
-const data = msg.payload.variabledata[0].y;
+**Evidência:** a saída de "Ver esquema" em `evidencias/t1-esquema.txt`.
 
-// Construct the SQL query with the 8 variables
-// We include the 'x' value as our timestamp
+<FileTree
+  root="lab08-grupo-X"
+  files={["src/main.cpp u", "evidencias/t1-esquema.txt c"]}
+/>
 
-msg.topic = `INSERT INTO sensor_data (ADC1IN1, voltage1, BLUELED, TEMPSENSOR, v_ref, v_sense, temp, VREFINT)
-VALUES (
-                ${data.ADC1IN1}, 
-                ${data.voltage1.toFixed(2)}, 
-                ${data.BLUELED}, 
-                ${data.TEMPSENSOR}, 
-                ${data.v_ref.toFixed(2)}, 
-                ${data.v_sense.toFixed(2)}, 
-                ${data.temp.toFixed(2)}, 
-                ${data.VREFINT}
-             );`;
-// Clear payload to trigger the SQLite node
-msg.payload = [];
+<CommitPoint
+  id="t1"
+  task="Banco e esquema"
+  pontos={10}
+  files="src/main.cpp evidencias/t1-esquema.txt"
+/>
 
-return msg;
+---
+
+## Parte 2 — Gravação segura {/* #parte-2 */}
+
+```mermaid
+flowchart LR
+  D[mqtt in .../dht · JSON] --> FL[function: leitura → parâmetros] --> IL[(sqlite Prepared: INSERT leituras)]
+  T1[inject: leitura de teste] & T2[inject: injeção de SQL] & T3[inject: fora da faixa] --> FL
+  P[mqtt in .../pwm · JSON] --> FA[function: atuação → parâmetros] --> IA[(sqlite Prepared: INSERT atuacao)]
+  C[catch: erros do SQLite] --> E[debug: erro]
 ```
 
-Versão simplificada sem as colunas de cálculos de tensão:
+### 2.1 Leituras do DHT22
 
-```js
-// Navigate the nested structure
-const data = msg.payload.variabledata[0].y;
+**mqtt in** `elt73a/lab08/grupo-x/dht` (_a parsed JSON object_) → **function** →
+**sqlite** "INSERT leituras" (_Prepared Statement_):
 
-// Construct the SQL query with the 8 variables
-// We include the 'x' value as our timestamp
-
-msg.topic = `INSERT INTO sensor_data (ADC1IN1, BLUELED, TEMPSENSOR, VREFINT)
-VALUES (
-                ${data.ADC1IN1}, 
-                ${data.BLUELED}, 
-                ${data.TEMPSENSOR}, 
-                ${data.VREFINT}
-             );`;
-// Clear payload to trigger the SQLite node
-msg.payload = [];
-
-return msg;
-```
-
-### The SQL Query
-
-```SQL
-SELECT * FROM sensor_data ORDER BY timestamp DESC LIMIT 1;
-```
-
-SQLite always returns data as an Array of Objects, even if there is only one result.
-
-```js
-// Check if data actually exists to avoid errors
-if (msg.payload.length > 0) {
-  // Take the first element of the array
-  // msg.payload = msg.payload[0];
-  msg.payload = msg.payload[0].voltage1;
-  return msg;
+```js title="function: leitura -> parâmetros"
+// .../dht (ou leitura injetada à mão) -> parâmetros do INSERT preparado.
+// Broker público: QUALQUER um pode publicar no seu tópico -> valide antes de gravar.
+const p = msg.payload;
+const num = (v) => typeof v === "number" && isFinite(v);
+if (!p || typeof p !== "object" || !num(p.t) || !num(p.h)) {
+  node.warn("descartado (formato): " + JSON.stringify(p));
+  return null;
 }
-```
-
-## SQLite to insert data into the database
-
-Calculation Node (Function after the SQLite node):
-
-```js
-msg.topic = "SELECT ADC1IN1 FROM sensor_data ORDER BY id DESC LIMIT 1;";
+msg.params = {
+  $grupo: String(p.grupo ?? "?"),
+  $seq: num(p.seq) ? p.seq : null,
+  $t: p.t,
+  $h: p.h,
+  $uptime: num(p.uptime_ms) ? p.uptime_ms : null,
+  $intervalo: num(p.intervalo_s) ? p.intervalo_s : null,
+  $origem: msg.origem || "esp32",
+};
+node.status({
+  fill: "green",
+  shape: "dot",
+  text: `seq ${p.seq}: ${p.t} °C ${p.h} %`,
+});
 return msg;
 ```
 
-```js
-if (msg.payload.length > 0) {
-  let adc_1 = msg.payload[0].ADC1IN1;
+```sql title="sqlite: INSERT leituras (Prepared Statement)"
+INSERT INTO leituras (grupo, seq, t, h, uptime_ms, intervalo_s, origem)
+VALUES ($grupo, $seq, $t, $h, $uptime, $intervalo, $origem);
+```
 
-  // Perform the conversion
-  let voltage1 = (adc_1 * 3.3) / 4095;
+A function só confere o **formato** (são números?). A **faixa** (−40 a 80 °C, 0 a 100 %) fica com
+o `CHECK` do banco. Assim a regra vive num lugar só.
 
-  // Return the result rounded to 2 decimal places
-  msg.payload = voltage1.toFixed(2);
+### 2.2 Mudanças dos atuadores
 
-  return msg;
+**mqtt in** `elt73a/lab08/grupo-x/pwm` (_a parsed JSON object_) → **function** →
+**sqlite** "INSERT atuacao" (_Prepared Statement_):
+
+```js title="function: atuação -> parâmetros"
+// .../pwm -> parâmetros do INSERT preparado (o CHECK do banco confere as faixas)
+const p = msg.payload;
+if (
+  !p ||
+  typeof p !== "object" ||
+  typeof p.aq !== "number" ||
+  typeof p.ve !== "number"
+) {
+  node.warn("descartado (formato): " + JSON.stringify(p));
+  return null;
 }
-```
-
-Or:
-
-```js
-// The math: (adc1 * 3.3) / 4095
-msg.topic =
-  "SELECT (ADC1IN1 * 3.3 / 4095) AS voltage1 FROM sensor_data ORDER BY id DESC LIMIT 1;";
+const num = (v) => (typeof v === "number" && isFinite(v) ? v : null);
+msg.params = {
+  $modo: String(p.modo),
+  $estado: String(p.estado ?? ""),
+  $aq: p.aq,
+  $ve: p.ve,
+  $aq_duty: num(p.aq_duty),
+  $ve_duty: num(p.ve_duty),
+  $sp: num(p.sp),
+  $t: num(p.t),
+};
+node.status({
+  fill: "green",
+  shape: "dot",
+  text: `${p.modo} ${p.estado} AQ ${p.aq}% VE ${p.ve}%`,
+});
 return msg;
 ```
 
-Average of the Last "X" Records
-
-```js
-msg.topic = `SELECT AVG(ADC1IN1) AS mean_adc1 
-             FROM (SELECT ADC1IN1 FROM sensor_data ORDER BY id DESC LIMIT 5);`;
-return msg;
+```sql title="sqlite: INSERT atuacao (Prepared Statement)"
+INSERT INTO atuacao (modo, estado, aq, ve, aq_duty, ve_duty, sp, t)
+VALUES ($modo, $estado, $aq, $ve, $aq_duty, $ve_duty, $sp, $t);
 ```
 
-Como calcular a temperatura diretamente no SQL usando os dados brutos do sensor:
+Por fim, um nó **catch** com escopo nos nós sqlite → **debug** "erro" (_Output_
+`msg.error.message`). Sem ele, um `CHECK` violado aparece só no log do container.
 
-```sql
-SELECT Round(( (
-               -- Step 2: v_sense calculation using the derived v_ref
-               ( TEMPSENSOR * ( ( 1.21 * 4095.0 ) / VREFINT ) ) / 4095.0
-               -- Step 3: Temperature conversion formula
-               - 0.76 ) * 1000.0 / 2.5 ) + 25.0, 2) AS calculated_temp
-FROM   sensor_data_full
-ORDER  BY id DESC
-LIMIT  1;
+### 2.3 Testando a defesa
+
+Crie três **inject** ligados à function **da leitura**, cada um com `msg.payload` (JSON) e
+`msg.origem` = `manual` (string):
+
+| inject                      | `msg.payload`                                                            |
+| --------------------------- | ------------------------------------------------------------------------ |
+| Injetar leitura de teste    | `{"grupo":"a","seq":0,"t":-12.3,"h":99.0,"uptime_ms":0,"intervalo_s":0}` |
+| Tentativa de injeção de SQL | `{"grupo":"x'); DROP TABLE leituras; --","seq":0,"t":20,"h":50}`         |
+| Leitura fora da faixa       | `{"grupo":"a","seq":0,"t":999,"h":50}`                                   |
+
+E mais estas consultas no sqlite "consultas":
+
+| inject                          | SQL                                                                                                             |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Últimas 10 leituras             | `SELECT id, recebido_em, grupo, seq, t, h, intervalo_s, origem FROM leituras ORDER BY id DESC LIMIT 10;`        |
+| Últimas 10 mudanças             | `SELECT id, recebido_em, modo, estado, aq, ve, aq_duty, ve_duty, sp, t FROM atuacao ORDER BY id DESC LIMIT 10;` |
+| INSERT inválido direto no banco | `INSERT INTO leituras (grupo, t, h) VALUES ('teste', 999, 50);`                                                 |
+| Apagar leituras manuais         | `DELETE FROM leituras WHERE origem = 'manual';`                                                                 |
+
+```sql title="inject 'Contagem por tabela'"
+SELECT 'leituras' AS tabela, COUNT(*) AS linhas, MIN(recebido_em) AS primeira, MAX(recebido_em) AS ultima FROM leituras
+UNION ALL
+SELECT 'atuacao', COUNT(*), MIN(recebido_em), MAX(recebido_em) FROM atuacao;
 ```
 
-```sql
-SELECT
-    ROUND(
-        ((((TEMPSENSOR * 1.21 / VREFINT) - 0.76) * 1000.0 / 2.5) + 25.0),
-        2
-    ) AS optimized_temp
-FROM sensor_data
-ORDER BY id DESC
-LIMIT 1;
+Dispare os três injects de teste, depois "INSERT inválido", e por fim publique lixo no tópico
+pelo terminal:
+
+<GroupCommands
+  commands={[
+    {
+      codeTitle: "Terminal — mensagens inválidas via Docker",
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/dht' -m 'lixo'
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/dht' -m '{"t":"quente"}'
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/pwm' -m '{"modo":"turbo","estado":"X","aq":10,"ve":0}'`,
+    },
+  ]}
+/>
+
+**Saída esperada** (trechos do painel debug):
+
+```text title="Painel debug do Node-RED"
+[erro]      Error: SQLITE_CONSTRAINT: CHECK constraint failed: t BETWEEN -40 AND 80
+[erro]      Error: SQLITE_CONSTRAINT: CHECK constraint failed: modo IN ('pot', 'remoto', 'auto')
+[resultado] [{"id":33,"recebido_em":"2026-10-20 15:53:10.201","grupo":"x'); DROP TABLE leituras; --",
+              "seq":0,"t":20,"h":50,"intervalo_s":null,"origem":"manual"}, ...]
 ```
 
-## VS Code Terminal Configuration
+A tentativa de injeção virou **uma linha comum**, com o texto do ataque no campo `grupo`. A
+tabela continua lá.
 
-Configure `Git Bash` como terminal integrado do Visual Studio Code para evitar problemas de formatação de texto e comandos:
+:::tip[Preveja antes de rodar]
+**P2:** para cada mensagem ruim (`lixo`, `{"t":"quente"}`, `t = 999`, modo `turbo`, a injeção de
+SQL), diga **antes** em que nó ela vai parar: no **mqtt in**, na **function**, no **CHECK** do
+banco, ou em nenhum (é gravada). Depois confira. Se a function montasse o SQL concatenando
+strings (`` `INSERT ... VALUES ('${p.grupo}', ...)` ``), o que a "tentativa de injeção" faria?
+:::
 
-```json title=".vscode/settings.json"
-"terminal.integrated.defaultProfile.windows": "Git Bash",
+**Evidência:** em `evidencias/t2-sqlite.txt`, a saída de "Últimas 10 leituras" (com as linhas
+`manual`, inclusive a do ataque), "Últimas 10 mudanças", "Contagem por tabela" e as duas
+mensagens de `CHECK` do debug "erro". Depois rode "Apagar leituras manuais".
+
+<FileTree
+  root="lab08-grupo-X"
+  files={["nodered/flows-lab08.json c", "evidencias/t2-sqlite.txt c"]}
+/>
+
+<CommitPoint
+  id="t2"
+  task="Gravacao segura"
+  pontos={20}
+  files="nodered/flows-lab08.json evidencias/t2-sqlite.txt"
+/>
+
+---
+
+## Parte 3 — Consultas das leituras {/* #parte-3 */}
+
+Com o Wokwi rodando há alguns minutos, a tabela `leituras` já conta uma história. Crie estes
+injects no sqlite "consultas":
+
+```sql title="Resumo por minuto (GROUP BY)"
+SELECT substr(recebido_em, 1, 16) AS minuto, COUNT(*) AS n,
+       ROUND(AVG(t), 1) AS t_media, ROUND(MIN(t), 1) AS t_min, ROUND(MAX(t), 1) AS t_max, ROUND(AVG(h), 1) AS h_media
+FROM leituras WHERE origem = 'esp32'
+GROUP BY minuto ORDER BY minuto DESC LIMIT 10;
 ```
 
-## Crie um [gh alias](/docs/github-cli#aliases) para deploy-debug
-
-```bash
-gh alias set deploy-debug 'tag="$1"; cp ./build/Debug/*.elf ./firmware-debug.elf && gh release create "$tag" ./firmware-debug.elf --generate-notes && rm ./firmware-debug.elf' --shell
+```sql title="Falhas na sequência (LAG)"
+SELECT recebido_em, anterior, seq,
+       CASE WHEN seq < anterior THEN 'ESP32 reiniciou'
+            ELSE (seq - anterior - 1) || ' perdida(s)' END AS diagnostico
+FROM (SELECT recebido_em, seq, LAG(seq) OVER (ORDER BY id) AS anterior
+      FROM leituras WHERE origem = 'esp32')
+WHERE seq <> anterior + 1;
 ```
 
-Como funciona:
-
-- Considera a etiqueta de lançamento como $1.
-- Copia o ELF de ./build/Debug/\*.elf → ./firmware-debug.elf.
-- Executa gh release create com o arquivo renomeado.
-- Limpa removendo o arquivo renomeado temporário.
-
-Uso:
-
-```bash
-gh deploy-debug v1.0.0
+```sql title="Intervalo real entre leituras (LAG)"
+SELECT seq, intervalo_s,
+       ROUND((julianday(recebido_em) - julianday(LAG(recebido_em) OVER (ORDER BY id))) * 86400, 1) AS dt_s
+FROM leituras WHERE origem = 'esp32' ORDER BY id DESC LIMIT 10;
 ```
 
-### Rápida verificação do upload
+`LAG()` é uma **função de janela**: devolve o valor da linha **anterior** na ordem pedida. É
+assim que o `seq` do Lab 05 vira diagnóstico: um salto indica mensagens perdidas, e um `seq`
+menor que o anterior indica que o ESP32 reiniciou.
 
-Assim que o comando terminar, você poderá verificar o upload diretamente em seu terminal usando:
+### 3.1 Provocando falhas
 
-```bash
-gh release view v1.0.0 --web
+1. **Node-RED fora do ar:** com o ESP32 rodando, pare o container do Node-RED por ~30 s
+   (`docker stop <container>`) e ligue de novo (`docker start <container>`).
+2. **ESP32 reiniciado:** reinicie a simulação no Wokwi.
+3. **Intervalo novo:** mude o intervalo para 10 s:
+
+<GroupCommands
+  commands={[
+    {
+      codeTitle: "Terminal — intervalo de 10 s via Docker",
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/cmd/intervalo' -m 10`,
+    },
+  ]}
+/>
+
+**Saída esperada** de "Falhas na sequência", depois dos passos 1 e 2:
+
+```text title="Painel debug do Node-RED"
+▼ array[2]
+  ▶ 0: { recebido_em: "2026-10-20 18:46:28.138", anterior: 106, seq: 113, diagnostico: "6 perdida(s)" }
+  ▶ 1: { recebido_em: "2026-10-20 18:51:02.410", anterior: 131, seq: 1, diagnostico: "ESP32 reiniciou" }
 ```
+
+:::tip[Preveja antes de rodar]
+**P3:** no passo 1, o ESP32 continuou publicando, mas as leituras se perderam. Por que o broker
+não as guardou para entregar quando o Node-RED voltou? Pense em **QoS 0** e em **sessão limpa**.
+O que mudaria com QoS 1 e `cleansession = false` no **mqtt in**? No passo 3, que valor de
+`dt_s` você espera ver em "Intervalo real", e a partir de qual `seq`?
+:::
+
+**Evidência:** a saída das três consultas em `evidencias/t3-consultas.txt`, depois dos passos
+1–3.
+
+<FileTree root="lab08-grupo-X" files={["evidencias/t3-consultas.txt c"]} />
+
+<CommitPoint
+  id="t3"
+  task="Consultas das leituras"
+  pontos={15}
+  files="nodered/flows-lab08.json evidencias/t3-consultas.txt"
+/>
+
+---
+
+## Parte 4 — Tempo e energia com LEAD {/* #parte-4 */}
+
+A tabela `atuacao` é diferente: cada linha é um **evento de mudança**, que vale **até a
+próxima**. A duração de um estado é o tempo até a linha **seguinte**, e é isso que a função de
+janela **`LEAD()`** devolve. A última linha ainda está "em andamento", então o `LEAD()` usa o
+**agora** como valor padrão:
+
+```sql title="Tempo em cada estado (LEAD)"
+SELECT estado, COUNT(*) AS trocas, ROUND(SUM(dt_s), 1) AS segundos
+FROM (SELECT estado, (julianday(LEAD(recebido_em, 1, strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime'))
+                  OVER (ORDER BY id)) - julianday(recebido_em)) * 86400 AS dt_s FROM atuacao)
+GROUP BY estado ORDER BY segundos DESC;
+```
+
+```sql title="Energia do aquecedor por modo (25 W)"
+SELECT modo, ROUND(SUM(25.0 * aq / 100.0 * dt_s) / 3600.0, 4) AS energia_wh,
+       ROUND(SUM(dt_s) / 60.0, 1) AS minutos,
+       ROUND(SUM(aq * dt_s) / SUM(dt_s), 1) AS duty_pct
+FROM (SELECT modo, aq, (julianday(LEAD(recebido_em, 1, strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime'))
+                  OVER (ORDER BY id)) - julianday(recebido_em)) * 86400 AS dt_s FROM atuacao)
+GROUP BY modo;
+```
+
+```sql title="Trocas do aquecedor no modo auto (LAG)"
+SELECT COUNT(*) AS trocas_do_aquecedor
+FROM (SELECT aq, LAG(aq) OVER (ORDER BY id) AS aq_antes FROM atuacao WHERE modo = 'auto')
+WHERE aq <> aq_antes;
+```
+
+`energia_wh` soma potência × tempo: 25 W × (duty em %) × duração. `duty_pct` é a média
+**ponderada pelo tempo**, diferente da média simples das linhas: um estado que durou 10 minutos
+pesa mais que um que durou 2 segundos.
+
+### 4.1 Experimento: 5 min em `pot` × 5 min em `auto`
+
+1. Modo `pot` com o knob em **50 %** por 5 minutos.
+2. Modo `auto` com SP ≈ 37,5 °C por 5 minutos, levando a temperatura do DHT22 pela sequência do
+   Lab 07: **24,5 → 37,4 → 38,2 → 41,0 → 37,8 → 36,8 °C** (uma leitura em cada valor) e depois
+   oscilando entre 36,8 e 38,2 °C até completar os 5 minutos.
+
+<GroupCommands
+  commands={[
+    {
+      codeTitle: "Terminal — trocar o modo via Docker",
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/cmd/modo' -m pot
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/cmd/modo' -m auto`,
+    },
+  ]}
+/>
+
+**Saída esperada** de "Energia do aquecedor por modo" (valores ilustrativos):
+
+```text title="Painel debug do Node-RED"
+▼ array[2]
+  ▶ 0: { modo: "auto", energia_wh: 0.8333, minutos: 5.0, duty_pct: 40.0 }
+  ▶ 1: { modo: "pot",  energia_wh: 1.0417, minutos: 5.0, duty_pct: 50.0 }
+```
+
+:::tip[Preveja antes de rodar]
+**P4:** antes do experimento, estime a `energia_wh` de 5 minutos em `pot` a 50 % (faça a conta)
+e diga se o `auto` vai gastar mais ou menos. Depois compare: a diferença veio do **duty médio**
+ou do **tempo**? O que a consulta "Trocas do aquecedor" diz sobre a histerese do Lab 07? Por que
+a última linha de `atuacao` precisa do `LEAD(..., 'now')` e o que aconteceria com a energia sem
+ele?
+:::
+
+**Evidência:** as saídas de "Tempo em cada estado", "Energia do aquecedor por modo" e "Trocas do
+aquecedor" depois do experimento, em `evidencias/t4-energia.txt`.
+
+<FileTree root="lab08-grupo-X" files={["evidencias/t4-energia.txt c"]} />
+
+<CommitPoint
+  id="t4"
+  task="Tempo e energia com LEAD"
+  pontos={15}
+  files="nodered/flows-lab08.json evidencias/t4-energia.txt"
+/>
+
+---
+
+## Parte 5 — Dashboard com histórico do banco {/* #parte-5 */}
+
+Um gráfico do Dashboard 2.0 só tem os pontos que chegaram **com ele aberto**: recarregue a
+página e ele começa vazio. Aqui o gráfico nasce com o **histórico do banco**, num período
+escolhido, e continua recebendo os pontos **ao vivo**.
+
+Na página **Lab 08** (caminho `/lab08`) do `My Dashboard`, crie os grupos _Histórico (SQLite)_
+(largura 7) e _Resumo (SQLite)_ (largura 5).
+
+```mermaid
+flowchart LR
+  DD[ui-dropdown: período] --> J[function: período → $janela]
+  I[inject once: -1 hours] --> J & DD
+  J --> QT[(Prepared: histórico T e SP)] --> PT[function: linhas → pontos] --> CT[ui-chart Temperatura × setpoint]
+  J --> QP[(Prepared: histórico PWM)] --> PP[function: linhas → pontos] --> CP[ui-chart PWM aplicado]
+  D[mqtt in .../dht] --> VD[function: dht ao vivo] --> CT
+  P[mqtt in .../pwm] --> VP[function: pwm ao vivo · 2 saídas] --> CT & CP
+  T[inject a cada 30 s] --> QE[(Fixed: tempo em cada estado)] --> TE[ui-table]
+  T --> QN[(Fixed: energia por modo)] --> TN[ui-table]
+```
+
+### 5.1 Período e consulta parametrizada
+
+**ui-dropdown** "Período" (grupo _Histórico_, pass-through desligado) com três opções:
+
+| Rótulo         | Valor         |
+| -------------- | ------------- |
+| últimos 10 min | `-10 minutes` |
+| última hora    | `-1 hours`    |
+| últimas 24 h   | `-24 hours`   |
+
+O valor é um **modificador** do `strftime()` do SQLite: `strftime(..., 'now', 'localtime',
+'-1 hours')` é "agora menos uma hora". Um **inject** (_once_, 2 s, payload `-1 hours`) liga no
+dropdown, para ele já aparecer selecionado, e na function:
+
+```js title="function: período -> $janela"
+// período escolhido -> parâmetro $janela das duas consultas (modificador do strftime)
+const ok = ["-10 minutes", "-1 hours", "-24 hours"];
+const janela = ok.includes(msg.payload) ? msg.payload : "-1 hours";
+flow.set("janela", janela);
+return { params: { $janela: janela } };
+```
+
+A function liga em **dois** sqlite _Prepared Statement_:
+
+```sql title="sqlite: histórico T e SP (Prepared)"
+SELECT recebido_em AS ts, 'T (°C)' AS serie, t AS valor
+FROM leituras
+WHERE origem = 'esp32' AND recebido_em >= strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime', $janela)
+UNION ALL
+SELECT recebido_em, 'SP (°C)', sp
+FROM atuacao
+WHERE sp IS NOT NULL AND recebido_em >= strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime', $janela)
+ORDER BY ts;
+```
+
+```sql title="sqlite: histórico PWM (Prepared)"
+SELECT recebido_em AS ts, 'Aquecedor (%)' AS serie, aq AS valor
+FROM atuacao WHERE recebido_em >= strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime', $janela)
+UNION ALL
+SELECT recebido_em, 'Ventilador (%)', ve
+FROM atuacao WHERE recebido_em >= strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime', $janela)
+ORDER BY ts;
+```
+
+As duas consultas já devolvem as linhas no formato do gráfico (`ts`, `serie`, `valor`), juntando
+duas séries com **`UNION ALL`**. Cada uma vai a uma function igual e depois ao seu gráfico:
+
+```js title="function: linhas -> pontos"
+// linhas {ts, serie, valor} do SQLite -> pontos do gráfico (substitui o que havia)
+const pontos = msg.payload.map((r) => ({
+  ts: new Date(r.ts.replace(" ", "T")).getTime(),
+  serie: r.serie,
+  valor: r.valor,
+}));
+node.status({ text: `${pontos.length} pontos (${flow.get("janela")})` });
+return { payload: pontos, action: "replace" };
+```
+
+### 5.2 Pontos ao vivo e resumo
+
+| Nó                                                        | Configuração                                                                                                                                     |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **ui-chart** "Temperatura × setpoint"                     | grupo _Histórico_, _Line_, **Series** = key `serie`, **X** = key `ts` (_timescale_), **Y** = key `valor`, interpolação linear                    |
+| **ui-chart** "PWM aplicado"                               | igual, com interpolação **step**                                                                                                                 |
+| **mqtt in** `.../dht` → function "dht ao vivo"            | → gráfico de temperatura                                                                                                                         |
+| **mqtt in** `.../pwm` → function "pwm ao vivo" (2 saídas) | → gráfico de temperatura (SP) e gráfico de PWM                                                                                                   |
+| **inject** a cada 30 s                                    | → sqlite _Fixed_ "tempo em cada estado" → **ui-table**; → sqlite _Fixed_ "energia por modo" → **ui-table** (grupo _Resumo_, colunas automáticas) |
+
+```js title="function: dht ao vivo"
+// .../dht -> ponto ao vivo da temperatura
+const p = msg.payload;
+if (typeof p?.t !== "number") return null;
+return { payload: [{ ts: Date.now(), serie: "T (°C)", valor: p.t }] };
+```
+
+```js title="function: pwm ao vivo (2 saídas)"
+// .../pwm -> ponto ao vivo do setpoint e do PWM
+const p = msg.payload;
+if (typeof p?.aq !== "number") return null;
+const ts = Date.now();
+return [
+  typeof p.sp === "number"
+    ? { payload: [{ ts, serie: "SP (°C)", valor: p.sp }] }
+    : null,
+  {
+    payload: [
+      { ts, serie: "Aquecedor (%)", valor: p.aq },
+      { ts, serie: "Ventilador (%)", valor: p.ve },
+    ],
+  },
+];
+```
+
+Abra `http://localhost:1880/dashboard/lab08`, troque o período e recarregue a página: o histórico
+volta inteiro, porque vem do banco.
+
+:::tip[Preveja antes de rodar]
+**P5 (parte 1):** por que o período vai em `msg.params` (`$janela`) e não concatenado no texto do
+SQL, se o valor vem do **seu** dropdown? O que impediria alguém de mandar `$janela =
+"-100 years"` direto pelo WebSocket do dashboard? (Releia a lista `ok` da function.)
+:::
+
+**Evidências:** captura do dashboard em `evidencias/t5-dashboard.png`, com o período "última
+hora" e os dois gráficos mostrando o experimento da T4, e o fluxo exportado em
+`nodered/flows-lab08.json`.
+
+<FileTree
+  root="lab08-grupo-X"
+  files={["nodered/flows-lab08.json u", "evidencias/t5-dashboard.png c"]}
+/>
+
+<CommitPoint
+  id="t5"
+  task="Dashboard com historico do banco"
+  pontos={20}
+  files="nodered/flows-lab08.json evidencias/t5-dashboard.png"
+/>
+
+---
+
+## Projeto integrador — manutenção do banco {/* #integrador */}
+
+Uma leitura a cada 5 s são **17 280 linhas por dia** por grupo. O SQLite aguenta isso com folga,
+mas um sistema que **só cresce** um dia fica lento e enche o disco. Um banco de telemetria
+precisa de três cuidados: **índice** para as consultas por período, **resumo** do que é antigo e
+**retenção** (apagar o detalhe que já foi resumido).
+
+### Requisitos
+
+1. **Plano de consulta e índice.** O dashboard da T5 filtra por `recebido_em`. Veja como o
+   SQLite executa essa consulta **antes** e **depois** do índice:
+
+   ```sql title="inject 'Plano da consulta por período' (sqlite consultas)"
+   EXPLAIN QUERY PLAN SELECT COUNT(*) AS n, ROUND(AVG(t), 2) AS t_media FROM leituras
+   WHERE recebido_em >= strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime', '-5 minutes');
+   ```
+
+   ```sql title="inject 'Criar índices e leituras_min' (sqlite Batch, once)"
+   CREATE INDEX IF NOT EXISTS idx_leituras_recebido ON leituras (recebido_em);
+   CREATE INDEX IF NOT EXISTS idx_atuacao_recebido ON atuacao (recebido_em);
+
+   CREATE TABLE IF NOT EXISTS leituras_min (
+       minuto  TEXT PRIMARY KEY,      -- 'AAAA-MM-DD HH:MM'
+       n       INTEGER NOT NULL,
+       t_media REAL, t_min REAL, t_max REAL,
+       h_media REAL
+   );
+   ```
+
+   Antes: `SCAN leituras` (lê a tabela inteira). Depois: `SEARCH leituras USING INDEX
+idx_leituras_recebido (recebido_em>?)`.
+
+2. **Resumo e retenção numa transação.** Um **inject** "Manutenção" que repete **a cada 5
+   minutos**, ligado ao sqlite **Batch**:
+
+   ```sql title="msg.topic do inject 'Manutenção' (sqlite Batch)"
+   BEGIN;
+   INSERT OR REPLACE INTO leituras_min (minuto, n, t_media, t_min, t_max, h_media)
+   SELECT substr(recebido_em, 1, 16), COUNT(*), ROUND(AVG(t), 2), ROUND(MIN(t), 1), ROUND(MAX(t), 1), ROUND(AVG(h), 2)
+   FROM leituras
+   WHERE origem = 'esp32'
+     AND recebido_em < strftime('%Y-%m-%d %H:%M', 'now', 'localtime', '-10 minutes')
+   GROUP BY 1;
+   DELETE FROM leituras
+   WHERE origem = 'esp32'
+     AND recebido_em < strftime('%Y-%m-%d %H:%M', 'now', 'localtime', '-10 minutes');
+   COMMIT;
+   ```
+
+   As leituras com mais de 10 minutos viram **uma linha por minuto** em `leituras_min` e são
+   apagadas de `leituras`. Num sistema real a janela seria de dias (`'-7 days'`); aqui são
+   10 minutos para você ver o efeito na aula.
+
+3. **Tamanho e histórico longo.**
+
+   ```sql title="inject 'Tamanho do banco'"
+   SELECT p.page_count * s.page_size AS bytes, f.freelist_count AS paginas_livres,
+          (SELECT COUNT(*) FROM leituras) AS leituras,
+          (SELECT COUNT(*) FROM leituras_min) AS minutos_resumidos
+   FROM pragma_page_count() AS p, pragma_page_size() AS s, pragma_freelist_count() AS f;
+   ```
+
+   ```sql title="inject 'Histórico longo (resumo + recente)'"
+   SELECT minuto, n, t_media, t_min, t_max FROM leituras_min
+   UNION ALL
+   SELECT substr(recebido_em, 1, 16), COUNT(*), ROUND(AVG(t), 2), ROUND(MIN(t), 1), ROUND(MAX(t), 1)
+   FROM leituras WHERE origem = 'esp32' AND substr(recebido_em, 1, 16) NOT IN (SELECT minuto FROM leituras_min)
+   GROUP BY 1
+   ORDER BY minuto DESC LIMIT 30;
+   ```
+
+   O "histórico longo" junta o resumo (minutos antigos) com o detalhe recente agregado na hora:
+   quem consulta não precisa saber onde cada minuto está guardado.
+
+4. **VACUUM.** Um inject com `VACUUM;` no sqlite "consultas". Rode "Tamanho do banco" antes e
+   depois.
+
+5. **Evidências**
+   - `evidencias/t6-plano.txt`: o plano **antes** e **depois** do índice.
+   - `evidencias/t6-manutencao.txt`: "Tamanho do banco" antes da primeira manutenção, depois
+     dela e depois do `VACUUM`, e as 10 primeiras linhas do "Histórico longo".
+   - O fluxo exportado de novo em `nodered/flows-lab08.json`.
+
+**Saída esperada** de "Tamanho do banco" (valores ilustrativos):
+
+```text title="Painel debug do Node-RED"
+antes:        [{ bytes: 69632, paginas_livres: 0, leituras: 361, minutos_resumidos: 0 }]
+manutenção:   [{ bytes: 69632, paginas_livres: 4, leituras: 122, minutos_resumidos: 20 }]
+VACUUM:       [{ bytes: 40960, paginas_livres: 0, leituras: 122, minutos_resumidos: 20 }]
+```
+
+:::tip[Preveja antes de rodar]
+**P5 (parte 2):** (a) depois da manutenção, o arquivo **não diminui** (`bytes` igual) e aparecem
+`paginas_livres`. Por quê? O que o `VACUUM` faz de diferente, e por que ele não roda junto com a
+manutenção a cada 5 minutos? (b) Por que o `INSERT` do resumo e o `DELETE` precisam estar na
+**mesma transação**? Imagine o Node-RED reiniciando entre os dois. (c) O índice deixa a
+consulta por período mais rápida. O que ele custa a **cada INSERT** que chega do MQTT?
+:::
+
+### Dicas
+
+- O corte usa `strftime('%Y-%m-%d %H:%M', ...)`, **sem segundos**: só minutos **completos** são
+  resumidos, então um minuto nunca fica metade em `leituras_min` e metade em `leituras`.
+- `INSERT OR REPLACE` com `minuto` como `PRIMARY KEY` torna a manutenção **idempotente**: rodar
+  duas vezes não duplica nada.
+- `EXPLAIN QUERY PLAN` não executa a consulta: só mostra o plano. Use-o sempre que uma consulta
+  ficar lenta.
+- Depois da manutenção, o período "última hora" do dashboard só mostra a temperatura dos últimos
+  10 minutos: o detalhe mais antigo foi apagado. Num sistema real, a retenção do detalhe é
+  **maior** que o maior período do dashboard (ou o dashboard passa a ler `leituras_min` para os
+  períodos longos).
+
+<FileTree
+  root="lab08-grupo-X"
+  files={[
+    "nodered/flows-lab08.json u",
+    "evidencias/t6-plano.txt c",
+    "evidencias/t6-manutencao.txt c",
+  ]}
+/>
+
+<CommitPoint
+  id="t6"
+  task="Manutencao do banco"
+  pontos={20}
+  files="nodered/flows-lab08.json evidencias/t6-plano.txt evidencias/t6-manutencao.txt"
+/>
+
+---
+
+<LabLogout />
