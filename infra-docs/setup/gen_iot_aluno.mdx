@@ -4,8 +4,6 @@ title: gen_iot_aluno
 sidebar_label: gen_iot_aluno
 ---
 
-import LabIotAluno from "@site/src/components/shared/LabIotAluno";
-
 Gera o LAB IoT completo na máquina do aluno (sem servidor e sem VPS).
 
 ## Usage
@@ -115,11 +113,3 @@ Uso (Windows: "py"; Linux/macOS: "python3"):
 <LabIotAluno labName="lab05" opcoes={{ portaHttp: 8080, captura: true }} />
 
 ---
-
-```bash
-py gen_iot_aluno.py --lab lab07 --grupo x --sem-gitea --sem-microbin --sem-fuxa --sem-ntfy
-```
-
-```bash
-cd lab07-x && docker compose up -d --build
-```
