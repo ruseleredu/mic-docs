@@ -211,6 +211,20 @@ export function DevTools() {
                     gh auth status
                 </ThemeCodeBlock>
             </TabItem>
+            <TabItem value="py" label="Python">
+                <p><b>O <a href="https://www.python.org/" target="_blank">Python</a> é uma linguagem de programação que permite trabalhar com rapidez e integrar sistemas de forma mais eficaz.</b></p>
+                <ul>
+                    <li>O <a href="https://www.python.org/" target="_blank">Python</a> pode ser instalado via winget:
+                    </li>
+                </ul>
+                <ThemeCodeBlock className="language-bash">
+                    winget install Python.Python.3.14
+                </ThemeCodeBlock>
+                <p>Verifique a versão instalada:</p>
+                <ThemeCodeBlock className="language-bash">
+                    py --version && python --version && pip --version
+                </ThemeCodeBlock>
+            </TabItem>
             <TabItem value="vscode" label="VS Code">
                 <p><b><Link to="/docs/vs-code-intro">Visual Studio Code</Link>: IDE e Editor de Código para Desenvolvimento de Software.</b></p>
                 <ul>
@@ -365,41 +379,6 @@ export function DevTools() {
                         </ThemeCodeBlock>
                         <ThemeCodeBlock className="language-bash">
                             {`docker run --rm eclipse-mosquitto:2 mosquitto_pub -h test.mosquitto.org -t "esp32iot/labtest" -m "Hello from Docker!"`}
-                        </ThemeCodeBlock>
-                    </li>
-                </ul>
-            </TabItem>
-            <TabItem value="mqtt-cli" label="MQTT">
-                <p><b><a href="https://hivemq.github.io/mqtt-cli/" target="_blank">MQTT CLI</a>: Uma interface de linha de comando para clientes MQTT totalmente compatível com MQTT 5.0 e MQTT 3.1.1.</b></p>
-                <ul>
-                    <li>Baixe o arquivo <a href="https://github.com/hivemq/mqtt-cli/releases/latest" target="_blank">ZIP para Windows</a> e extraia-o no local <code>%USERPROFILE%\.platformio\penv\Scripts\</code>.
-
-                        <ThemeCodeBlock className="language-bash">
-                            explorer %USERPROFILE%\.platformio\penv\Scripts\
-                        </ThemeCodeBlock>
-                    </li>
-                    <li>
-                        <p>Verifique a versão instalada:</p>
-                        <ThemeCodeBlock className="language-bash">
-                            {`mqtt-cli -V`}
-                        </ThemeCodeBlock>
-                    </li>
-                    <li>
-                        <p>Pasta de configurações e logs:</p>
-                        <ThemeCodeBlock className="language-bash">
-                            explorer %USERPROFILE%\.mqtt-cli
-                        </ThemeCodeBlock>
-                    </li>
-                    <li>
-                        <p>Teste:</p>
-                        <ThemeCodeBlock className="language-bash">
-                            {`mqtt-cli test -h broker.hivemq.com`}
-                        </ThemeCodeBlock>
-                    </li>
-                    <li>
-                        <p>Teste de MQTT com hivemq/mqtt-cli:</p>
-                        <ThemeCodeBlock className="language-bash">
-                            {`docker run -it hivemq/mqtt-cli test -h broker.hivemq.com`}
                         </ThemeCodeBlock>
                     </li>
                 </ul>
