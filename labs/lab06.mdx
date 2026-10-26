@@ -14,7 +14,7 @@ sidebar_position: 9
 - [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
 
 :::info[Pontuação]
-**T1…T5 = 100 pts** (esta aula não tem desafios): T1 10 · T2 20 · T3 25 · T4 20 · T5 25.
+**T2…T6 = 100 pts** (esta aula não tem desafios): T2 10 · T3 20 · T4 25 · T5 20 · T6 25.
 O autograder normaliza para 0–10. Vale o commit `Tn:` mais recente de cada tarefa.
 :::
 
@@ -79,11 +79,12 @@ a maioria é `0x3C`, alguns são `0x3D`.
 <details>
 <summary><strong>Mapa de tarefas</strong> — 5 tarefas · 100 pts</summary>
 
-- [T1 — Circuito e dependencias do SSD1306](#t1) · 10 pts
-- [T2 — Tela local no OLED](#t2) · 20 pts
-- [T3 — MQTT nos dois sentidos](#t3) · 25 pts
-- [T4 — Node-RED: replica do OLED e comando do intervalo](#t4) · 20 pts
-- [T5 — Framebuffer pixel a pixel no dashboard](#t5) · 25 pts
+- [T1 — Docker Operacional](#t1) · 0 pts
+- [T2 — Circuito e dependencias do SSD1306](#t2) · 10 pts
+- [T3 — Tela local no OLED](#t3) · 20 pts
+- [T4 — MQTT nos dois sentidos](#t4) · 25 pts
+- [T5 — Node-RED: replica do OLED e comando do intervalo](#t5) · 20 pts
+- [T6 — Framebuffer pixel a pixel no dashboard](#t6) · 25 pts
 
 </details>
 
@@ -125,6 +126,12 @@ Tudo fica sob `elt73a/lab06/grupo-X/`. Troque o `X` (e o `#define GRUPO`) pela l
 | `.../cmd/intervalo` | broker → ESP32 | `10` (segundos, 2–60)                                                         |
 
 :::
+
+## Parte 0 — Docker Operacional {/* #parte-0 */}
+
+<LabIotAluno labName="lab06" />
+
+<CommitPoint id="t1" task="Hello Docker!" pontos={0} files="docker" />
 
 ---
 
@@ -205,7 +212,7 @@ A **GFX** é a biblioteca de desenho (texto, linhas, retângulos, círculos). A 
 o framebuffer e conversa com o controlador do display pelo I2C.
 
 <CommitPoint
-  id="t1"
+  id="t2"
   task="Circuito e dependencias do SSD1306"
   pontos={10}
   files="platformio.ini diagram.json"
@@ -356,7 +363,7 @@ e uma captura do Wokwi com o display em `evidencias/t2-oled.png`.
 />
 
 <CommitPoint
-  id="t2"
+  id="t3"
   task="Tela local no OLED"
   pontos={20}
   files="src/main.cpp evidencias/t2-serial.txt evidencias/t2-oled.png"
@@ -672,7 +679,7 @@ vazio com `-r -n`.)
 :::
 
 <CommitPoint
-  id="t3"
+  id="t4"
   task="MQTT nos dois sentidos"
   pontos={25}
   files="src/main.cpp evidencias/t3-mqtt.txt"
@@ -771,7 +778,7 @@ exportada (menu → _Export_ → _Current flow_) em `nodered/flows-lab06.json`.
 />
 
 <CommitPoint
-  id="t4"
+  id="t5"
   task="Node-RED: replica do OLED e comando do intervalo"
   pontos={20}
   files="nodered/flows-lab06.json evidencias/t4-dashboard.png"
@@ -917,7 +924,7 @@ ou no dashboard?
 />
 
 <CommitPoint
-  id="t5"
+  id="t6"
   task="Framebuffer pixel a pixel no dashboard"
   pontos={25}
   files="src/main.cpp nodered/flows-lab06.json evidencias/t5-fb.txt evidencias/t5-oled.png"
