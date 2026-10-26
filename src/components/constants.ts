@@ -30,11 +30,17 @@ export type GenIotOpcoes = {
 };
 
 export const PRESETS_IOT: Record<string, GenIotOpcoes> = {
-    lab05: {}, // LAB IoT completo
-    lab06: { semGitea: true, semMicrobin: true },
-    lab07: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
+    lab00: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
+    lab01: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
+    lab02: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
+    lab03: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
+    lab04: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
+    lab05: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
+    lab06: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
+    lab07: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
     lab08: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
     lab09: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
+    lab10: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true, captura: true },
     projeto: {},
 };
 
@@ -63,9 +69,16 @@ export type ScadaOpcoes = {
 };
 
 export const PRESETS_SCADA: Record<string, ScadaOpcoes> = {
-    lab05: {}, // LAB IoT completo
-    lab06: { semGitea: true, semMicrobin: true },
+    lab00: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
+    lab01: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
+    lab02: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
+    lab03: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
+    lab04: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
+    lab05: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
+    lab06: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
     lab07: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
-    lab08: {},
+    lab08: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
+    lab09: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
+    lab10: { semGitea: true, semMicrobin: true, semFuxa: true, semNtfy: true },
     projeto: {},
 };
