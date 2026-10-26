@@ -40,7 +40,7 @@ export const labData: LabRow[] = [
 
         start: "23-Mar-2026",
         end: "30-Mar-2026",
-        conteudo: "Ambiente de desenvolvimento VS Code; Uso do git e GitHub;",
+        conteudo: "Git, GitHub e VS Code;",
     },
     {
         tarefa: "LAB02",
@@ -53,7 +53,7 @@ export const labData: LabRow[] = [
 
         start: "30-Mar-2026",
         end: "06-Apr-2026",
-        conteudo: "Configuração do Ambiente ESP32 (Parte 02);",
+        conteudo: "PlatformIO, Wokwi e Docker;",
     },
     {
         tarefa: "LAB03",
@@ -65,7 +65,7 @@ export const labData: LabRow[] = [
 
         start: "06-Apr-2026",
         end: "13-Apr-2026",
-        conteudo: "Arquitetura de microcontroladores; Pinos de propósito geral (GPIO);",
+        conteudo: "Logs no ESP32 e ambientes de build (debug vs release);",
     },
     {
         tarefa: "LAB04",
@@ -77,7 +77,7 @@ export const labData: LabRow[] = [
 
         start: "13-Apr-2026",
         end: "20-Apr-2026",
-        conteudo: "Interrupções via GPIO e Temporizadores (Timers);",
+        conteudo: "Wi-Fi e MQTT no ESP32;",
     },
     {
         tarefa: "LAB05",
@@ -89,7 +89,7 @@ export const labData: LabRow[] = [
 
         start: "27-Apr-2026",
         end: "04-May-2026",
-        conteudo: "Módulo PWM; Conversor ADC;",
+        conteudo: "DHT22, temporizador e MQTT com Node-RED;",
     },
     {
         tarefa: "LAB06",
@@ -101,7 +101,7 @@ export const labData: LabRow[] = [
 
         start: "04-May-2026",
         end: "11-May-2026",
-        conteudo: "Uso do STM32CubeMonitor; Visualização de variáveis;",
+        conteudo: "SSD1306, MQTT nos dois sentidos e dashboard;",
     },
     {
         tarefa: "LAB07",
@@ -113,7 +113,7 @@ export const labData: LabRow[] = [
 
         start: "11-May-2026",
         end: "18-May-2026",
-        conteudo: "ADC com DMA; Uso do STM32CubeMonitor; Manipulação de variáveis;",
+        conteudo: "ADC, PWM, modos de operação e controle ON/OFF;",
     },
     {
         tarefa: "LAB08",
@@ -125,7 +125,7 @@ export const labData: LabRow[] = [
 
         start: "18-May-2026",
         end: "25-May-2026",
-        conteudo: "Uso do STM32CubeMonitor; MQTT, IoT;",
+        conteudo: "Node-RED e SQLite: gravar, consultar e manter;",
     },
     {
         tarefa: "LAB09",
@@ -137,7 +137,7 @@ export const labData: LabRow[] = [
 
         start: "25-May-2026",
         end: "01-Jun-2026",
-        conteudo: "Uso do STM32CubeMonitor; SQLite;",
+        conteudo: "Migração do Arduino para o ESP-IDF",
     },
     {
         tarefa: "LAB10",
@@ -149,7 +149,7 @@ export const labData: LabRow[] = [
 
         start: "01-Jun-2026",
         end: "08-Jun-2026",
-        conteudo: "Introdução ao uso do PlatformIO;",
+        conteudo: "Testes, simulação e CI/CD do firmware;",
     },
     {
         tarefa: "LAB11",
