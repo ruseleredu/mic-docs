@@ -18,6 +18,7 @@ import {
     LabLogout,
     DevTools,
 } from "@site/src/components/shared/InstructionsSite";
+import LabIotAluno from "@site/src/components/shared/LabIotAluno";
 
 export default {
     // Mantém os componentes padrão do MDX
@@ -37,4 +38,5 @@ export default {
     LabSetup,
     LabLogout,
     DevTools,
+    LabIotAluno,
 };
