@@ -161,7 +161,7 @@ export const labData: LabRow[] = [
 
         start: "08-Jun-2026",
         end: "15-Jun-2026",
-        conteudo: "Introdução ao Display OLED SSD1306;",
+        conteudo: "Assembly do ESP32: ver, ler e medir;",
     },
 
 ];
