@@ -137,7 +137,7 @@ export const labData: LabRow[] = [
 
         start: "25-May-2026",
         end: "01-Jun-2026",
-        conteudo: "Migração do Arduino para o ESP-IDF",
+        conteudo: "Migração do Arduino para o ESP-IDF;",
     },
     {
         tarefa: "LAB10",
