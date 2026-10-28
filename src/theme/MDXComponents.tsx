@@ -15,9 +15,11 @@ import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import {
     LabSetup,
+    GitLogOut,
     LabLogout,
     DevTools,
 } from "@site/src/components/shared/InstructionsSite";
+
 import LabIotAluno from "@site/src/components/shared/LabIotAluno";
 
 export default {
@@ -36,6 +38,7 @@ export default {
     Tabs,
     TabItem,
     LabSetup,
+    GitLogOut,
     LabLogout,
     DevTools,
     LabIotAluno,

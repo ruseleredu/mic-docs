@@ -1,439 +1,521 @@
 ---
-sidebar_position: 4
 title: Laboratório 01
-description: Ambiente de desenvolvimento VS Code; Uso do git e GitHub;
+sidebar_position: 4
 ---
 
-import Tabs from "@theme/Tabs";
-import TabItem from "@theme/TabItem";
-import { LABsApoio } from "@site/src/components/shared/AvisosSite";
-import {
-  VerifyDev1,
-  VerifyDev2,
-  GitConfig,
-  DevTools,
-  GitLogOut,
-  GitCommit,
-} from "@site/src/components/shared/InstructionsSite";
+## Checklist — ambiente de desenvolvimento (parte 1): Git, GitHub e VS Code {/* #checklist */}
 
-# Laboratório 01
+- [ ] VS Code, Git, GitHub CLI (`gh`) e Python 3 instalados (Parte 1)
+- [ ] Identidade do Git configurada, `gh` autenticado, repositório do grupo clonado e versões registradas em `evidencias/t1-ambiente.txt` (T1)
+- [ ] `README.md` do grupo com os integrantes e o primeiro `push` (T2)
+- [ ] Cada integrante com um _pull request_ aprovado, e um conflito de merge resolvido (T3)
+- [ ] `README.md` com _badges_, um diagrama Mermaid e uma expressão matemática, entregue por _issue_ → _branch_ → _pull request_ que fecha a _issue_ (T4)
+- [ ] Previsões P1–P3 respondidas no `README.md`
+- [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
+- [ ] Logout do Git e do `gh` no computador do laboratório
 
-{/* Info de que este conteúdo é de apoio! */}
-
-<LABsApoio />
-
-{/* Tabela com link para atividade, inicio, fim e descrição do LAB! */}
-
-<div style={{ display: "flex", justifyContent: "center" }}>
-  <LabTable index={1} internal={false} />
-</div>
-
----
-
-## Conteúdo
-
-Git e GitHub; Ambiente de desenvolvimento;
-
-- [ ] Uso do Git;
-- [ ] Uso do GitHub;
-- [ ] Crie uma organização no GitHub;
-- [ ] Solicitar inclusão em um time;
-- [ ] Ambiente de desenvolvimento;
-- [ ] Comandos básicos, git e GitHub;
-
----
-
-# Solicitar inclusão em um time
-
-Esta página explica como pedir para ser adicionado(a) ao seu **grupo (time)** na
-organização **`ELT73A-S22-2026-2`** do [GitHub](https://github.com/).
-
-Toda solicitação é feita abrindo uma **issue** em um repositório dedicado, por meio
-de um formulário. Depois de enviada, um administrador adiciona você ao time e fecha
-a issue.
-
-:::info[Pré-requisitos]
-
-- Ter uma conta no [GitHub](https://github.com/).
-- Saber o **slug do seu grupo** (de `grupo-a` até `grupo-j`).
-- Conhecer o seu **username** do GitHub (o nome que aparece no seu perfil, sem o `@`).
-  :::
-
-## Passo a passo
-
-### 1. Abra o formulário de solicitação
-
-Acesse o repositório de solicitações e clique em [New issue](https://github.com/ELT73A-S22-2026-2/elt73a-central/issues/new/choose) (Nova issue), ou use
-o [link direto](https://github.com/ELT73A-S22-2026-2/elt73a-central/issues/new?template=solicitar-time.yml):
-
-### 2. Selecione o formulário
-
-Na tela de escolha, selecione **"Solicitar inclusão em time"**.
-
-### 3. Preencha os campos
-
-| Campo                      | O que informar                                          |
-| -------------------------- | ------------------------------------------------------- |
-| **Grupo (slug do time)**   | Escolha o slug do seu grupo, de `grupo-a` a `grupo-p`.  |
-| **Seu username do GitHub** | Seu nome de usuário, **sem o `@`**. Ex.: `octocat`.     |
-| **Confirmação**            | Marque a caixa confirmando que o username está correto. |
-
-:::caution[Confira o username]
-Um username digitado errado impede a inclusão e atrasa o processo. Confirme no seu
-perfil antes de enviar.
+:::info[Pontuação]
+**T1…T4 = 100 pts** (esta aula não tem desafios): T1 15 · T2 20 · T3 30 · T4 35. O autograder
+normaliza para 0–10. Vale o commit `Tn:` mais recente de cada tarefa.
 :::
 
-<SimpleFileTree defaultOpen details profile="lab01" />
+<LabSetup />
 
-## Verifique o seu ambiente de desenvolvimento
-
-{/* List of Dev Tools */}
+### Configuração do ambiente de desenvolvimento {/* #setup */}
 
 <DevTools />
 
 ---
 
-{/* Configure o git */}
+Os laboratórios desta disciplina têm sempre a mesma forma. O grupo recebe um **repositório no
+GitHub**, criado a partir de um _template_. Ali escreve o firmware do ESP32 no **VS Code** com o
+**PlatformIO**, simula no **Wokwi** e entrega cada tarefa num **commit** `Tn:`. O autograder lê
+esses commits. Mais adiante entram o broker MQTT, o Node-RED, o banco de dados e o CI, todos
+rodando sobre as mesmas ferramentas.
 
-<GitConfig />
+Os Labs 01 e 02 preparam esse ambiente. O Lab 01 cuida do **Git** e do **GitHub**; o Lab 02, do
+**PlatformIO**, do **Wokwi** e do **Docker**. Nesta aula:
+
+1. você instala e confere as ferramentas;
+2. o Git passa a saber **quem** você é, e o GitHub passa a aceitar os seus `push`;
+3. o grupo pratica o fluxo que vai usar o semestre inteiro: _branch_, _pull request_, revisão e
+   _merge_, inclusive quando dois mexem na mesma linha;
+4. o `README.md` do grupo ganha **badges**, um **diagrama** e uma **fórmula**: os recursos de
+   Markdown do GitHub que os relatórios dos próximos labs usam.
+
+```mermaid
+flowchart LR
+  PC["seu computador<br/>VS Code + Git + gh"] -- "git push (branch)" --> GH["GitHub<br/>repositório do grupo"]
+  GH -- "pull request<br/>revisão + merge" --> M["main"]
+  M -- "git pull" --> PC
+  GH -- "commits Tn:" --> AG["autograder"]
+```
+
+## Objetivos
+
+- Instalar e **verificar** o ambiente: VS Code, Git, GitHub CLI e Python.
+- Configurar a **identidade** do Git e autenticar o `gh`, sem guardar senha em lugar nenhum.
+- Usar o fluxo de trabalho em grupo: `clone`, `commit`, `push`, `pull`, _branch_, _pull request_,
+  revisão e _merge_.
+- **Resolver um conflito** de merge sem perder o trabalho de ninguém.
+- Escrever um `README.md` com **diagramas** (Mermaid), **expressões matemáticas** (LaTeX) e
+  **badges** (Shields.io).
+
+## Material
+
+- Computador com **Windows 11** e ~5 GB livres. Todos os comandos desta página são para o
+  **Prompt de Comando** (`cmd`), o terminal padrão do VS Code nesta disciplina.
+- Uma conta no **GitHub**, já aceita na organização da disciplina (`elt73a-N21-2026-2`).
+- Nenhuma placa: os Labs 01 e 02 não precisam de ESP32 físico.
+
+:::info[Computador do laboratório × o seu]
+Nos computadores do laboratório o ambiente já vem instalado: faça só a **Parte 2 em diante** e,
+no fim, o **logout** do Git e do `gh`. No seu computador, faça tudo, desde a Parte 1. O Lab 02
+acrescenta o PlatformIO, o Wokwi e o Docker.
+:::
+
+<details>
+<summary><strong>Mapa de tarefas</strong> — 4 tarefas · 100 pts</summary>
+
+- [T1 — Identidade, autenticacao e clone](#t1) · 15 pts
+- [T2 — README e primeiro push](#t2) · 20 pts
+- [T3 — Branch, pull request e conflito](#t3) · 30 pts
+- [T4 — README com diagramas, fórmulas e badges por issue e pull request](#t4) · 35 pts
+
+</details>
+
+<FileTree
+  details={true}
+  defaultOpen={false}
+  title="Estrutura de Arquivos do Projeto (no fim da aula)"
+  root="lab01-grupo-x"
+  files={[
+    ".gitignore r",
+    ".vscode/settings.json c",
+    "README.md u",
+    "evidencias/t1-ambiente.txt c",
+    "evidencias/t3-presenca.md c",
+    "evidencias/t3-prs.txt c",
+    "evidencias/t4-readme.png c",
+  ]}
+/>
 
 ---
 
-{/* Verifique o seu ambiente dev, git, gh e code */}
+## Parte 1 — Instalar as ferramentas {/* #parte-1 */}
 
-<VerifyDev1 />
+Siga as abas da [configuração do ambiente](#setup), nesta ordem. Cada aba tem o comando de
+instalação (`winget`) e um comando para conferir. Depois de cada instalação, **feche e abra** o
+terminal, para ele achar os programas novos.
+
+| Aba do ambiente                    | O que fazer no Lab 01                                     |
+| ---------------------------------- | --------------------------------------------------------- |
+| **VS Code**                        | instalar e criar o `settings.json` do terminal (veja 1.1) |
+| **Git SCM**                        | instalar; a configuração é a Parte 2                      |
+| **GitHub CLI**                     | instalar; o login é a Parte 2                             |
+| **Python**                         | instalar e conferir com `py --version`                    |
+| PlatformIO, Wokwi, Drivers, Docker | ficam para o Lab 02                                       |
+
+Os repositórios da disciplina abrem sempre no **perfil `ESP32IO`** do VS Code, separado do seu
+perfil do dia a dia. Se o perfil ainda não existir, o VS Code o cria vazio; as extensões do
+PlatformIO e do Wokwi entram nele no Lab 02.
+
+```shell title="Prompt de Comando (cmd), na pasta do repositório"
+code --profile "ESP32IO" .
+```
+
+### 1.1 O terminal do VS Code é o Prompt de Comando
+
+Os comandos desta disciplina são escritos para o **Prompt de Comando** (`cmd`). O PowerShell,
+padrão do VS Code no Windows, trata aspas, `&&`, `>` e `%VARIAVEL%` de outro jeito, e um comando
+copiado daqui pode falhar ou fazer outra coisa. Por isso, cada repositório tem o arquivo
+`.vscode/settings.json`:
+
+```json title=".vscode/settings.json"
+{
+  "terminal.integrated.defaultProfile.windows": "Command Prompt"
+}
+```
+
+Crie o arquivo pelo VS Code (**Explorer** → nova pasta `.vscode` → novo arquivo
+`settings.json`) depois de clonar o repositório (2.3), e abra um terminal novo (**Ctrl+Shift+`**).
+O nome do terminal, à direita, tem de ser **cmd**, e o prompt fica assim:
+
+```text title="Terminal do VS Code"
+Microsoft Windows [versão 10.0.26100.xxxx]
+(c) Microsoft Corporation. Todos os direitos reservados.
+
+C:\Users\aluno\lab01-grupo-x>
+```
+
+:::note[Comentários no cmd]
+No `cmd` não existe comentário com `#`: o texto seria passado ao comando. Nesta página, as
+explicações estão fora dos blocos de comando, ou em linhas `rem`.
+:::
 
 ---
 
-## Clone o repositório inicial do LAB01
+## Parte 2 — Identidade, autenticação e clone {/* #parte-2 */}
 
-Escolha o seu grupo e entre com o comando abaixo para criar o repositório no GitHub:
+### 2.1 Quem você é para o Git
+
+Cada commit leva um **nome** e um **e-mail**. O GitHub usa o e-mail para ligar o commit à sua
+conta: é assim que o autograder e o professor sabem **quem** fez o quê no grupo.
+
+```shell title="Terminal (cmd)"
+git config --global user.name "Seu Nome Completo"
+git config --global user.email "12345678+seu-usuario@users.noreply.github.com"
+git config --global init.defaultBranch main
+git config --global pull.rebase false
+git config --global core.autocrlf true
+git config --global --list
+```
+
+O e-mail `...@users.noreply.github.com` está em **GitHub → Settings → Emails** ("Keep my email
+address private"). Com ele, o seu e-mail pessoal não fica público no histórico do repositório.
+O `pull.rebase false` faz o `git pull` juntar por _merge_ (o fluxo desta disciplina), e o
+`core.autocrlf true` converte os fins de linha do Windows (CRLF) para LF no repositório, e o
+inverso na sua pasta. O comando `git config --list --show-origin` da aba **Git SCM** mostra de
+qual arquivo vem cada configuração.
+
+:::tip[Preveja antes de rodar]
+**P1:** e se o `user.email` estiver errado (o e-mail do computador do laboratório, por
+exemplo)? O commit é aceito pelo GitHub? O que aparece no lugar do seu avatar na lista de
+commits, e o que isso significa para a **sua** nota num trabalho em grupo? Confira na T2.
+:::
+
+### 2.2 Autenticar o `gh`
+
+O GitHub não aceita a senha da conta no `git push`. Quem autentica é o **GitHub CLI**: ele
+abre o navegador, você autoriza, e ele passa a atender o Git como _credential helper_.
+
+```shell title="Terminal (cmd)"
+gh auth login --hostname github.com --git-protocol https --web
+gh auth setup-git
+gh auth status
+```
+
+O `gh auth login` mostra um código de 8 caracteres e abre o navegador: cole o código e
+autorize. O `gh auth setup-git` faz o `git push` usar esse login.
+
+```text title="Saída esperada (trecho)"
+github.com
+  ✓ Logged in to github.com account seu-usuario (keyring)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+```
+
+:::warning[Computador compartilhado]
+No laboratório, o login fica guardado no computador até você sair. Antes de ir embora, faça o
+**logout** do fim desta página. Quem usar a máquina depois teria acesso de escrita aos **seus**
+repositórios.
+:::
+
+### 2.3 Clonar o repositório do grupo {/* #clonar */}
+
+Escolha o grupo e rode o comando gerado. Ele cria o repositório do grupo a partir do template
+(na primeira vez) e o clona no seu computador:
 
 <LabTeamMembers labName="lab01" />
 
-{/* Git Commit */}
-
-<GitCommit />
-
-## Envie o link do repositório do seu grupo no Moodle: {/* #moodle-link */}
+### 2.4 Enviar o link do repositório no Moodle {/* #moodle-link */}
 
 <LabSubmit labName="lab01" />
 
-## Uso do git e GitHub
+Entre na pasta clonada e abra-a no VS Code, no perfil da disciplina:
 
-- [Melhores práticas do Git](/docs/git-best-practices).
-- [Folha de Dicas de Git do GitHub](/docs/github-git-cheat-sheet).
-
-## Conventional Commits em Projetos de Firmware e Sistemas Embarcados
-
-Em projetos de firmware e sistemas embarcados (PlatformIO + VS Code + Wokwi para ESP32), a adoção da [Convenção Conventional Commits](https://www.conventionalcommits.org/) traz clareza, facilita a geração automática de changelogs e melhora a colaboração em atividades de laboratório.
-
-Este documento apresenta a classificação dos tipos de commits e exemplos práticos orientados para o contexto de sala de aula.
-
-### Estrutura Básica
-
-```
-<tipo>[escopo opcional]: <descrição curta>
-
-[corpo opcional]
-
-[rodapé(s) opcional(is)]
+```shell title="Terminal (cmd)"
+cd lab01-grupo-x
+code --profile "ESP32IO" .
 ```
 
-### Regras importantes
+Crie o `.vscode/settings.json` da seção 1.1 e abra um terminal novo (**Ctrl+Shift+`**): ele
+tem de ser o **cmd**. Os comandos desta aula rodam nele, na raiz do repositório.
 
-- A descrição deve ser escrita no **imperativo** e em minúsculas (exceto nomes próprios).
-- Máximo recomendado de 72 caracteres na primeira linha.
-- O escopo é opcional e geralmente indica o módulo ou componente afetado (`sensor`, `wifi`, `platformio`, `display`, etc.).
-- Use o corpo para explicar o _porquê_ da mudança, não apenas o _o quê_.
+### 2.5 Registrar o ambiente
 
-### Classificação dos Tipos
+Gere a evidência com as versões instaladas. O mesmo arquivo ajuda o professor a entender um
+erro de ambiente depois.
 
-| Tipo         | Quando usar                                                  | Exemplo de contexto em laboratório                    |
-| ------------ | ------------------------------------------------------------ | ----------------------------------------------------- |
-| **feat**     | Nova funcionalidade                                          | Implementar leitura de sensor DHT22                   |
-| **fix**      | Correção de bug                                              | Corrigir overflow no buffer UART                      |
-| **docs**     | Alterações apenas em documentação                            | Atualizar README com diagrama de conexão              |
-| **style**    | Formatação, espaços, ponto e vírgula (sem mudança de lógica) | Ajustar indentação do código PlatformIO               |
-| **refactor** | Mudança de código que não corrige bug nem adiciona feature   | Separar lógica de Wi-Fi em arquivo próprio            |
-| **perf**     | Melhoria de performance                                      | Otimizar leitura ADC com media móvel                  |
-| **test**     | Adição ou correção de testes                                 | Criar teste unitário para função de debounce          |
-| **build**    | Mudanças no sistema de build ou dependências externas        | Atualizar versão da biblioteca FastLED                |
-| **ci**       | Configuração de integração contínua                          | Adicionar workflow de build no GitHub Actions         |
-| **chore**    | Tarefas de manutenção que não afetam o código-fonte          | Atualizar `.gitignore` ou limpar arquivos temporários |
-| **revert**   | Reverter um commit anterior                                  | Desfazer commit que quebrou o simulador Wokwi         |
-
-### Exemplos Práticos para Atividades de Laboratório
-
-import ConventionalCommitsTypes from "@site/src/components/shared/ConventionalCommitsTypes";
-
-<ConventionalCommitsTypes />
-
-O GitHub é uma plataforma de hospedagem de código-fonte e arquivos com controle de versão usando o Git.
-
-- https://docs.github.com/pt/get-started/learning-about-github/github-glossary
-
-### [Git](https://git-scm.com/)
-
-| Git                                                                                                                                                                                                                                           | Git                                                                                                                                                                                                                      |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| O Git é um programa de código aberto para acompanhamento de alterações em arquivos de texto. Ele foi escrito pelo autor do sistema operacional Linux e é a principal tecnologia na qual o GitHub, a interface social e do usuário, se baseia. | Git is an open source program for tracking changes in text files. It was written by the author of the Linux operating system, and is the core technology that GitHub, the social and user interface, is built on top of. |
-
-### repository
-
-| Repositório                                                                                                                                                                                                                                                                                                              | Repository                                                                                                                                                                                                                                                                                               |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Um repositório é o elemento mais básico do GitHub. É mais fácil imaginá-lo como uma pasta de projetos. Um repositório contém todos os arquivos de projeto (incluindo a documentação) e armazena o histórico de revisão de cada arquivo. Os repositórios podem ter vários colaboradores e podem ser públicos ou privados. | A repository is the most basic element of GitHub. They're easiest to imagine as a project's folder. A repository contains all of the project files (including documentation), and stores each file's revision history. Repositories can have multiple collaborators and can be either public or private. |
-
-### commit
-
-git-commit - Record changes to the repository
-
-| confirmar                                                                                                                                                                                                                                                                                                                                                                                                                                       | commit                                                                                                                                                                                                                                                                                                                                                                            |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Commit, ou "revisão", é uma alteração individual em um arquivo (ou conjunto de arquivos). Quando você faz um commit para salvar seu trabalho, o Git cria uma ID exclusiva (também conhecida como o "SHA" ou "hash") que permite que você mantenha o registro das alterações específicas confirmadas com quem as fez e quando. Os commits normalmente contêm uma mensagem do commit, que é uma breve descrição de quais alterações foram feitas. | A commit, or "revision", is an individual change to a file (or set of files). When you make a commit to save your work, Git creates a unique ID (a.k.a. the "SHA" or "hash") that allows you to keep record of the specific changes committed along with who made them and when. Commits usually contain a commit message which is a brief description of what changes were made. |
-
-```bash
-git help commit
+```shell title="Terminal do VS Code (cmd), na raiz do repositório"
+if not exist evidencias mkdir evidencias
+(echo == ambiente %DATE% %TIME% & git --version & gh --version & call code --version & py --version & git config --global user.name & git config --global user.email & gh auth status) > evidencias\t1-ambiente.txt 2>&1
+type evidencias\t1-ambiente.txt
 ```
 
-### pull
+Os parênteses juntam vários comandos, e o `> arquivo 2>&1` grava a saída **e os erros** de
+todos. O `call` é necessário porque o `code` é um arquivo `.cmd`: sem ele, o `cmd` não volta
+para os comandos seguintes.
 
-| pull                                                                                                                                                                                                                                                                 | pull                                                                                                                                                                                                                                                     |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pull refere-se a quando você busca alterações e as mescla. Por exemplo, se alguém editou o arquivo remoto no qual vocês dois estão trabalhando, o ideal é fazer pull dessas alterações na cópia local para que ele fique atualizado. Confira também [fetch](#fetch). | Pull refers to when you are fetching in changes and merging them. For instance, if someone has edited the remote file you're both working on, you'll want to pull in those changes to your local copy so that it's up to date. See also [fetch](#fetch). |
-
-```bash
-git help pull
+```text title="evidencias/t1-ambiente.txt (trecho; as versões variam)"
+== ambiente 22/10/2026 14:05:31,27
+git version 2.xx.x.windows.1
+gh version 2.xx.x (aaaa-mm-dd)
+https://github.com/cli/cli/releases/tag/v2.xx.x
+1.1xx.x
+(hash do commit do VS Code)
+x64
+Python 3.14.x
+Seu Nome Completo
+12345678+seu-usuario@users.noreply.github.com
+github.com
+  ✓ Logged in to github.com account seu-usuario (keyring)
 ```
 
-### fetch
+Confira que **todas** as linhas têm versão e que o `gh` está logado. O token aparece mascarado
+(`gho_****`): é seguro registrar.
 
-| fetch                                                                                                                                                                                                                                                  | fetch                                                                                                                                                                                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ao usar `git fetch`, você está adicionando alterações do repositório remoto ao branch de trabalho local sem fazer commit delas. Ao contrário de `git pull`, a busca permite que você revise as alterações antes de fazer commit delas no branch local. | When you use `git fetch`, you're adding changes from the remote repository to your local working branch without committing them. Unlike `git pull`, fetching allows you to review changes before committing them to your local branch. |
-
-```bash
-git help fetch
+```shell title="Terminal (cmd)"
+git add .vscode/settings.json evidencias/t1-ambiente.txt
+git commit -m "T1: ambiente registrado"
+git push
 ```
 
-### clone
+<FileTree
+  root="lab01-grupo-x"
+  files={[".vscode/settings.json c", "evidencias/t1-ambiente.txt c"]}
+/>
 
-git-clone - Clone a repository into a new directory
-
-| clone                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | clone                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Um clone é uma cópia de um repositório que fica em seu computador em vez de ficar em algum outro lugar em um servidor de site. Clonar significa o ato de fazer essa cópia. Quando você faz um clone, é possível editar os arquivos no seu editor preferido e usar o Git para acompanhar as alterações sem precisar ficar online. O repositório clonado ainda está conectado à versão remota, ou seja, você poderá enviar as alterações locais por push ao repositório remoto para mantê-las sincronizadas quando estiver online. | A clone is a copy of a repository that lives on your computer instead of on a website's server somewhere, or the act of making that copy. When you make a clone, you can edit the files in your preferred editor and use Git to keep track of your changes without having to be online. The repository you cloned is still connected to the remote version so that you can push your local changes to the remote to keep them synced when you're online. |
-
-```bash
-git help clone
-```
-
-### push
-
-git-push - Update remote refs along with associated objects
-
-| efetuar push                                                                                                                                                                                                                          | push                                                                                                                                                                                         |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Enviar por push significa enviar as alterações confirmadas para um repositório remoto no GitHub.com. Por exemplo, se você alterar algo localmente, poderá enviar por push essas alterações para que outras pessoas possam acessá-las. | To push means to send your committed changes to a remote repository on GitHub.com. For instance, if you change something locally, you can push those changes so that others may access them. |
-
-```bash
-git help push
-```
-
-### branch
-
-git-branch - List, create, or delete branches
-
-| branch                                                                                                                                                                                                                                                                                                                                                   | branch                                                                                                                                                                                                                                                                                                                               |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Um branch é uma versão paralela de um repositório. Está no repositório, mas não afeta a ramificação principal ou primária e permite que você trabalhe à vontade, sem prejudicar a versão "online". Depois de fazer as alterações desejadas, você poderá fazer uma mesclagem do branch novamente com a ramificação principal para publicar as alterações. | A branch is a parallel version of a repository. It is contained within the repository, but does not affect the primary or main branch allowing you to work freely without disrupting the "live" version. When you've made the changes you want to make, you can merge your branch back into the main branch to publish your changes. |
-
-```bash
-git help branch
-```
-
-### checkout
-
-git-checkout - Switch branches or restore working tree files
-
-| fazer checkout                                                                                                                                                                                                                                                                                                                                                                                                                                                             | checkout                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Use `git checkout` na linha de comando para criar um branch, alterar o branch de trabalho atual para outro branch ou até alternar para uma versão diferente de um arquivo de outro branch com `git checkout [branchname] [path to file]`. A ação de "check-out" atualiza toda ou parte da árvore de trabalho com um objeto de árvore ou um blob do banco de dados de objetos e atualiza o índice e o HEAD se toda a árvore de trabalho está apontando para um novo branch. | You can use `git checkout` on the command line to create a new branch, change your current working branch to a different branch, or even to switch to a different version of a file from a different branch with `git checkout [branchname] [path to file]`. The "checkout" action updates all or part of the working tree with a tree object or blob from the object database, and updates the index and HEAD if the whole working tree is pointing to a new branch. |
-
-```bash
-git help checkout
-```
-
-### fork
-
-| fork                                                                                                                                                                                                                                                                                                                                                                                  | fork                                                                                                                                                                                                                                                                                                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Uma bifurcação é uma cópia do repositório de outro usuário que está em sua conta. Os forks permitem que você faça alterações livremente em um projeto sem afetar o repositório upstream original. Você também pode abrir uma solicitação pull no repositório upstream e manter o fork sincronizado com as alterações mais recentes, pois os dois repositórios ainda estão conectados. | A fork is a personal copy of another user's repository that lives on your account. Forks allow you to freely make changes to a project without affecting the original upstream repository. You can also open a pull request in the upstream repository and keep your fork synced with the latest changes since both repositories are still connected. |
-
-### merge
-
-git-merge - Join two or more development histories together
-
-| mesclar                                                                                                                                                                                                                                                                                                                                                                                                                                                               | merge                                                                                                                                                                                                                                                                                                                                                                                           |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| O merge pega as alterações de um branch (no mesmo repositório ou a partir de uma bifurcação) e as aplica em outro. Normalmente, isso ocorre por meio de uma "solicitação de pull" (que pode ser considerada uma solicitação de mesclagem) ou por meio da linha de comando. Uma mesclagem pode ser feita por meio de uma solicitação de pull pela interface da Web GitHub.com se não há alterações conflitantes ou sempre pode ser feita por meio da linha de comando. | Merging takes the changes from one branch (in the same repository or from a fork), and applies them into another. This often happens as a "pull request" (which can be thought of as a request to merge), or via the command line. A merge can be done through a pull request via the GitHub.com web interface if there are no conflicting changes, or can always be done via the command line. |
-
-```bash
-git help merge
-```
-
-## Cheatsheet — Team members working with lab repos
-
-**Org:** `ELT73A-S22-2026-2`  
-**Your team:** `Grupo-X` → slug `grupo-x`  
-**Your lab repo:** `lab01-grupo-x` (example)
+<CommitPoint
+  id="t1"
+  task="Identidade, autenticacao e clone"
+  pontos={15}
+  files=".vscode/settings.json evidencias/t1-ambiente.txt"
+/>
 
 ---
 
-Open in VS Code:
+## Parte 3 — README e primeiro push {/* #parte-3 */}
 
-```bash
-code .
-# or, if you use a profile:
-code . --profile "ESP32IO"
+### 3.1 O ciclo básico
+
+```mermaid
+sequenceDiagram
+  participant W as pasta de trabalho
+  participant S as staging (git add)
+  participant L as repositório local
+  participant R as GitHub (origin)
+  W->>S: git add arquivo
+  S->>L: git commit -m "Tn: ..."
+  L->>R: git push
+  R->>L: git pull (o que os outros enviaram)
+  L->>W: (arquivos atualizados)
 ```
 
----
+Antes de qualquer coisa: `git status`. Ele diz em que ramo você está, o que mudou e o que está
+pronto para o commit. Use-o o tempo todo.
 
-## 2. Daily workflow
+### 3.2 O `README.md` do grupo
 
-```bash
-# Update from remote
-git pull
+Um integrante edita o `README.md`. Ele vai ser a capa de todos os repositórios da disciplina:
 
-# See status
+```markdown title="README.md"
+# Lab 01 — Grupo X
+
+## Integrantes
+
+| Nome   | Usuário no GitHub |
+| ------ | ----------------- |
+| Nome 1 | @usuario1         |
+| Nome 2 | @usuario2         |
+
+## Previsões
+
+- **P1:** ...
+- **P2:** ...
+- **P3:** ...
+```
+
+```shell title="Terminal (cmd)"
 git status
+git add README.md
+git commit -m "T2: README com os integrantes"
+git push
+git log --oneline -3
+```
 
-# Stage changes
-git add .
-# or specific files:
-git add src/main.cpp
+Os **outros** integrantes trazem o commit para as suas máquinas. O commit `T2:` aparece no
+`git log`:
 
-# Commit
-git commit -m "Implement exercise 2"
+```shell title="Terminal (cmd, cada um dos outros integrantes)"
+git pull
+git log --oneline -3
+```
 
-# Push to GitHub
+Abra o repositório no navegador (`gh repo view --web`), clique em **commits** e confira o P1: o
+seu avatar aparece ao lado do commit?
+
+:::note[Mensagens de commit nesta disciplina]
+Cada tarefa entregue tem **um** commit cuja mensagem começa com `Tn:` (`T1:`, `T2:`…). O
+autograder procura essas mensagens; vale o commit `Tn:` mais recente de cada tarefa. Commits
+intermediários podem ter qualquer mensagem, desde que descritiva (`corrige pino do LED`, e não
+`asdf`).
+:::
+
+<FileTree root="lab01-grupo-x" files={["README.md u"]} />
+
+<CommitPoint
+  id="t2"
+  task="README e primeiro push"
+  pontos={20}
+  files="README.md"
+/>
+
+---
+
+## Parte 4 — Branch, pull request e conflito {/* #parte-4 */}
+
+### 4.1 Por que não todo mundo direto na `main`?
+
+Se todos fazem `push` na `main` ao mesmo tempo, um sobrescreve ou atrapalha o outro, e ninguém
+revisa nada. O fluxo da disciplina é: **cada mudança num ramo** (_branch_) → **pull request**
+(PR) → alguém do grupo **revisa** → **merge** na `main`.
+
+```mermaid
+gitGraph
+  commit id: "T2: README"
+  branch t3-ana
+  commit id: "presença Ana"
+  checkout main
+  branch t3-bruno
+  commit id: "presença Bruno"
+  checkout main
+  merge t3-ana id: "PR #1"
+  checkout t3-bruno
+  merge main id: "resolve conflito"
+  checkout main
+  merge t3-bruno id: "PR #2"
+```
+
+### 4.2 Cada integrante, no seu computador
+
+**Todos ao mesmo tempo**, cada um no seu computador, partindo da `main` atualizada:
+
+O `git switch -c` cria o ramo e muda para ele (troque `ana` pelo seu nome):
+
+```shell title="Terminal (cmd, cada integrante)"
+git switch main
+git pull
+git switch -c t3-ana
+```
+
+Crie (ou edite, se já existir no seu ramo) o arquivo `evidencias/t3-presenca.md` com **exatamente**
+este conteúdo, trocando só a terceira linha:
+
+```markdown title="evidencias/t3-presenca.md"
+# Presença no Lab 01
+
+Quem fez este arquivo: Ana (@usuario-da-ana)
+```
+
+O `-u` do primeiro `push` liga o ramo local ao remoto; nos seguintes, basta `git push`:
+
+```shell title="Terminal (cmd)"
+git add evidencias/t3-presenca.md
+git commit -m "presença da Ana"
+git push -u origin t3-ana
+gh pr create --base main --title "Presença da Ana" --body "Lab 01, T3"
+```
+
+### 4.3 Revisar, juntar e resolver o conflito
+
+1. Outro integrante abre o PR (`gh pr list` e `gh pr view 1 --web`), lê a mudança em **Files
+   changed** e aprova (**Review changes → Approve**).
+2. Quem abriu o PR faz o merge: `gh pr merge 1 --merge --delete-branch`.
+3. O **segundo** PR agora mostra _This branch has conflicts that must be resolved_: os dois ramos
+   mudaram a **mesma linha** do mesmo arquivo. O dono do segundo PR resolve:
+
+```shell title="Terminal (cmd, dono do PR com conflito)"
+git switch t3-bruno
+git pull origin main
+git status
+```
+
+O `git pull origin main` traz a `main` e avisa `CONFLICT (add/add)`. O `git status` mostra o
+arquivo em **both added**: os dois ramos criaram o mesmo arquivo com conteúdos diferentes.
+
+No VS Code, o arquivo aparece com as marcas do conflito:
+
+```text title="evidencias/t3-presenca.md (durante o conflito)"
+# Presença no Lab 01
+
+<<<<<<< HEAD
+Quem fez este arquivo: Bruno (@usuario-do-bruno)
+=======
+Quem fez este arquivo: Ana (@usuario-da-ana)
+>>>>>>> 52f781f13aa312d984ce2e0dc6056b2a83372c98
+```
+
+Entre `<<<<<<< HEAD` e `=======` está a **sua** versão; entre `=======` e `>>>>>>>`, a que
+veio da `main` (identificada pelo hash do commit).
+
+Resolver é **editar o arquivo** até ele ficar como deve ser, sem as marcas, mantendo o trabalho
+dos dois:
+
+```markdown title="evidencias/t3-presenca.md (resolvido)"
+# Presença no Lab 01
+
+Quem fez este arquivo: Ana (@usuario-da-ana)
+Quem fez este arquivo: Bruno (@usuario-do-bruno)
+```
+
+```shell title="Terminal (cmd)"
+git add evidencias/t3-presenca.md
+git commit -m "resolve conflito com a presença da Ana"
 git push
 ```
 
-If `git push` asks for a remote branch the first time:
+O PR fica verde: revise, aprove e faça o merge como antes. Repita até o PR de **todos** os
+integrantes estar na `main`.
 
-```bash
-git push -u origin main
-```
+:::tip[Preveja antes de rodar]
+**P2:** se a Ana tivesse escrito na **linha 3** e o Bruno numa **linha 5** nova, haveria
+conflito? Por que o Git consegue juntar sozinho mudanças em linhas diferentes, mas não na mesma
+linha? E por que o `git push --force` "resolveria" o conflito do jeito errado?
+:::
 
----
+### 4.4 Evidência
 
-## 3. Branch workflow (recommended)
+Com todos os PRs juntados, um integrante atualiza a `main` e registra:
 
-```bash
-# Create and switch to a branch
-git checkout -b feature/ex2
-
-# Work, commit, push
-git add .
-git commit -m "Exercise 2"
-git push -u origin feature/ex2
-
-# Open a PR into main
-gh pr create --base main --title "Exercise 2" --body "Done"
-```
-
-After the PR is merged:
-
-```bash
-git checkout main
+```shell title="Terminal (cmd)"
+git switch main
 git pull
-git branch -d feature/ex2
-```
-
----
-
-## 5. What you **can** and **cannot** do
-
-| Action                                        | Allowed?                 |
-| --------------------------------------------- | ------------------------ |
-| Clone / pull / push to **your** group repo    | Yes (if team has `push`) |
-| Create branches / commits                     | Yes                      |
-| Open issues / PRs in your repo                | Yes                      |
-| Edit other groups’ repos (`lab00-grupo-b`, …) | No                       |
-| Delete the repository                         | No (usually)             |
-| Change team / org settings                    | No                       |
-| Access `lab00-template` (if private)          | Only if granted          |
-
-Your access comes from the **team** (`grupo-a`, etc.), not from being repo admin.
-
----
-
-## 7. Common problems
-
-**Permission denied on push**
-
-- Confirm you are logged in: `gh auth status`
-- Confirm you are in the right team/repo
-- Ask the instructor to check team access (`push` on the repo)
-
-**Repo not found**
-
-```bash
-gh repo view ELT73A-S22-2026-2/lab00-grupo-a
-```
-
-If 404: wrong name, or you are not a member of the org/team yet.
-
-**Merge conflicts**
-
-```bash
-git pull
-# fix conflicted files
-git add .
-git commit -m "Resolve merge conflicts"
+(gh pr list --state merged & echo. & git log --oneline --graph -15) > evidencias\t3-prs.txt 2>&1
+type evidencias\t3-prs.txt
+git add evidencias/t3-prs.txt
+git commit -m "T3: PRs de todos e conflito resolvido"
 git push
 ```
 
-**Undo local changes (destructive)**
+<FileTree
+  root="lab01-grupo-x"
+  files={["evidencias/t3-presenca.md c", "evidencias/t3-prs.txt c"]}
+/>
 
-```bash
-git checkout -- .
-git clean -fd
-```
-
----
-
-## 8. Minimal “start of lab” checklist
-
-1. `gh auth status` (logged in)
-2. `gh repo clone ELT73A-S22-2026-2/labXX-grupo-y`
-3. `cd labXX-grupo-y`
-4. `code .`
-5. Work → `git add` → `git commit` → `git push`
-6. Check CI: `gh run list`
+<CommitPoint
+  id="t3"
+  task="Branch, pull request e conflito"
+  pontos={30}
+  files="evidencias/t3-presenca.md evidencias/t3-prs.txt"
+/>
 
 ---
 
-## 9. One-liner cheat card
+## Parte 5 — Markdown avançado no GitHub {/* #parte-5 */}
 
-```text
-clone   →  gh repo clone ORG/lab00-grupo-a
-update  →  git pull
-save    →  git add . && git commit -m "msg" && git push
-web     →  gh repo view --web
-ci      →  gh run list
-```
+O GitHub renderiza, além do Markdown comum, três recursos que os relatórios desta disciplina
+usam o tempo todo: **diagramas**, **expressões matemáticas** e **badges**. Os três são texto
+puro no arquivo: entram no Git, aparecem no `diff` do PR e são revisados como código.
 
-## Criando diagramas
+### 5.1 Criando diagramas
 
-- https://docs.github.com/pt/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams
+- [GitHub Docs — Criar diagramas](https://docs.github.com/pt/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams)
 
-Here is a simple flow chart:
+Um bloco de código com a linguagem `mermaid` vira um diagrama. Um fluxograma simples:
 
-````md
+````markdown title="README.md (trecho)"
 ```mermaid
 graph TD;
     A-->B;
@@ -443,7 +525,7 @@ graph TD;
 ```
 ````
 
----
+O GitHub mostra:
 
 ```mermaid
 graph TD;
@@ -453,34 +535,206 @@ graph TD;
     C-->D;
 ```
 
----
+O mesmo Mermaid desenha os outros diagramas desta página: `flowchart`, `sequenceDiagram` e
+`gitGraph`. Os diagramas dos labs seguintes (circuitos MQTT, fluxos do Node-RED) vão para o
+`README.md` assim.
 
-## Como escrever expressões matemáticas
+### 5.2 Escrevendo expressões matemáticas
 
-- https://docs.github.com/pt/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions
+- [GitHub Docs — Escrever expressões matemáticas](https://docs.github.com/pt/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions)
 
-```bash
+O GitHub usa a sintaxe do **LaTeX** (renderizada pelo MathJax):
+
+| Forma                                  | Uso                                                         |
+| -------------------------------------- | ----------------------------------------------------------- |
+| `$ ... $`                              | expressão **na linha** do texto                             |
+| `$$ ... $$`                            | expressão em **bloco**, numa linha própria                  |
+| bloco de código com a linguagem `math` | bloco, sem conflito com o resto do Markdown (`_`, `*`, `\`) |
+
+Por exemplo, a **desigualdade de Cauchy-Schwarz**. O `\` no fim da linha do título força a
+quebra de linha:
+
+```markdown title="README.md (trecho)"
 **The Cauchy-Schwarz Inequality**\
 $$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
 ```
 
-**The Cauchy-Schwarz Inequality**\
-$$\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)$$
+E uma conta que aparece no Lab 02: o resistor que limita a corrente do LED no GPIO2 (3,3 V,
+LED vermelho com ~2 V, corrente de ~6 mA):
+
+````markdown title="README.md (trecho)"
+O resistor do LED vale $R = \frac{V_{CC} - V_F}{I_F}$:
+
+```math
+R = \frac{3{,}3\ \text{V} - 2{,}0\ \text{V}}{6\ \text{mA}} \approx 217\ \Omega \;\Rightarrow\; 220\ \Omega
+```
+````
+
+### 5.3 Static Badge
+
+- [Shields.io — Static Badge](https://shields.io/badges)
+
+Um _badge_ é uma imagem gerada pela URL: `https://img.shields.io/badge/<rótulo>-<mensagem>-<cor>`.
+No Markdown, entra como qualquer imagem (`![texto alternativo](url)`):
+
+```markdown title="README.md (trecho)"
+![Version](https://img.shields.io/badge/github-repo-blue?logo=github)
+![LAB status](https://img.shields.io/badge/LAB_01-OK-green?logo=github)
+![LAB status](https://img.shields.io/badge/LAB_01-OK-blue?logo=github)
+![LAB status](https://img.shields.io/badge/LAB_01-TODO-red?logo=github)
+```
+
+![Version](https://img.shields.io/badge/github-repo-blue?logo=github)
+![LAB status](https://img.shields.io/badge/LAB_01-OK-green?logo=github)
+![LAB status](https://img.shields.io/badge/LAB_01-OK-blue?logo=github)
+![LAB status](https://img.shields.io/badge/LAB_01-TODO-red?logo=github)
+
+| Na URL       | Vira no badge                                                    |
+| ------------ | ---------------------------------------------------------------- |
+| `_`          | espaço (`LAB_01` → "LAB 01")                                     |
+| `__`         | um `_`                                                           |
+| `--`         | um `-` (um `-` sozinho separa rótulo, mensagem e cor)            |
+| `%20`        | espaço                                                           |
+| `?logo=...`  | o ícone de um serviço (`github`, `espressif`, `docker`, `mqtt`…) |
+| `&style=...` | o estilo: `flat`, `flat-square`, `for-the-badge`…                |
+
+Um badge **estático** mostra só o que está escrito na URL: o `LAB_01-OK` continua verde mesmo
+que nada funcione. No Lab 10, o CI ganha um badge **dinâmico**, que muda de cor sozinho quando
+o build quebra.
 
 ---
 
-## Static Badge
+## Projeto integrador — README por issue e pull request {/* #integrador */}
 
-- https://shields.io/badges
+Num projeto real, o trabalho começa por uma **issue** (o que precisa ser feito), segue num
+**ramo** e termina num **PR que fecha a issue** quando entra na `main`. Aqui, a issue é deixar
+o `README.md` do grupo com a cara dos relatórios da disciplina.
 
-![Version](https://img.shields.io/badge/github-repo-blue?logo=github)
+### Requisitos
 
-![LAB status](https://img.shields.io/badge/LAB_01-OK-green?logo=github)
+1. **Issue.** Um integrante abre a issue:
 
-![LAB status](https://img.shields.io/badge/LAB_01-OK-blue?logo=github)
+   ```shell title="Terminal (cmd)"
+   gh issue create --title "README com badges, diagrama e fórmula" --body "Badges no topo, diagrama Mermaid do fluxo do grupo e a fórmula do resistor do LED."
+   gh issue list
+   ```
 
-![LAB status](https://img.shields.io/badge/LAB_01-TODO-red?logo=github)
+   Anote o número da issue (ex.: `#3`).
 
-{/* Logout do seu ambiente dev, git e gh */}
+2. **Ramo.** Crie o ramo `t4-readme` a partir da `main` atualizada:
+
+   ```shell title="Terminal (cmd)"
+   git switch main
+   git pull
+   git switch -c t4-readme
+   ```
+
+3. **`README.md`.** Acrescente, mantendo os integrantes e as previsões:
+   - logo abaixo do título, **pelo menos dois badges**: um com o nome do grupo e um de status
+     do Lab 01 (`TODO` em vermelho, por enquanto);
+   - uma seção **Fluxo de trabalho** com um diagrama Mermaid (`flowchart` ou `gitGraph`) do
+     caminho _issue_ → _branch_ → PR → revisão → _merge_ que o grupo usou;
+   - uma seção **Fórmulas** com a conta do resistor do LED da Parte 5.2, em bloco.
+
+   ```markdown title="README.md (início)"
+   # Lab 01 — Grupo X
+
+   ![Grupo](https://img.shields.io/badge/elt73a-grupo_X-blue?logo=github)
+   ![LAB status](https://img.shields.io/badge/LAB_01-TODO-red?logo=github)
+   ```
+
+4. **Conferir antes do PR.** Veja o resultado em dois lugares:
+   - no VS Code, com o _preview_ do Markdown (**Ctrl+Shift+V**);
+   - no GitHub, no próprio ramo:
+
+   ```shell title="Terminal (cmd)"
+   git add README.md
+   git commit -m "README com badges, diagrama e fórmula"
+   git push -u origin t4-readme
+   gh repo view --web --branch t4-readme
+   ```
+
+   Corrija o que não renderizar (um `-` a mais no badge, uma `}` faltando na fórmula) e faça
+   `git push` de novo. Quando estiver certo no GitHub, troque o badge do Lab 01 para
+   `LAB_01-OK-green` e salve uma captura da página do ramo, com os badges, o diagrama e a
+   fórmula, em `evidencias/t4-readme.png`.
+
+5. **Commit e PR.**
+
+   ```shell title="Terminal (cmd)"
+   git add README.md evidencias/t4-readme.png
+   git commit -m "T4: README com badges, diagrama e fórmula (closes #3)"
+   git push
+   gh pr create --base main --title "README com badges, diagrama e fórmula" --body "Closes #3"
+   ```
+
+6. **Revisão e merge.** Outro integrante revisa: em **Files changed**, o botão de _rich diff_
+   (ícone de documento) mostra o README renderizado. Aprova e faz o merge. A issue **fecha
+   sozinha** por causa do `Closes #3`. Confira com `gh issue list --state closed`.
+
+7. **No `README.md`:** as respostas de P1, P2 e P3 (num PR, como todo o resto).
+
+:::tip[Preveja antes de rodar]
+**P3:** (a) o _preview_ do VS Code mostra a fórmula? E o diagrama Mermaid? E o GitHub mostra os
+dois? Por que o mesmo arquivo `README.md` aparece diferente em cada lugar? (b) Os badges
+aparecem com o computador **sem internet**? O que isso diz sobre onde a imagem é gerada? (c) Se
+o firmware do Lab 02 parar de compilar, o badge `LAB_01-OK-green` muda de cor? Então, o que ele
+garante para quem lê o README?
+:::
+
+<FileTree
+  root="lab01-grupo-x"
+  files={["README.md u", "evidencias/t4-readme.png c"]}
+/>
+
+<CommitPoint
+  id="t4"
+  task="README com diagramas, fórmulas e badges por issue e pull request"
+  pontos={35}
+  files="README.md evidencias/t4-readme.png"
+/>
+
+---
+
+## Referência rápida {/* #referencia */}
+
+| Para…                                            | Comando                                                                 |
+| ------------------------------------------------ | ----------------------------------------------------------------------- |
+| Ver em que ramo estou e o que mudou              | `git status`                                                            |
+| Trazer o que os outros enviaram                  | `git pull`                                                              |
+| Salvar e enviar                                  | `git add <arquivos>` → `git commit -m "msg"` → `git push`               |
+| Criar um ramo e mudar para ele                   | `git switch -c nome`                                                    |
+| Voltar para a `main` atualizada                  | `git switch main` → `git pull`                                          |
+| Histórico resumido                               | `git log --oneline --graph -15`                                         |
+| Abrir o repositório no navegador                 | `gh repo view --web` · num ramo: `gh repo view --web --branch nome`     |
+| Abrir / listar / juntar PRs                      | `gh pr create` · `gh pr list` · `gh pr merge N --merge --delete-branch` |
+| Issues                                           | `gh issue create` · `gh issue list`                                     |
+| Desfazer mudanças **não** commitadas num arquivo | `git restore <arquivo>`                                                 |
+| Preview do Markdown no VS Code                   | **Ctrl+Shift+V** (ou **Ctrl+K V**, ao lado)                             |
+
+| Markdown no GitHub | Sintaxe                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| Diagrama           | bloco de código com a linguagem `mermaid`                  |
+| Fórmula na linha   | `$ ... $`                                                  |
+| Fórmula em bloco   | `$$ ... $$` ou bloco de código com a linguagem `math`      |
+| Badge estático     | `![alt](https://img.shields.io/badge/rótulo-mensagem-cor)` |
+
+| Problema                                  | O que fazer                                                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `Permission denied` / `403` no `push`     | `gh auth status`; confira se você está no time do grupo; peça ao professor para conferir o acesso                                     |
+| `Repository not found`                    | nome errado ou você ainda não é membro da organização: `gh repo view elt73a-N21-2026-2/lab01-grupo-x`                                 |
+| `rejected ... (fetch first)` no `push`    | alguém enviou antes: `git pull`, resolva o conflito se houver, e `git push` de novo. **Nunca** `--force`                              |
+| Commit sem o seu avatar no GitHub         | `user.email` diferente do da conta (P1). Corrija o `git config` para os próximos commits                                              |
+| O terminal abre como **PowerShell**       | falta o `.vscode/settings.json` (1.1), ou a pasta aberta não é a raiz do repositório. Abra um terminal novo depois de criar o arquivo |
+| Comando com `'aspas simples'` falha       | no `cmd`, só as **aspas duplas** agrupam um texto                                                                                     |
+| Diagrama aparece como código no GitHub    | o bloco tem de começar com três crases e `mermaid`, e a sintaxe tem de estar certa: o GitHub mostra o erro no lugar do diagrama       |
+| Fórmula aparece com `$` ou sem os índices | o Markdown comeu um `_` ou `\`: use o bloco com a linguagem `math`                                                                    |
+| Badge quebrado ou com texto errado        | um `-` a mais na URL: no rótulo e na mensagem, `-` vira `--` e espaço vira `_`                                                        |
+
+---
+
+## Logout do seu ambiente dev, git e gh {/* #logout */}
 
 <GitLogOut />
+
+<LabLogout />
