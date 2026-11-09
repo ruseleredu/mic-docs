@@ -13,6 +13,7 @@ sidebar_position: 15
 - [ ] O defeito da média móvel achado com um **watchpoint**, corrigido e verificado (T6)
 - [ ] Previsões P1–P5 respondidas no `README.md`
 - [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
+- [ ] Logout do Git e do `gh` no computador do laboratório
 
 :::info[Pontuação]
 **T1…T6 = 100 pts** (esta aula não tem desafios): T1 10 · T2 20 · T3 15 · T4 20 · T5 15 ·
@@ -74,10 +75,13 @@ A documentação do Wokwi para PlatformIO aponta para
 toolchain novo (`toolchain-xtensa-esp-elf`, GCC 15), que **não tem GDB**: ele está em
 `~/.platformio/packages/tool-xtensa-esp-elf-gdb/`. Confira se a pasta existe:
 
-```bash title="Terminal (Linux/macOS; no Windows: dir %USERPROFILE%.platformio\packages)"
-ls ~/.platformio/packages/ | grep gdb
-ls ~/.platformio/packages/tool-xtensa-esp-elf-gdb/bin/
+```shell title="Terminal do VS Code (cmd)"
+dir "%USERPROFILE%\.platformio\packages" | findstr gdb
+dir "%USERPROFILE%\.platformio\packages\tool-xtensa-esp-elf-gdb\bin"
 ```
+
+No Linux e no macOS: `ls ~/.platformio/packages/ | grep gdb` e
+`ls ~/.platformio/packages/tool-xtensa-esp-elf-gdb/bin/`.
 
 :::
 
@@ -147,7 +151,7 @@ e as falhas, ainda com os textos em `lab11`) e duas mudanças pequenas:
 />
 
 :::info[Tópicos do Lab 12]
-Os mesmos do Lab 11, sob `elt85b/lab12/grupo-x/`. O `.../dht` ganha o campo `t_media`:
+Os mesmos do Lab 11, sob `elt73a/lab12/grupo-x/`. O `.../dht` ganha o campo `t_media`:
 `{"grupo":"a","seq":7,"t":24.5,"t_media":24.5,"h":55.0,...}`.
 :::
 
@@ -161,6 +165,11 @@ e a lista de threads podem ser outros. O que vale são os **nomes** das funçõe
 ---
 
 ## Parte 1 — Conectar o GDB ao Wokwi {/* #parte-1 */}
+
+:::info[Suba o stack do LAB12!]
+Execute os comandos para subir o [stack do LAB12](/infra/setup/gen_iot_aluno#lab-12)!
+:::
+
 
 ### 1.1 Firmware no Lab 12
 
@@ -223,13 +232,16 @@ linhas) e **onde** está o servidor:
 }
 ```
 
-Desde o Lab 09, o `.gitignore` ignora a pasta `.vscode/` inteira. Agora a configuração de
-depuração precisa ir para o repositório (o colega clona e já depura):
+Desde o Lab 09, o `.gitignore` do template ignora a pasta `.vscode/`, porque o PlatformIO com ESP-IDF
+gera nela arquivos que mudam de um computador para outro. Ficam de fora dessa regra o
+`settings.json` do Lab 01 (o terminal `cmd`) e, agora, a configuração de depuração, que precisa ir
+para o repositório como no Lab 02 (o colega clona e já depura):
 
 ```text title=".gitignore"
 .pio/
 # .vscode/ fica fora do repositório, menos a configuração de depuração (Lab 12)
 .vscode/*
+!.vscode/settings.json
 !.vscode/launch.json
 !.vscode/extensions.json
 managed_components/
@@ -386,7 +398,7 @@ e na tela.
   commands={[
     {
       codeTitle: "Terminal — um comando via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab12/grupo-{group}/cmd/modo' -m pot`,
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab12/grupo-{group}/cmd/modo" -m pot`,
     },
   ]}
 />
@@ -505,7 +517,7 @@ decodificar. Com o depurador conectado, dá para parar **antes** do reboot, e at
     {
       codeTitle:
         "Terminal — provocar uma falha via Docker (nulo, div0 ou travar)",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab12/grupo-{group}/cmd/falha' -m nulo`,
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab12/grupo-{group}/cmd/falha" -m nulo`,
     },
   ]}
 />
@@ -524,7 +536,7 @@ Thread 2 hit Breakpoint 2, esp_panic_handler (info=0x3ffbb810) at .../esp_system
 #3  0x40082ebb in _xt_handle_exc () at .../xtensa/xtensa_vectors.S:830
 #4  0x400e70a7 in guardar_setpoint (l=0x0, sp=0) at src/falhas.c:33
 #5  0x400dc0d0 in falhas_provocar (tipo=0x3ffbb9b4 "nulo") at src/falhas.c:52
-#6  0x400db404 in tratar_comando (topico=0x3ffbb974 "elt85b/lab12/grupo-a/cmd/falha", txt=0x3ffbb9b4 "nulo") at src/main.c:324
+#6  0x400db404 in tratar_comando (topico=0x3ffbb974 "elt73a/lab12/grupo-a/cmd/falha", txt=0x3ffbb9b4 "nulo") at src/main.c:324
 #7  0x400db795 in task_app (arg=0x0) at src/main.c:388
 ```
 
@@ -767,5 +779,9 @@ teste unitário, no estilo do Lab 10, teria pegado esse defeito antes de ele che
 />
 
 ---
+
+## Logout do seu ambiente dev, git e gh {/* #logout */}
+
+<GitLogOut />
 
 <LabLogout />

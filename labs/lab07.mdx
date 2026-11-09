@@ -13,6 +13,7 @@ sidebar_position: 10
 - [ ] Modo `auto`: aquecedor ON/OFF com histerese e ventilador proporcional (T6)
 - [ ] Previsões P1–P4 respondidas no `README.md`
 - [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
+- [ ] Logout do Git e do `gh` no computador do laboratório
 
 :::info[Pontuação]
 **T1…T6 = 100 pts** (esta aula não tem desafios): T1 10 · T2 15 · T3 20 · T4 20 · T5 15 ·
@@ -39,7 +40,7 @@ flowchart LR
   POT[Potenciômetro] -->|ADC1 · GPIO34| ESP[ESP32]
   DHT[DHT22] -->|GPIO15| ESP
   ESP -->|LEDC canal 0 · 5 Hz| AQ[LED aquecedor · GPIO25]
-  ESP -->|LEDC canal 1 · 25 kHz| VE[LED ventilador · GPIO26]
+  ESP -->|LEDC canal 2 · 25 kHz| VE[LED ventilador · GPIO26]
   ESP -->|I2C| OLED[SSD1306]
   ESP -->|adc · pwm · dht · oled · status| BRK[(broker.hivemq.com)]
   BRK --> NR[Node-RED: dashboard]
@@ -426,7 +427,7 @@ Usamos frequências bem diferentes nos dois canais, de propósito:
 | Canal | Pino   | Carga real (na câmara)                         | Frequência | Por quê                                                                                     |
 | ----- | ------ | ---------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------- |
 | 0     | GPIO25 | resistência via relé de estado sólido / MOSFET | **5 Hz**   | a resistência tem inércia térmica de segundos; chavear devagar reduz perdas e interferência |
-| 1     | GPIO26 | ventoinha de 4 fios                            | **25 kHz** | é o padrão das ventoinhas PWM: acima da faixa audível, sem zumbido                          |
+| 2     | GPIO26 | ventoinha de 4 fios                            | **25 kHz** | é o padrão das ventoinhas PWM: acima da faixa audível, sem zumbido                          |
 
 ### 3.2 A API mudou entre as versões do core
 
@@ -439,6 +440,13 @@ mudou as funções do LEDC. Para o mesmo código compilar nos dois, encapsule:
 | `ledcAttachPin(pino, canal)`   | (feito pela linha acima)                     |
 | `ledcWrite(canal, duty)`       | `ledcWrite(pino, duty)`                      |
 
+:::warning[Canal e timer]
+Cada canal do LEDC usa um **timer**, e é o timer que define a frequência. No core 2.x,
+`ledcSetup(canal, ...)` escolhe o timer pelo número do canal: `timer = (canal / 2) % 4`. Os canais
+**0 e 1 dividem o timer 0**: se o ventilador usasse o canal 1, o `ledcSetup()` dele (25 kHz)
+mudaria também a frequência do aquecedor. Por isso o ventilador fica no **canal 2** (timer 1).
+:::
+
 <FileTree root="lab07-grupo-x" files={["src/main.cpp u"]} />
 
 ```cpp title="src/main.cpp (trechos novos da T3)"
@@ -446,7 +454,7 @@ mudou as funções do LEDC. Para o mesmo código compilar nos dois, encapsule:
 #define AQ_PIN     25                    // "aquecedor": resistência -> PWM lento
 #define VE_PIN     26                    // "ventilador": ventoinha 4 fios -> 25 kHz
 #define AQ_CANAL   0
-#define VE_CANAL   1
+#define VE_CANAL   2                    // canal 2 = timer 1 (veja a nota "Canal e timer")
 #define AQ_FREQ_HZ 5
 #define VE_FREQ_HZ 25000
 #define PWM_BITS   8                     // duty de 0 a 255
@@ -652,7 +660,7 @@ void controlar() {
 ```
 
 `strtof()` com o ponteiro `fim` detecta texto que **não é número**: se nada foi convertido,
-`fim == txt`. O `atof()` da T3 do Lab 06 devolveria `0` em silêncio.
+`fim == txt`. O `atof()` da T4 do Lab 06 devolveria `0` em silêncio.
 
 <details>
 <summary><strong>Código completo até a T4</strong> (clique para abrir)</summary>
@@ -692,7 +700,7 @@ void controlar() {
 #define AQ_PIN     25                    // "aquecedor": resistência -> PWM lento
 #define VE_PIN     26                    // "ventilador": ventoinha 4 fios -> 25 kHz
 #define AQ_CANAL   0
-#define VE_CANAL   1
+#define VE_CANAL   2                    // canal 2 = timer 1 (veja a nota "Canal e timer")
 #define AQ_FREQ_HZ 5
 #define VE_FREQ_HZ 25000
 #define PWM_BITS   8                     // duty de 0 a 255
@@ -1070,14 +1078,11 @@ void loop() {
 ### 4.2 Testando pelo terminal
 
 <GroupCommands
-  language="bash"
   commands={[
     {
       title: "1. Assinar tópicos (sem o framebuffer)",
       codeTitle: "Terminal 1 — assinar (sem o framebuffer)",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com \\
-  -t '{course}/lab07/grupo-{group}/adc' -t '{course}/lab07/grupo-{group}/pwm' \\
-  -t '{course}/lab07/grupo-{group}/cmd/#' -v | tee evidencias/t4-mqtt.txt`,
+      command: `docker run --rm --init -v "%cd%\\evidencias:/ev" eclipse-mosquitto:2 sh -c "mosquitto_sub -h broker.hivemq.com -t '{course}/lab07/grupo-{group}/adc' -t '{course}/lab07/grupo-{group}/pwm' -t '{course}/lab07/grupo-{group}/cmd/#' -v | tee /ev/t4-mqtt.txt"`,
     },
     {
       title: "2. Comandar via MQTT",
@@ -1085,12 +1090,15 @@ void loop() {
       command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/modo -m remoto
 docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/aquecedor -m 30
 docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/ventilador -m 80
-docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/aquecedor -m 150   # fora da faixa
-docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/modo -m turbo      # modo inválido
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/aquecedor -m 150
+docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/modo -m turbo
 docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t {course}/lab07/grupo-{group}/cmd/modo -m pot`,
     },
   ]}
 />
+
+Os dois penúltimos comandos são inválidos de propósito: `aquecedor 150` está fora da faixa e
+`turbo` não é um modo.
 
 **Saída esperada** (gire o potenciômetro antes dos comandos):
 
@@ -1328,5 +1336,9 @@ lido a cada 5 s, quantas vezes por minuto o aquecedor pode, **no máximo**, troc
 />
 
 ---
+
+## Logout do seu ambiente dev, git e gh {/* #logout */}
+
+<GitLogOut />
 
 <LabLogout />

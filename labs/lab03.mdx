@@ -4,51 +4,37 @@ title: Laboratório 03
 description: PlatformIO IDE e Logging no ESP32
 ---
 
-# Laboratório 03
+## Checklist — PlatformIO IDE e Logging no ESP32 {/* #checklist */}
 
-{/* Tabela com link para atividade, inicio, fim e descrição do LAB! */}
+- [ ] Projeto PlatformIO criado e compilando (T1)
+- [ ] Logs nativos (`log_e` … `log_v`) e pisca do LED com `millis()` (T2)
+- [ ] `CORE_DEBUG_LEVEL` no `platformio.ini`, com plataforma em **versão fixa** (T3)
+- [ ] `wokwi.toml` + `diagram.json` e o firmware simulado, com os logs no monitor serial (T4)
+- [ ] Contador de erros com a taxa de falhas em `%.1f%%` (T5)
+- [ ] Nível de produção (`CORE_DEBUG_LEVEL=1`) explicado no `README.md` (T6)
+- [ ] Hexdump de um buffer com `log_buf_i()` (T7)
+- [ ] Desafio: pisca do LED com um `log_d` a cada troca de estado (T8)
+- [ ] Workflow de CI compilando o firmware a cada `push` (T9)
+- [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
+- [ ] Logout do Git e do `gh` no computador do laboratório
 
-<div style={{ display: "flex", justifyContent: "center" }}>
-  <LabTable index={3} internal={false} />
-</div>
-
----
-
-## Checklist — PlatformIO IDE e Logging no ESP32
-
-- [ ] Verificar `git --version`
-- [ ] Abrir o VS Code
-- [ ] Abrir a extensão PlatformIO IDE
-- [ ] Criar um projeto ESP32
-- [ ] Selecionar o framework Arduino
-- [ ] Executar o primeiro Build
-- [ ] Criar `wokwi.toml`
-- [ ] Criar `diagram.json`
-- [ ] Executar a simulação
-- [ ] Verificar o Serial Monitor
-- [ ] Atualizar o repositório no GitHub
-- [ ] Executar `git push`
-- [ ] Confirmar que o projeto está disponível no GitHub
-- [ ] Logout
-
----
-
-import {
-  LabSetup,
-  LabLogout,
-} from "@site/src/components/shared/InstructionsSite";
+:::info[Pontuação]
+**T1…T9 = 100 pts** (esta aula não tem desafios valendo extra): T1 5 · T2 10 · T3 10 · T4 20 ·
+T5 10 · T6 10 · T7 10 · T8 10 · T9 15. O autograder normaliza para 0–10. Vale o commit `Tn:` mais
+recente de cada tarefa.
+:::
 
 <LabSetup />
 
+### Configuração do ambiente de desenvolvimento {/* #setup */}
+
+<DevTools />
+
 ---
 
-<LabLogout />
+## Clonar o repositório do grupo {/* #clonar */}
 
----
-
-## Clone o repositório inicial do LAB03
-
-Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub:
+Escolha o grupo e rode o comando gerado para criar o repositório no GitHub:
 
 <LabTeamMembers labName="lab03" />
 
@@ -58,23 +44,38 @@ Escolha o Grupo e entre com o comando abaixo para criar o repositório no GitHub
 
 <LabSubmit labName="lab03" />
 
-# Avaliação do Laboratório — como é corrigido
+<details>
+<summary><strong>Mapa de tarefas</strong> — 9 tarefas · 100 pts</summary>
+
+- [T1 — Projeto PlatformIO](#t1) · 5 pts
+- [T2 — Logs e pisca do LED](#t2) · 10 pts
+- [T3 — CORE_DEBUG_LEVEL no platformio.ini](#t3) · 10 pts
+- [T4 — Wokwi no VS Code](#t4) · 20 pts
+- [T5 — Contador de erros](#t5) · 10 pts
+- [T6 — Nivel de producao](#t6) · 10 pts
+- [T7 — Hexdump](#t7) · 10 pts
+- [T8 — Desafio: pisca com log_d](#t8) · 10 pts
+- [T9 — CI no GitHub Actions](#t9) · 15 pts
+
+</details>
+
+## Avaliação do laboratório — como é corrigido {/* #avaliacao */}
 
 A avaliação é **automática** e roda no GitHub a cada `push`. A ideia é simples:
 
 :::info[Cada tarefa é entregue por um commit.]
-A mensagem do commit começa com o > código da tarefa (`T1`, `T2`, ...). O robô de correção encontra o commit de cada tarefa, volta o repositório para aquele ponto exato da história e testa se os requisitos daquela tarefa foram cumpridos.
+A mensagem do commit começa com o código da tarefa (`T1`, `T2`, ...). O robô de correção encontra o commit de cada tarefa, volta o repositório para aquele ponto exato da história e testa se os requisitos daquela tarefa foram cumpridos.
 :::
 Você acompanha a nota na aba **Actions** do seu repositório (resumo do job) e no
 arquivo **`GRADE.md`**, disponível em **Artifacts** de cada execução.
 
 ---
 
-## Convenção de commits (obrigatória)
+### Convenção de commits (obrigatória)
 
 Ao terminar uma tarefa, faça **um commit** cuja mensagem **comece** com o código dela:
 
-```bash
+```shell title="Terminal (cmd)"
 git add .
 git commit -m "T1: implementa os cinco niveis de log"
 git push
@@ -93,7 +94,7 @@ exemplo, mudar `CORE_DEBUG_LEVEL` de 5 para 2 e depois voltar para 5).
 
 ---
 
-## O que é verificado em cada tarefa
+### O que é verificado em cada tarefa
 
 O corretor faz, para cada tarefa, no estado do repositório **naquele commit**:
 
@@ -104,15 +105,20 @@ A nota de cada tarefa é **proporcional** ao número de verificações que passa
 A rubrica completa (tarefas, pontos e checagens) está em
 `.github/autograde/grade.py` — o professor pode ajustá-la.
 
-## Crie um novo projeto no PlatformIo
+## Parte 1 — Projeto PlatformIO {/* #parte-1 */}
 
-```bash
+Na raiz do repositório, como no Lab 02. O `--sample-code` cria um `src/main.cpp` de exemplo, para o
+projeto já compilar no commit da T1:
+
+```shell title="Terminal do VS Code (cmd)"
 pio project init -b esp32dev -O "framework=arduino" -O "monitor_speed=115200" --sample-code
 ```
 
-<CommitPoint task="pio project init" pontos={5} />
+Depois, fixe a plataforma no `platformio.ini`, como no Lab 02: `platform = espressif32@6.9.0`.
 
-## ESP32 Arduino Hal Logging
+<CommitPoint id="t1" task="Projeto PlatformIO" pontos={5} files="platformio.ini src/main.cpp" />
+
+## Parte 2 — ESP32 Arduino HAL Logging {/* #parte-2 */}
 
 Aqui está um exemplo completo para o arquivo `src/main.cpp`.
 
@@ -187,7 +193,8 @@ void loop() {
 ```
 
 <CommitPoint
-  task="Teste de Logs e Blink de LED"
+  id="t2"
+  task="Logs e pisca do LED"
   pontos={10}
   files="src/main.cpp"
   type="info"
@@ -197,13 +204,13 @@ void loop() {
 
 ### Destaques do Código
 
-1. **`log_i()`, `log_w()`, `log_e()**`:
+1. **`log_i()`, `log_w()`, `log_e()`**:
 
 - São macros de log nativas do core ESP32/Arduino.
 - Suportam formatação similar ao `printf` (ex: `%d`, `%s`, `%u`).
 - Adicionam automaticamente a tag do arquivo, linha da chamada e cor (se a flag `-D CONFIG_ARDUHAL_LOG_COLORS=1` estiver no `platformio.ini`).
 
-2. **Uso de `millis()` em vez de `delay()**`:
+2. **Uso de `millis()` em vez de `delay()`**:
 
 - O uso de `delay()` bloqueia o processamento do ESP32. Utilizar a verificação por `millis()` permite que o microcontrolador execute outras tarefas de segundo plano no `loop()` sem travar a CPU.
 
@@ -230,7 +237,7 @@ void loop() {
 }
 ```
 
-## Logging no ESP32
+## Parte 3 — Logging no ESP32 {/* #parte-3 */}
 
 ### Fundamentos: por que usar log em vez de `Serial.print()`?
 
@@ -329,6 +336,11 @@ Isso imprime os bytes formatados em hexadecimal, útil para depurar protocolos.
 Este é o passo **mais importante** da aula. Abra o `platformio.ini` na raiz do projeto e deixe-o assim:
 
 ```ini title="platformio.ini"
+[env:esp32dev]
+platform = espressif32@6.9.0       ; versão fixa (Lab 02)
+board = esp32dev
+framework = arduino
+monitor_speed = 115200
 ; CORE_DEBUG_LEVEL define ate que nivel de log sera COMPILADO:
 ;   0 = NONE | 1 = ERROR | 2 = WARN | 3 = INFO | 4 = DEBUG | 5 = VERBOSE
 build_flags =
@@ -350,51 +362,53 @@ Em `platformio.ini`: `build_flags = -DCORE_DEBUG_LEVEL=<0..5>`
 Se você esquecer o `-DCORE_DEBUG_LEVEL`, o valor padrão costuma ser `0` (NONE) e **nada aparece**, mesmo com o código correto. Se seus logs sumiram, comece a investigação por aqui.
 :::
 
-```ini
+<details>
+<summary><strong>Para conhecer: ambientes de debug e de release</strong> (não é usado nas tarefas)</summary>
+
+Um mesmo projeto pode ter vários ambientes. Este exemplo tem um de desenvolvimento, com logs, e um
+de produção, sem logs. O de desenvolvimento se chama `esp32dev` para o `wokwi.toml` continuar
+achando o firmware em `.pio/build/esp32dev/`; o de produção compila em `.pio/build/release/`.
+
+```ini title="platformio.ini (exemplo)"
+[platformio]
+; ambiente padrão quando nenhum é pedido (pio run -e release compila o outro)
+default_envs = esp32dev
+
 ; =====================================================================
-; Configurações Globais / Padrão (Herdadas por todos os ambientes)
+; Configurações comuns (herdadas por todos os ambientes)
 ; =====================================================================
 [env]
-platform = espressif32
+platform = espressif32@6.9.0
 board = esp32dev
 framework = arduino
 monitor_speed = 115200
 
-; Define o ambiente padrão caso nenhum seja especificado explicitamente
-default_envs = debug
-
 ; =====================================================================
-; Ambiente de Debug (Desenvolvimento e Testes)
+; Desenvolvimento (debug)
 ; =====================================================================
-[env:debug]
+[env:esp32dev]
 build_type = debug
-
-; Filtros para o monitor serial em ambiente de desenvolvimento
 monitor_filters =
     esp32_exception_decoder
     colorize
     time
-
-; Flags específicas para compilação em Debug
 build_flags =
     -D CORE_DEBUG_LEVEL=4               ; 4 = Debug, 5 = Verbose
-    -D CONFIG_ARDUHAL_LOG_COLORS=1       ; Habilita cores no console
-    -D DEBUG_MODE                        ; Macro customizada para usar no código (#ifdef DEBUG_MODE)
+    -D CONFIG_ARDUHAL_LOG_COLORS=1      ; cores no console
+    -D DEBUG_MODE                       ; macro própria (#ifdef DEBUG_MODE)
 
 ; =====================================================================
-; Ambiente de Release (Produção e Implantação)
+; Produção (release)
 ; =====================================================================
 [env:release]
 build_type = release
-
-; Velocidade de upload maior para acelerar gravação em lote
 upload_speed = 921600
-
-; Flags de otimização de tamanho e desempenho para produção
 build_flags =
-    -D CORE_DEBUG_LEVEL=0               ; 0 = Logs desativados (economiza memória Flash e RAM)
-    -Os                                 ; Otimiza o tamanho do binário gerado
+    -D CORE_DEBUG_LEVEL=0               ; 0 = logs desligados (economiza flash e RAM)
+    -Os                                 ; otimiza o tamanho do binário
 ```
+
+</details>
 
 #### O código-base (`src/main.cpp`)
 
@@ -417,62 +431,63 @@ void loop() {
 Observe que **usamos `Serial.begin()` normalmente**. O sistema de log escreve no mesmo periférico serial; o `Serial.begin` continua sendo o que inicializa a UART e define a velocidade.
 
 <CommitPoint
-  task="Filtra logs com CORE_DEBUG_LEVEL"
+  id="t3"
+  task="CORE_DEBUG_LEVEL no platformio.ini"
   pontos={10}
   files="platformio.ini"
 />
 
 ---
 
-### Configurando o Wokwi
+### Configurando o Wokwi {/* #wokwi */}
 
 O Wokwi simula o ESP32 usando o firmware **já compilado pelo PlatformIO**. Precisamos de dois arquivos na raiz do projeto.
 
 <Tabs>
 <TabItem value="diagram" label="diagram.json" default>
 
-O "circuito". Para começar, só a placa é suficiente:
+O "circuito": a placa e o LED no GPIO2, com resistor de 220 Ω (o mesmo circuito do Lab 02):
 
 ```json title="diagram.json"
 {
   "version": 1,
-  "author": "Uri Shaked",
+  "author": "elt73a - Lab 03",
   "editor": "wokwi",
   "parts": [
     {
-      "type": "wokwi-esp32-devkit-v1",
+      "type": "board-esp32-devkit-c-v4",
       "id": "esp",
       "top": 0,
       "left": 0,
       "attrs": {}
     },
     {
-      "type": "wokwi-led",
-      "id": "led1",
-      "top": -3.33,
-      "left": 153.33,
-      "attrs": { "color": "red" }
-    },
-    {
       "type": "wokwi-resistor",
       "id": "r1",
-      "top": 64,
-      "left": 149.33,
-      "rotate": 90,
-      "attrs": {}
+      "top": 130,
+      "left": 120,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 80,
+      "left": 220,
+      "attrs": { "color": "red", "label": "GPIO2" }
     }
   ],
   "connections": [
-    ["esp:TX0", "$serialMonitor:RX", "", []],
-    ["esp:RX0", "$serialMonitor:TX", "", []],
-    ["esp:GND.1", "led1:C", "black", ["h0"]],
-    ["led1:A", "r1:1", "green", ["v0"]],
-    ["r1:2", "esp:D2", "green", ["h0", "v38"]]
-  ]
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []],
+    ["esp:2", "r1:1", "green", []],
+    ["r1:2", "led1:A", "green", []],
+    ["led1:C", "esp:GND.2", "black", []]
+  ],
+  "dependencies": {}
 }
 ```
 
-As duas conexões ligam a UART do ESP32 ao monitor serial do simulador — é o que faz os logs aparecerem na tela do Wokwi.
+As duas primeiras conexões ligam a UART do ESP32 ao monitor serial do simulador: é o que faz os logs aparecerem na tela do Wokwi.
 
 </TabItem>
 <TabItem value="wokwi" label="wokwi.toml">
@@ -494,8 +509,9 @@ Se o seu ambiente no `platformio.ini` não se chamar `esp32dev`, ajuste o caminh
 </Tabs>
 
 <CommitPoint
-  task="Configurando o Wokwi"
-  pontos={15}
+  id="t4"
+  task="Wokwi no VS Code"
+  pontos={20}
   files="diagram.json wokwi.toml"
 />
 
@@ -604,12 +620,38 @@ void loop() {
 
 ---
 
-### Exercícios propostos (para entregar)
+### Exercícios propostos (para entregar) {/* #exercicios */}
 
-1. **Contador de erros.** Modifique o Exercício 4 para contar quantas falhas ocorreram e, a cada 10 ciclos, emitir um `log_i` com a taxa de falhas em porcentagem (`%.1f%%`).
-2. **Nível de produção.** Compile o projeto com `CORE_DEBUG_LEVEL=1` e descreva no relatório o que muda na saída. Explique por que essa seria a configuração para um produto entregue ao cliente.
-3. **Hexdump.** Crie um `uint8_t buffer[8]` preenchido com valores à sua escolha e imprima-o com `log_buf_i()`. Cole a saída no relatório.
-4. **Desafio.** Ligue um LED no diagrama do Wokwi (GPIO 2) e faça-o piscar, emitindo um `log_d` a cada troca de estado. Anexe o `diagram.json` modificado.
+Cada exercício é uma tarefa, entregue no seu commit `Tn:`.
+
+#### T5 — Contador de erros
+
+Modifique o Exercício 4 para contar quantas falhas ocorreram e, a cada 10 ciclos, emitir um `log_i`
+com a taxa de falhas em porcentagem (`%.1f%%`).
+
+<CommitPoint id="t5" task="Contador de erros" pontos={10} files="src/main.cpp" />
+
+#### T6 — Nível de produção
+
+Compile o projeto com `CORE_DEBUG_LEVEL=1` e descreva no `README.md` o que muda na saída. Explique
+por que essa seria a configuração para um produto entregue ao cliente. Faça o commit **com** o nível
+1; na T7, volte para 5.
+
+<CommitPoint id="t6" task="Nivel de producao" pontos={10} files="platformio.ini README.md" />
+
+#### T7 — Hexdump
+
+Volte para `CORE_DEBUG_LEVEL=5`. Crie um `uint8_t buffer[8]` preenchido com valores à sua escolha e
+imprima-o com `log_buf_i()`. Cole a saída no `README.md`.
+
+<CommitPoint id="t7" task="Hexdump" pontos={10} files="platformio.ini src/main.cpp README.md" />
+
+#### T8 — Desafio: pisca com `log_d`
+
+O LED do diagrama já está no GPIO2 (T4). Junte ao código atual o pisca com `millis()` da T2, sem
+`delay()`, e emita um `log_d` a cada troca de estado do LED.
+
+<CommitPoint id="t8" task="Desafio: pisca com log_d" pontos={10} files="src/main.cpp diagram.json" />
 
 ---
 
@@ -712,66 +754,68 @@ int buttonPin = 3;
 
 ---
 
-## CI workflow
+## Parte 4 — CI no GitHub Actions {/* #parte-4 */}
 
-Example workflow (.github/workflows/grade.yml):
+Um workflow que compila o firmware a cada `push`. Se o código parar de compilar, a execução fica
+vermelha na aba **Actions**.
 
-```bash
-.github/workflows/grade.yml
-```
+<FileTree root="lab03-grupo-x" files={[".github/workflows/ci.yml c", "...", "src/main.cpp"]} />
 
-```yaml
-name: Build & Test
+```yaml title=".github/workflows/ci.yml"
+name: CI
 
 on: [push, pull_request]
+
+env:
+  PLATFORMIO_VERSAO: "6.2.0" # versão fixa, como a plataforma no platformio.ini
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - name: Cache PlatformIO
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cache/pip
-            ~/.platformio/.cache
-            ~/.platformio/packages
-          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
-      - name: Install PlatformIO
-        run: pip install platformio
+      - name: Cache do PlatformIO
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ env.PLATFORMIO_VERSAO }}-${{ hashFiles('platformio.ini') }}
 
-      - name: Build project
+      - name: Instala o PlatformIO
+        run: pip install "platformio==${PLATFORMIO_VERSAO}"
+
+      - name: Compila o firmware
         run: pio run
-
-      # Uncomment if you want native/unit tests in CI
-      # - name: Run tests
-      #   run: pio test -e native
 ```
 
+:::note[Por que `ci.yml`?]
+O nome `ci.yml` é o mesmo do Lab 10 e não se confunde com o workflow do autograder que vem no
+template do repositório. Não apague nem renomeie os arquivos que já estão em `.github/`.
+:::
+
 <CommitPoint
-  task="GitHub action"
+  id="t9"
+  task="CI no GitHub Actions"
   pontos={15}
-  files=".github/workflows/grade.yml"
+  files=".github/workflows/ci.yml"
 />
 
-## Wokwi for CI and GitHub Actions (TODO)
+:::info[Wokwi no CI]
+Os testes automáticos do firmware no simulador (`wokwi-cli` com `--expect-text`, cenários e
+analisador lógico) entram no pipeline no **Lab 10**. Referências:
+[Wokwi CI](https://docs.wokwi.com/wokwi-ci/getting-started) ·
+[Uso do Wokwi CLI](https://docs.wokwi.com/wokwi-ci/cli-usage) ·
+[Migrar projetos do Wokwi para o VS Code](https://docs.wokwi.com/vscode/migrating)
+:::
 
-GitHub action for using Wokwi Embedded Systems Simulator in your CI workflow.
-
-- https://docs.wokwi.com/wokwi-ci/getting-started
-- [Migrating Wokwi projects to VS Code](https://docs.wokwi.com/vscode/migrating)
-- [Wokwi CLI Usage](https://docs.wokwi.com/wokwi-ci/cli-usage)
-
-## Logout do seu ambiente dev, git e gh
-
-import { GitLogOut } from "@site/src/components/shared/InstructionsSite";
+## Logout do seu ambiente dev, git e gh {/* #logout */}
 
 <GitLogOut />
+
+<LabLogout />

@@ -13,6 +13,7 @@ sidebar_position: 12
 - [ ] NVS guardando modo e intervalo, diagnóstico em `.../diag` e comparação Arduino × ESP-IDF (T6)
 - [ ] Previsões P1–P5 respondidas no `README.md`
 - [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
+- [ ] Logout do Git e do `gh` no computador do laboratório
 
 :::info[Pontuação]
 **T1…T6 = 100 pts** (esta aula não tem desafios): T1 10 · T2 20 · T3 20 · T4 15 · T5 15 ·
@@ -163,7 +164,7 @@ prontos**, que substituem bibliotecas do Arduino que não existem no ESP-IDF:
 />
 
 :::info[Tópicos do Lab 09]
-Os mesmos do Lab 08, sob `elt85b/lab09/grupo-x/`: `dht`, `adc`, `pwm`, `status`, `oled`,
+Os mesmos do Lab 08, sob `elt73a/lab09/grupo-x/`: `dht`, `adc`, `pwm`, `status`, `oled`,
 `oled/fb` e os comandos `cmd/intervalo`, `cmd/modo`, `cmd/aquecedor` e `cmd/ventilador`, com o
 **mesmo JSON**. Novo só o `.../diag` (T6). Troque o `X` (e o `#define GRUPO`) pela letra do grupo.
 :::
@@ -171,6 +172,11 @@ Os mesmos do Lab 08, sob `elt85b/lab09/grupo-x/`: `dht`, `adc`, `pwm`, `status`,
 ---
 
 ## Parte 1 — Projeto ESP-IDF {/* #parte-1 */}
+
+:::info[Suba o stack do LAB09!]
+Execute os comandos para subir o [stack do LAB09](/infra/setup/gen_iot_aluno#lab-09)!
+:::
+
 
 ### 1.1 O que muda na estrutura
 
@@ -273,7 +279,7 @@ elf = '.pio/build/esp32dev/firmware.elf'
 ### 1.4 O primeiro programa
 
 ```c title="src/main.c (T1)"
-// ELT85B - Lab 09 (T1): o primeiro programa ESP-IDF
+// ELT73A - Lab 09 (T1): o primeiro programa ESP-IDF
 #include "esp_log.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
@@ -449,7 +455,7 @@ Os pinos, as constantes e os tópicos ficam num `config.h`, usado por todos os a
 #define HISTERESE  0.5f                  // controle ON/OFF: ±0,5 °C
 
 // ---- tópicos
-#define BASE "elt85b/" LAB "/grupo-" GRUPO
+#define BASE "elt73a/" LAB "/grupo-" GRUPO
 #define TOPICO_DADOS     BASE "/dht"
 #define TOPICO_STATUS    BASE "/status"
 #define TOPICO_OLED      BASE "/oled"
@@ -637,7 +643,7 @@ void rede_iniciar(const char *client_id, const rede_callbacks_t *cb)
 E o `main.c` da T2, que só liga a rede e registra no log o que acontece:
 
 ```c title="src/main.c (T2)"
-// ELT85B - Lab 09 (T2): Wi-Fi e MQTT orientados a eventos
+// ELT73A - Lab 09 (T2): Wi-Fi e MQTT orientados a eventos
 #include <stdio.h>
 
 #include "config.h"
@@ -683,11 +689,11 @@ void app_main(void)
   commands={[
     {
       codeTitle: "Terminal 1 — assinar via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com -t '{course}/lab09/grupo-{group}/#' -v | tee evidencias/t2-mqtt.txt`,
+      command: `docker run --rm --init -v "%cd%\\evidencias:/ev" eclipse-mosquitto:2 sh -c "mosquitto_sub -h broker.hivemq.com -t '{course}/lab09/grupo-{group}/#' -v | tee /ev/t2-mqtt.txt"`,
     },
     {
       codeTitle: "Terminal 2 — comandar via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab09/grupo-{group}/cmd/modo' -m auto`,
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab09/grupo-{group}/cmd/modo" -m auto`,
     },
   ]}
 />
@@ -705,7 +711,7 @@ I (2410) app: Wi-Fi ok · MQTT --
 I (3120) rede: MQTT conectado
 I (3120) app: conectado ao broker
 I (3130) app: Wi-Fi ok · MQTT ok
-I (9540) app: [CMD] elt85b/lab09/grupo-a/cmd/modo <- 'auto'
+I (9540) app: [CMD] elt73a/lab09/grupo-a/cmd/modo <- 'auto'
 ```
 
 :::tip[Preveja antes de rodar]
@@ -805,94 +811,6 @@ static void ao_receber(const char *topico, const char *texto)
     strlcpy(ev.topico, topico, sizeof(ev.topico));
     strlcpy(ev.texto, texto, sizeof(ev.texto));
     if (xQueueSend(fila, &ev, 0) != pdTRUE) ESP_LOGW(TAG, "fila cheia: comando perdido");
-}
-
-
-static void ler_adc(void)
-{
-    sensores_ler_pot(&adc_raw, &adc_mv);
-    float sp = SP_MIN + adc_raw * (SP_MAX - SP_MIN) / 4095.0f;
-    setpoint = roundf(sp * 2) / 2;                                 // passos de 0,5 °C
-}
-
-// ------------------------------------------------------------------ tela
-static void indicador(int x, const char *letra, bool ok)
-{
-    if (ok) {
-        gfx_retangulo_cheio(x, 0, 13, 9, GFX_BRANCO);
-        gfx_cor_texto(GFX_PRETO);
-    } else {
-        gfx_retangulo(x, 0, 13, 9, GFX_BRANCO);
-        gfx_cor_texto(GFX_BRANCO);
-    }
-    gfx_cursor(x + 4, 1);
-    gfx_texto(letra);
-    gfx_cor_texto(GFX_BRANCO);
-}
-
-static void barra(int y, const char *rotulo, float pct)
-{
-    gfx_cursor(0, y);
-    gfx_texto(rotulo);
-    gfx_retangulo(16, y, 80, 8, GFX_BRANCO);
-    gfx_retangulo_cheio(18, y + 2, (int)(76 * pct / 100.0f), 4, GFX_BRANCO);
-    gfx_cursor(100, y);
-    gfx_printf("%3.0f%%", pct);
-}
-
-static void desenhar_tela(void)
-{
-    gfx_limpar();
-    gfx_cor_texto(GFX_BRANCO);
-
-    gfx_tamanho_texto(1);                                          // cabeçalho
-    gfx_cursor(0, 1);
-    gfx_texto("LAB09 grupo " GRUPO);
-    indicador(98, "W", rede_wifi_ok());
-    indicador(114, "M", rede_mqtt_ok());
-    gfx_linha_h(0, 11, GFX_W, GFX_BRANCO);
-
-    gfx_tamanho_texto(2);                                          // temperatura medida
-    gfx_cursor(0, 15);
-    if (isnan(ultima_t)) gfx_texto("--.-");
-    else gfx_printf("%4.1f", ultima_t);
-    gfx_circulo(53, 17, 2, GFX_BRANCO);
-    gfx_cursor(58, 15);
-    gfx_texto("C");
-
-    gfx_tamanho_texto(1);                                          // setpoint e ADC
-    gfx_cursor(76, 15);
-    gfx_printf("SP %4.1f", setpoint);
-    gfx_cursor(76, 24);
-    gfx_printf("%4d mV", adc_mv);
-
-    barra(35, "AQ", aq_pct < 0 ? 0 : aq_pct);                      // atuadores
-    barra(45, "VE", ve_pct < 0 ? 0 : ve_pct);
-
-    gfx_cursor(0, 56);                                             // modo e estado
-    gfx_printf("%s: %s", NOME_MODO[modo], estado);
-    tela_enviar();
-}
-
-static void publicar_tela_texto(void)
-{
-    char t[8] = "--.-";
-    if (!isnan(ultima_t)) snprintf(t, sizeof(t), "%.1f", ultima_t);
-    char payload[220];
-    snprintf(payload, sizeof(payload),
-             "{\"linhas\":[\"LAB09 grupo %s\",\"T: %s C  SP: %.1f C\",\"AQ: %.0f %%  VE: %.0f %%\","
-             "\"modo %s | %s\",\"WiFi %s | MQTT %s\"]}",
-             GRUPO, t, setpoint, aq_pct < 0 ? 0 : aq_pct, ve_pct < 0 ? 0 : ve_pct,
-             NOME_MODO[modo], estado, rede_wifi_ok() ? "ok" : "--", rede_mqtt_ok() ? "ok" : "--");
-    rede_publicar(TOPICO_OLED, payload, -1);
-}
-
-static void publicar_framebuffer(void)
-{
-    static char b64[1400];                                         // static: fora da pilha
-    size_t n = tela_base64(b64, sizeof(b64));
-    if (n == 0 || !rede_publicar(TOPICO_OLED_FB, b64, (int)n))
-        ESP_LOGD(TAG, "framebuffer não publicado");
 }
 ```
 
@@ -1151,10 +1069,10 @@ poderia ocorrer? (c) A task `app` foi criada **na CPU 1**. Por que não na CPU 0
 (gire o potenciômetro de um extremo ao outro).
 
 ```text title="evidencias/t3-mqtt.txt (trecho)"
-elt85b/lab09/grupo-a/status online
-elt85b/lab09/grupo-a/adc {"raw":2047,"mv":1650,"sp":37.5}
-elt85b/lab09/grupo-a/dht {"grupo":"a","seq":1,"t":24.5,"h":55.0,"uptime_ms":8123,"intervalo_s":5.0}
-elt85b/lab09/grupo-a/adc {"raw":3001,"mv":2420,"sp":45.5}
+elt73a/lab09/grupo-a/status online
+elt73a/lab09/grupo-a/adc {"raw":2047,"mv":1650,"sp":37.5}
+elt73a/lab09/grupo-a/dht {"grupo":"a","seq":1,"t":24.5,"h":55.0,"uptime_ms":8123,"intervalo_s":5.0}
+elt73a/lab09/grupo-a/adc {"raw":3001,"mv":2420,"sp":45.5}
 ```
 
 <FileTree
@@ -1184,7 +1102,8 @@ elt85b/lab09/grupo-a/adc {"raw":3001,"mv":2420,"sp":45.5}
 O LEDC tem **timers** (geram frequência e resolução) e **canais** (cada um usa um timer e
 controla um pino). No ESP-IDF você escolhe os dois. No core Arduino 2.x, `ledcSetup(canal, ...)`
 escolhe o timer **pelo número do canal**: `timer = (canal / 2) % 4`. Os canais 0 e 1 **dividem o
-timer 0**.
+timer 0**: foi por isso que, no Lab 07, o ventilador foi para o canal 2. Aqui não há regra
+escondida: o aquecedor usa o `LEDC_TIMER_0` e o ventilador o `LEDC_TIMER_1`, escritos no código.
 
 O outro detalhe é o **relógio**. 5 Hz com 8 bits pedem um divisor de 80 MHz ÷ (5 × 256) = 62 500,
 e o divisor do LEDC vai só até ~1023. Com `LEDC_AUTO_CLK`, o driver procura um relógio que sirva:
@@ -1392,10 +1311,10 @@ I (431) app: [PWM] {"modo":"pot","estado":"MANUAL","aq":50,"ve":50,"aq_duty":128
 ```
 
 :::tip[Preveja antes de rodar]
-**P4:** (a) no Lab 07/08 (Arduino), o aquecedor usava o **canal 0** a 5 Hz e o ventilador o
-**canal 1** a 25 kHz, e o `ledcSetup()` do ventilador vinha **depois**. Com a regra
-`timer = canal / 2`, que frequência o D0 (aquecedor) realmente tinha? Se você ainda tem o Wokwi
-do Lab 08, grave o analisador e confira. Como corrigir no Arduino, sem mudar os pinos? (b) Por
+**P4:** (a) no Lab 07/08 (Arduino), o aquecedor usa o **canal 0** e o ventilador o **canal 2**.
+Se o ventilador tivesse ficado no **canal 1**, com o `ledcSetup()` dele vindo **depois**, que
+frequência o D0 (aquecedor) teria, pela regra `timer = (canal / 2) % 4`? Aqui o ventilador está no
+`LEDC_CHANNEL_1`: por que no ESP-IDF isso não é problema? (b) Por
 que o ESP-IDF precisou de **dois** `ledc_timer_config()`? (c) O que o `ledc_update_duty()` faz que
 o `ledc_set_duty()` sozinho não faz?
 :::
@@ -1615,7 +1534,7 @@ No fim da task `app`, depois do `switch`, redesenhe quando `tela_suja` (como no 
 <summary><strong>Código completo do <code>main.c</code> até a T5</strong> (clique para abrir)</summary>
 
 ```c title="src/main.c (T5)"
-// ELT85B - Lab 09 (T5): o firmware do Lab 08 migrado de framework = arduino para espidf.
+// ELT73A - Lab 09 (T5): o firmware do Lab 08 migrado de framework = arduino para espidf.
 // Mesmo circuito, mesmo contrato MQTT (tópicos e JSON), mesma tela. O que muda é a estrutura:
 //   setup()               -> app_main(): inicia periféricos e cria a task da aplicação
 //   loop() + flags        -> task "app" bloqueada numa FILA de eventos (xQueueReceive)
@@ -2020,8 +1939,11 @@ No Node-RED, exporte a aba **Lab 08** (menu → _Export_ → _Current flow_), tr
 - as consultas do Lab 08 (falhas na sequência, tempo em cada estado, energia) funcionam;
 - o dashboard `/lab09` mostra o histórico.
 
+Para a réplica pixel a pixel da tela (a evidência `t5-oled.png`), faça o mesmo com a aba **Lab 07**:
+exporte, troque `lab07` por `lab09` e importe. O framebuffer chega em `.../oled/fb`, como antes.
+
 :::tip[Preveja antes de rodar]
-**P5:** (a) o `esp_lcd` inicia o SSD1306 sem espelhar a imagem, e a Adafruit espelha nos dois
+**P5 (parte 1):** (a) o `esp_lcd` inicia o SSD1306 sem espelhar a imagem, e a Adafruit espelha nos dois
 eixos (`0xA1`, `0xC8`). O que você veria no Wokwi sem a linha `esp_lcd_panel_mirror(painel,
 true, true)`? Teste. (b) O app desta versão tem ~960 KB. A partição padrão do ESP-IDF para o app
 é de 1 MB. Por que o `sdkconfig.defaults` troca para `SINGLE_APP_LARGE` (1,5 MB), e que
@@ -2067,7 +1989,7 @@ suficiente.
 2. **Diagnóstico.** Um terceiro `esp_timer` (30 s) gera o evento `EV_DIAG`, e a task `app`
    publica em `.../diag`:
 
-   ```text title="elt85b/lab09/grupo-x/diag (valores ilustrativos)"
+   ```text title="elt73a/lab09/grupo-x/diag (valores ilustrativos)"
    {"uptime_s":61,"heap_livre":231412,"heap_minimo":219808,"pilha_livre_app":4928,"rssi":-62,"reset":1}
    ```
 
@@ -2144,5 +2066,9 @@ flash a cada comando. A flash aguenta ~100 mil apagamentos por setor. É um prob
 />
 
 ---
+
+## Logout do seu ambiente dev, git e gh {/* #logout */}
+
+<GitLogOut />
 
 <LabLogout />

@@ -5,16 +5,18 @@ sidebar_position: 9
 
 ## Checklist — SSD1306, MQTT nos dois sentidos e dashboard {/* #checklist */}
 
-- [ ] `platformio.ini` com Adafruit SSD1306 + GFX; `diagram.json` com o OLED em SDA 21 / SCL 22 (T1)
-- [ ] Tela local desenhada só quando muda (`telaSuja`), fora do callback do temporizador (T2)
-- [ ] Intervalo alterado por MQTT (`.../cmd/intervalo`, 2–60 s) e tela espelhada em texto em `.../oled` (T3)
-- [ ] Dashboard mínimo no Node-RED: réplica do OLED em texto, status e slider do intervalo (T4)
-- [ ] Framebuffer do SSD1306 em `.../oled/fb` desenhado pixel a pixel no dashboard (T5)
+- [ ] Stack Docker do curso rodando (T1, sem pontos)
+- [ ] `platformio.ini` com Adafruit SSD1306 + GFX; `diagram.json` com o OLED em SDA 21 / SCL 22 (T2)
+- [ ] Tela local desenhada só quando muda (`telaSuja`), fora do callback do temporizador (T3)
+- [ ] Intervalo alterado por MQTT (`.../cmd/intervalo`, 2–60 s) e tela espelhada em texto em `.../oled` (T4)
+- [ ] Dashboard mínimo no Node-RED: réplica do OLED em texto, status e slider do intervalo (T5)
+- [ ] Framebuffer do SSD1306 em `.../oled/fb` desenhado pixel a pixel no dashboard (T6)
 - [ ] Previsões P1–P3 respondidas no `README.md`
 - [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
+- [ ] Logout do Git e do `gh` no computador do laboratório
 
 :::info[Pontuação]
-**T2…T6 = 100 pts** (esta aula não tem desafios): T2 10 · T3 20 · T4 25 · T5 20 · T6 25.
+**T1…T6 = 100 pts** (esta aula não tem desafios): T1 0 · T2 10 · T3 20 · T4 25 · T5 20 · T6 25.
 O autograder normaliza para 0–10. Vale o commit `Tn:` mais recente de cada tarefa.
 :::
 
@@ -51,8 +53,8 @@ flowchart LR
 - Atualizar a tela **só quando algo muda** (flag `telaSuja`), sem bloquear o `loop()`.
 - Usar MQTT **nos dois sentidos**: assinar um tópico de comando e mudar o **intervalo** do
   temporizador remotamente.
-- Visualizar o **SSD1306 no dashboard** do Node-RED: réplica em texto (T4) e réplica fiel,
-  pixel a pixel, a partir do framebuffer (T5), com o mínimo de nós.
+- Visualizar o **SSD1306 no dashboard** do Node-RED: réplica em texto (T5) e réplica fiel,
+  pixel a pixel, a partir do framebuffer (T6), com o mínimo de nós.
 
 ## Material
 
@@ -77,7 +79,7 @@ a maioria é `0x3C`, alguns são `0x3D`.
 <LabSubmit labName="lab06" />
 
 <details>
-<summary><strong>Mapa de tarefas</strong> — 5 tarefas · 100 pts</summary>
+<summary><strong>Mapa de tarefas</strong> — 6 tarefas · 100 pts</summary>
 
 - [T1 — Docker Operacional](#t1) · 0 pts
 - [T2 — Circuito e dependencias do SSD1306](#t2) · 10 pts
@@ -104,12 +106,12 @@ O repositório do grupo nasce do `lab06-template`, que já traz o **firmware fin
     ".gitignore r",
     ".vscode/extensions.json r",
     "nodered/flows-lab06.json c",
-    "evidencias/t2-serial.txt c",
-    "evidencias/t2-oled.png c",
-    "evidencias/t3-mqtt.txt c",
-    "evidencias/t4-dashboard.png c",
-    "evidencias/t5-fb.txt c",
-    "evidencias/t5-oled.png c",
+    "evidencias/t3-serial.txt c",
+    "evidencias/t3-oled.png c",
+    "evidencias/t4-mqtt.txt c",
+    "evidencias/t5-dashboard.png c",
+    "evidencias/t6-fb.txt c",
+    "evidencias/t6-oled.png c",
     "README.md u",
   ]}
 />
@@ -121,8 +123,8 @@ Tudo fica sob `elt73a/lab06/grupo-x/`. Troque o `X` (e o `#define GRUPO`) pela l
 | ------------------- | -------------- | ----------------------------------------------------------------------------- |
 | `.../dht`           | ESP32 → broker | `{"grupo":"a","seq":7,"t":24.5,"h":55.0,"uptime_ms":35210,"intervalo_s":5.0}` |
 | `.../status`        | ESP32 → broker | `online` / `offline` (retido, LWT)                                            |
-| `.../oled`          | ESP32 → broker | `{"linhas":["LAB06 grupo a","T: 24.5 C", ...]}` (T3)                          |
-| `.../oled/fb`       | ESP32 → broker | 1024 bytes do framebuffer em **base64** (T5)                                  |
+| `.../oled`          | ESP32 → broker | `{"linhas":["LAB06 grupo a","T: 24.5 C", ...]}` (T4)                          |
+| `.../oled/fb`       | ESP32 → broker | 1024 bytes do framebuffer em **base64** (T6)                                  |
 | `.../cmd/intervalo` | broker → ESP32 | `10` (segundos, 2–60)                                                         |
 
 :::
@@ -136,6 +138,11 @@ Tudo fica sob `elt73a/lab06/grupo-x/`. Troque o `X` (e o `#define GRUPO`) pela l
 ---
 
 ## Parte 1 — SSD1306 no circuito {/* #parte-1 */}
+
+:::info[Suba o stack do LAB06!]
+Execute os comandos para subir o [stack do LAB06](/infra/setup/gen_iot_aluno#lab-06)!
+:::
+
 
 ### 1.1 Circuito no Wokwi
 
@@ -194,17 +201,17 @@ ao `diagram.json` do Lab 05:
 
 ```ini title="platformio.ini"
 [env:esp32dev]
-platform = espressif32
+platform = espressif32@6.9.0       ; versão fixa (Lab 02)
 board = esp32dev
 framework = arduino
 monitor_speed = 115200
 #highlight-start
 lib_deps =
-    adafruit/DHT sensor library@^1.4.6
-    adafruit/Adafruit Unified Sensor@^1.1.14
-    knolleary/PubSubClient@^2.8
-    adafruit/Adafruit SSD1306@^2.5.13
-    adafruit/Adafruit GFX Library@^1.11.11
+    adafruit/DHT sensor library@1.4.6
+    adafruit/Adafruit Unified Sensor@1.1.14
+    knolleary/PubSubClient@2.8
+    adafruit/Adafruit SSD1306@2.5.13
+    adafruit/Adafruit GFX Library@1.11.11
 #highlight-end
 ```
 
@@ -254,7 +261,7 @@ Acrescente ao firmware do Lab 05:
 
 <FileTree root="lab06-grupo-x" files={["src/main.cpp u"]} />
 
-```cpp title="src/main.cpp (trechos novos da T2)"
+```cpp title="src/main.cpp (trechos novos da T3)"
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -354,19 +361,19 @@ aparecem cheios quando Wi-Fi e MQTT estão conectados.
 Anote as previsões e o que observou no `README.md`.
 :::
 
-**Evidências:** salve o monitor serial com pelo menos 3 leituras em `evidencias/t2-serial.txt`
-e uma captura do Wokwi com o display em `evidencias/t2-oled.png`.
+**Evidências:** salve o monitor serial com pelo menos 3 leituras em `evidencias/t3-serial.txt`
+e uma captura do Wokwi com o display em `evidencias/t3-oled.png`.
 
 <FileTree
   root="lab06-grupo-x"
-  files={["evidencias/t2-serial.txt c", "evidencias/t2-oled.png c"]}
+  files={["evidencias/t3-serial.txt c", "evidencias/t3-oled.png c"]}
 />
 
 <CommitPoint
   id="t3"
   task="Tela local no OLED"
   pontos={20}
-  files="src/main.cpp evidencias/t2-serial.txt evidencias/t2-oled.png"
+  files="src/main.cpp evidencias/t3-serial.txt evidencias/t3-oled.png"
 />
 
 ---
@@ -406,8 +413,8 @@ sequenceDiagram
 
 <FileTree root="lab06-grupo-x" files={["src/main.cpp u"]} />
 
-```cpp title="src/main.cpp (T3)"
-// elt73a - Lab 06 (T3): DHT22 + SSD1306 + MQTT nos dois sentidos
+```cpp title="src/main.cpp (T4)"
+// elt73a - Lab 06 (T4): DHT22 + SSD1306 + MQTT nos dois sentidos
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -499,7 +506,7 @@ void desenharTela() {
   oled.display();
 }
 
-// ------------------------------------------------------ espelho da tela (T3)
+// ------------------------------------------------------ espelho da tela (T4)
 void publicarTelaTexto() {
   char t[8] = "--.-", h[8] = "--.-";            // antes da 1ª leitura: sem número
   if (!isnan(ultimaT)) snprintf(t, sizeof(t), "%.1f", ultimaT);
@@ -630,32 +637,29 @@ Num terminal, assine **todos** os tópicos do grupo. Num segundo terminal, mande
   commands={[
     {
       codeTitle: "Terminal 1 — Assinar via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com \\
--t '{course}/lab06/grupo-{group}/#' -v | tee evidencias/t3-mqtt.txt`,
+      command: `docker run --rm --init -v "%cd%\\evidencias:/ev" eclipse-mosquitto:2 sh -c "mosquitto_sub -h broker.hivemq.com -t '{course}/lab06/grupo-{group}/#' -v | tee /ev/t4-mqtt.txt"`,
     },
     {
       codeTitle: "Terminal 2 — comandar via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com \\
-  -t '{course}/lab06/grupo-{group}/cmd/intervalo' -m 10`,
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab06/grupo-{group}/cmd/intervalo" -m 10`,
     },
     {
-      codeTitle: "Terminal 2 — comandar via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com \\
-  -t '{course}/lab06/grupo-{group}/cmd/intervalo' -m 1      # fora da faixa: deve ser ignorado`,
+      codeTitle: "Terminal 2 — fora da faixa (deve ser ignorado)",
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab06/grupo-{group}/cmd/intervalo" -m 1`,
     },
   ]}
 />
 
 **Saída esperada** (trecho; encerre o Terminal 1 com Ctrl+C depois de umas 8 linhas):
 
-<FileTree root="lab06-grupo-x" files={["evidencias/t3-mqtt.txt c"]} />
+<FileTree root="lab06-grupo-x" files={["evidencias/t4-mqtt.txt c"]} />
 
 <GroupCommands
   language="text"
   commands={[
     {
       title: "Exemplo de Evidência de Saída",
-      codeTitle: "evidencias/t3-mqtt.txt",
+      codeTitle: "evidencias/t4-mqtt.txt",
       command: `{course}/lab06/grupo-{group}/status online
 {course}/lab06/grupo-{group}/dht {"grupo":"{group}","seq":3,"t":24.5,"h":55.0,"uptime_ms":16288,"intervalo_s":5.0}
 {course}/lab06/grupo-{group}/oled {"linhas":["LAB06 grupo {group}","T: 24.5 C","UR: 55.0 %","seq 3 | 5 s","WiFi ok | MQTT ok"]}
@@ -682,7 +686,7 @@ vazio com `-r -n`.)
   id="t4"
   task="MQTT nos dois sentidos"
   pontos={25}
-  files="src/main.cpp evidencias/t3-mqtt.txt"
+  files="src/main.cpp evidencias/t4-mqtt.txt"
 />
 
 ---
@@ -769,26 +773,26 @@ Abra `http://localhost:1880/dashboard/lab06`, mova o slider para 10 s e confira:
 - o monitor serial mostra `[CMD] novo intervalo: 10.0 s`;
 - as leituras passam a chegar a cada 10 s.
 
-**Evidências:** captura do dashboard em `evidencias/t4-dashboard.png` e a aba **Lab 06**
+**Evidências:** captura do dashboard em `evidencias/t5-dashboard.png` e a aba **Lab 06**
 exportada (menu → _Export_ → _Current flow_) em `nodered/flows-lab06.json`.
 
 <FileTree
   root="lab06-grupo-x"
-  files={["nodered/flows-lab06.json c", "evidencias/t4-dashboard.png c"]}
+  files={["nodered/flows-lab06.json c", "evidencias/t5-dashboard.png c"]}
 />
 
 <CommitPoint
   id="t5"
   task="Node-RED: replica do OLED e comando do intervalo"
   pontos={20}
-  files="nodered/flows-lab06.json evidencias/t4-dashboard.png"
+  files="nodered/flows-lab06.json evidencias/t5-dashboard.png"
 />
 
 ---
 
 ## Projeto integrador — framebuffer pixel a pixel {/* #integrador */}
 
-A réplica em texto da T4 **não é** a tela do ESP32. Ela não tem o grau desenhado com
+A réplica em texto da T5 **não é** a tela do ESP32. Ela não tem o grau desenhado com
 `drawCircle`, a barra de umidade, os indicadores `[W]` `[M]` nem a fonte grande. Para ver
 **exatamente** o que o display mostra, o ESP32 envia o próprio **framebuffer**: os 1024 bytes
 que acabaram de ir para o SSD1306 pelo I2C.
@@ -819,23 +823,22 @@ Como o MQTT/JSON é texto, os bytes viajam em **base64**: 3 bytes viram 4 caract
    - Aumentar o buffer do PubSubClient, que por padrão tem **256 bytes**.
 2. **Node-RED**
    - **mqtt in** `.../oled/fb` (_Output_: **a String**) → **ui-template** no grupo _Tela OLED_,
-     ao lado da réplica em texto da T4, que desenha os pixels num `<canvas>` (escala 3: 384 × 192 px).
+     ao lado da réplica em texto da T5, que desenha os pixels num `<canvas>` (escala 3: 384 × 192 px).
    - Exporte o fluxo de novo por cima de `nodered/flows-lab06.json`.
 3. **Evidências**
-   - `evidencias/t5-oled.png`: Wokwi e dashboard **lado a lado**, mostrando a mesma tela.
-   - `evidencias/t5-fb.txt`: tamanho de **uma** mensagem do framebuffer, pelo terminal:
+   - `evidencias/t6-oled.png`: Wokwi e dashboard **lado a lado**, mostrando a mesma tela.
+   - `evidencias/t6-fb.txt`: tamanho de **uma** mensagem do framebuffer, pelo terminal:
 
 <GroupCommands
   commands={[
     {
       codeTitle: "Terminal — Assinar via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com \\
-  -t '{course}/lab06/grupo-{group}/oled/fb' -C 1 | wc -c | tee evidencias/t5-fb.txt`,
+      command: `docker run --rm --init -v "%cd%\\evidencias:/ev" eclipse-mosquitto:2 sh -c "mosquitto_sub -h broker.hivemq.com -t '{course}/lab06/grupo-{group}/oled/fb' -C 1 | wc -c | tee /ev/t6-fb.txt"`,
     },
   ]}
 />
 
-```text title="evidencias/t5-fb.txt"
+```text title="evidencias/t6-fb.txt"
 1369
 ```
 
@@ -918,8 +921,8 @@ ou no dashboard?
   files={[
     "src/main.cpp u",
     "nodered/flows-lab06.json u",
-    "evidencias/t5-fb.txt c",
-    "evidencias/t5-oled.png c",
+    "evidencias/t6-fb.txt c",
+    "evidencias/t6-oled.png c",
   ]}
 />
 
@@ -927,9 +930,13 @@ ou no dashboard?
   id="t6"
   task="Framebuffer pixel a pixel no dashboard"
   pontos={25}
-  files="src/main.cpp nodered/flows-lab06.json evidencias/t5-fb.txt evidencias/t5-oled.png"
+  files="src/main.cpp nodered/flows-lab06.json evidencias/t6-fb.txt evidencias/t6-oled.png"
 />
 
 ---
+
+## Logout do seu ambiente dev, git e gh {/* #logout */}
+
+<GitLogOut />
 
 <LabLogout />

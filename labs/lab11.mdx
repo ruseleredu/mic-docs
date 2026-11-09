@@ -13,6 +13,7 @@ sidebar_position: 14
 - [ ] Três falhas (`cmd/falha nulo | div0 | travar`) diagnosticadas pelo PC, pelos registradores e pelo `addr2line` (T6)
 - [ ] Previsões P1–P5 respondidas no `README.md`
 - [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
+- [ ] Logout do Git e do `gh` no computador do laboratório
 
 :::info[Pontuação]
 **T1…T6 = 100 pts** (esta aula não tem desafios): T1 10 · T2 20 · T3 15 · T4 20 · T5 15 ·
@@ -85,7 +86,7 @@ e a T6 voltam ao pipeline para perguntar o que o CI deixaria passar.
 - O toolchain que o Lab 09 já instalou (`toolchain-xtensa-esp-elf`, GCC 15.2): `objdump`, `nm`,
   `addr2line` e o próprio `gcc`. Nada para baixar.
 - `mosquitto_sub`/`mosquitto_pub` via Docker, como nos labs anteriores.
-- Python 3 com o pacote `esp-idf-size` (`python -m pip install esp-idf-size`), na T1 e na T3.
+- Python 3 com o pacote `esp-idf-size` (`py -m pip install esp-idf-size`), na T1 e na T3.
 - Opcional: o [Compiler Explorer](https://godbolt.org) tem compiladores "Xtensa ESP32" para testar
   trechos isolados.
 
@@ -93,7 +94,7 @@ e a T6 voltam ao pipeline para perguntar o que o CI deixaria passar.
 O PlatformIO não coloca o toolchain no `PATH` do terminal. Use o `pio pkg exec`, que acha o
 executável dentro do pacote (funciona igual no Linux, no macOS e no Windows):
 
-```bash title="Terminal do PlatformIO (na pasta do projeto)"
+```shell title="Terminal do VS Code (cmd), na pasta do projeto"
 pio pkg exec -p toolchain-xtensa-esp-elf -- xtensa-esp32-elf-objdump --version
 ```
 
@@ -167,7 +168,7 @@ e diagnóstico, ainda com os textos em `lab09`) e o circuito:
 />
 
 :::info[Tópicos do Lab 11]
-Os mesmos do Lab 09, sob `elt85b/lab11/grupo-x/`, e mais três:
+Os mesmos do Lab 09, sob `elt73a/lab11/grupo-x/`, e mais três:
 
 | Tópico            | Direção | Conteúdo                                                       | Tarefa |
 | ----------------- | ------- | -------------------------------------------------------------- | ------ |
@@ -186,6 +187,11 @@ daqui como **referência de formato** e trabalhe sempre com os do **seu** `firmw
 ---
 
 ## Parte 1 — Gerar e navegar o assembly {/* #parte-1 */}
+
+:::info[Suba o stack do LAB11!]
+Execute os comandos para subir o [stack do LAB11](/infra/setup/gen_iot_aluno#lab-11)!
+:::
+
 
 ### 1.1 Firmware no Lab 11
 
@@ -365,7 +371,7 @@ cada instrução com o nome das variáveis do C:
 
 Para uma função só, direto do ELF:
 
-```bash title="Terminal do PlatformIO"
+```shell title="Terminal do VS Code (cmd)"
 pio pkg exec -p toolchain-xtensa-esp-elf -- xtensa-esp32-elf-objdump -d -S --disassemble=ler_adc .pio/build/esp32dev/firmware.elf
 ```
 
@@ -383,12 +389,12 @@ O `firmware.sym` lista os símbolos do maior para o menor. Os primeiros quase nu
 ```
 
 Para somar por **biblioteca**, use o `esp-idf-size` sobre o arquivo `.map` que o linker do ESP-IDF
-gera (procure-o com `ls .pio/build/esp32dev/*.map`):
+gera (procure-o com `dir .pio\build\esp32dev\*.map`):
 
-```bash title="Terminal"
-python -m pip install esp-idf-size
-python -m esp_idf_size .pio/build/esp32dev/lab11.map
-python -m esp_idf_size --archives .pio/build/esp32dev/lab11.map
+```shell title="Terminal do VS Code (cmd)"
+py -m pip install esp-idf-size
+py -m esp_idf_size .pio/build/esp32dev/lab11.map
+py -m esp_idf_size --archives .pio/build/esp32dev/lab11.map
 ```
 
 :::tip[Preveja antes de rodar]
@@ -512,8 +518,8 @@ Linha a linha:
 
 Para ver o `float` por trás de um padrão de bits:
 
-```bash title="Terminal"
-python -c "import struct; print(struct.unpack('>f', bytes.fromhex('437f0000'))[0])"
+```shell title="Terminal do VS Code (cmd)"
+py -c "import struct; print(struct.unpack('>f', bytes.fromhex('437f0000'))[0])"
 ```
 
 ### 2.3 Sua vez: `ler_adc()` e `enfileirar()`
@@ -828,11 +834,11 @@ idf_component_register(
   commands={[
     {
       codeTitle: "Terminal 1 — assinar o resultado via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com -t '{course}/lab11/grupo-{group}/bancada' -v`,
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com -t "{course}/lab11/grupo-{group}/bancada" -v`,
     },
     {
       codeTitle: "Terminal 2 — rodar a bancada via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab11/grupo-{group}/cmd/bancada' -m 1`,
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab11/grupo-{group}/cmd/bancada" -m 1`,
     },
   ]}
 />
@@ -840,7 +846,7 @@ idf_component_register(
 **Saída esperada** (valores **ilustrativos**, medidos no QEMU da Espressif):
 
 ```text title="Monitor serial"
-I (2020) app: [CMD] elt85b/lab11/grupo-a/cmd/bancada <- '1'
+I (2020) app: [CMD] elt73a/lab11/grupo-a/cmd/bancada <- '1'
 I (2020) bancada: operacao          ciclos
 I (2020) bancada: int_soma             5.1
 I (2020) bancada: int_mul              5.1
@@ -986,7 +992,7 @@ void atraso_v(void)
 }
 ```
 
-```bash title="Terminal do PlatformIO (repita com -Og, -Os e -O2)"
+```shell title="Terminal do VS Code (cmd): repita com -Og, -Os e -O2"
 pio pkg exec -p toolchain-xtensa-esp-elf -- xtensa-esp32-elf-gcc -mlongcalls -O0 -S -o exemplos/otimizacao-O0.s exemplos/otimizacao.c
 pio pkg exec -p toolchain-xtensa-esp-elf -- xtensa-esp32-elf-gcc -mlongcalls -O0 -c -o exemplos/otimizacao-O0.o exemplos/otimizacao.c
 pio pkg exec -p toolchain-xtensa-esp-elf -- xtensa-esp32-elf-nm -S --size-sort exemplos/otimizacao-O0.o
@@ -1164,7 +1170,7 @@ No `main.c`, `#include "falhas.h"` e mais um ramo em `tratar_comando()`; no
     {
       codeTitle:
         "Terminal — provocar uma falha via Docker (troque nulo por div0 ou travar)",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab11/grupo-{group}/cmd/falha' -m nulo`,
+      command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t "{course}/lab11/grupo-{group}/cmd/falha" -m nulo`,
     },
   ]}
 />
@@ -1174,7 +1180,7 @@ No `main.c`, `#include "falhas.h"` e mais um ramo em `tratar_comando()`; no
 **Saída esperada** de `cmd/falha nulo` (os endereços do seu firmware são outros):
 
 ```text title="Monitor serial"
-I (2220) app: [CMD] elt85b/lab11/grupo-a/cmd/falha <- 'nulo'
+I (2220) app: [CMD] elt73a/lab11/grupo-a/cmd/falha <- 'nulo'
 W (2220) falhas: gravando por um ponteiro NULL...
 Guru Meditation Error: Core  1 panic'ed (StoreProhibited). Exception was unhandled.
 Core  1 register dump:
@@ -1200,7 +1206,7 @@ Rebooting...
 
 Para transformar os endereços em funções e linhas:
 
-```bash title="Terminal do PlatformIO"
+```shell title="Terminal do VS Code (cmd)"
 pio pkg exec -p toolchain-xtensa-esp-elf -- xtensa-esp32-elf-addr2line -pfiaC -e .pio/build/esp32dev/firmware.elf 0x400e717b 0x400dc08d 0x400db3d5 0x400db766 0x400eac5d
 ```
 
@@ -1300,5 +1306,9 @@ rfc2217://localhost:4000`. O filtro `esp32_exception_decoder` do `platformio.ini
 />
 
 ---
+
+## Logout do seu ambiente dev, git e gh {/* #logout */}
+
+<GitLogOut />
 
 <LabLogout />

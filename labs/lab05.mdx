@@ -13,6 +13,7 @@ sidebar_position: 8
 - [ ] LWT `offline` + `online` retidos em `.../status`, visíveis no Node-RED (T6)
 - [ ] Previsões P1–P4 respondidas no `README.md`
 - [ ] Nenhum `push --force`; cada tarefa num commit `Tn:`
+- [ ] Logout do Git e do `gh` no computador do laboratório
 
 :::info[Pontuação]
 **T1…T6 = 100 pts** (esta aula não tem desafios): T1 10 · T2 20 · T3 15 · T4 20 · T5 15 ·
@@ -42,8 +43,9 @@ flowchart LR
 ```
 
 :::note[Continua no Lab 06]
-No **Lab 06** o mesmo firmware é reaproveitado: o Node-RED passa a **gravar as leituras em
-SQLite** e a **mudar o intervalo** do ESP32 remotamente.
+No **Lab 06** o mesmo firmware é reaproveitado: ganha um display **OLED** e passa a **receber
+comandos** pelo MQTT, como o intervalo de leitura. Gravar as leituras num banco (**SQLite**) fica
+para o **Lab 08**.
 :::
 
 ## Objetivos
@@ -130,6 +132,11 @@ O repositório do grupo nasce do `lab05-template`:
 
 ## Parte 1 — Circuito e dependências {/* #parte-1 */}
 
+:::info[Suba o stack do LAB05!]
+Execute os comandos para subir o [stack do LAB05](/infra/setup/gen_iot_aluno#lab-05)!
+:::
+
+
 ### 1.1 Circuito no Wokwi
 
 O DHT22 do Wokwi tem 4 pinos: `VCC`, `SDA` (dados), `NC` e `GND`. Ligue **VCC → 3V3**,
@@ -181,17 +188,20 @@ Com o simulador rodando, **clique no DHT22**: aparecem sliders de temperatura e 
 
 ```ini title="platformio.ini"
 [env:esp32dev]
-platform = espressif32
+platform = espressif32@6.9.0       ; versão fixa (Lab 02)
 board = esp32dev
 framework = arduino
 monitor_speed = 115200
 #highlight-start
 lib_deps =
-    adafruit/DHT sensor library@^1.4.6
-    adafruit/Adafruit Unified Sensor@^1.1.14
-    knolleary/PubSubClient@^2.8
+    adafruit/DHT sensor library@1.4.6
+    adafruit/Adafruit Unified Sensor@1.1.14
+    knolleary/PubSubClient@2.8
 #highlight-end
 ```
+
+As versões são **fixas**, como no Lab 02: sem elas, o mesmo commit pode compilar com bibliotecas
+diferentes em dias diferentes. (O Lab 10 volta a esse ponto, no CI.)
 
 O `wokwi.toml` do template já aponta para `.pio/build/esp32dev/firmware.bin` e `.elf` —
 por isso o nome do ambiente precisa continuar **`esp32dev`**.
@@ -363,8 +373,8 @@ Troque só as constantes (o resto é idêntico). O `begin()` **sem** o canal, po
 real pode estar em qualquer canal:
 
 ```cpp title="src/main.cpp (placa fisica)"
-const char* WIFI_SSID = "IoT-Broker";
-const char* WIFI_PASS = "ESP32IoTLab";
+const char *WIFI_SSID  = "IoT-Broker";
+const char *WIFI_SENHA = "ESP32IoTLab";
 // ...
 WiFi.begin(WIFI_SSID, WIFI_SENHA);
 ```
@@ -542,13 +552,22 @@ Enquanto a simulação roda, assine o tópico. Use o **MQTT Explorer** da stack 
   commands={[
     {
       codeTitle: "Terminal — Assinar via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com \\
-  -t '{course}/lab05/grupo-{group}/#' -v -C 5 | tee evidencias/t4-mqtt.txt`,
+      command: `docker run --rm --init -v "%cd%\\evidencias:/ev" eclipse-mosquitto:2 sh -c "mosquitto_sub -h broker.hivemq.com -t '{course}/lab05/grupo-{group}/#' -v -C 5 | tee /ev/t4-mqtt.txt"`,
     },
   ]}
 />
 
-`-C 5` encerra depois de 5 mensagens. **Saída esperada:**
+`-C 5` encerra depois de 5 mensagens.
+
+:::note[Por que o `tee` roda dentro do container?]
+O `cmd` do Windows não tem `tee` (mostrar na tela **e** gravar no arquivo). Por isso o comando roda
+num `sh` **dentro** do container, que tem o `tee`. O `-v "%cd%\evidencias:/ev"` monta a pasta
+`evidencias` do repositório em `/ev`: o que o container grava ali aparece na sua pasta. O `--init`
+faz o **Ctrl+C** encerrar o container. Rode o comando na raiz do repositório, com a pasta
+`evidencias` já criada (`if not exist evidencias mkdir evidencias`).
+:::
+
+**Saída esperada:**
 
 <FileTree root="lab05-grupo-x" files={["evidencias/t4-mqtt.txt c"]} />
 
@@ -582,7 +601,7 @@ E o que aconteceria se dois grupos esquecessem de trocar o `GRUPO` e ficassem am
 
 ## Parte 5 — Node-RED: receber e visualizar {/* #parte-5 */}
 
-Suba a [Stack Docker](/infra/setup/gen_iot_aluno#lab-05) e abra o Node-RED em [localhost](http://localhost). Crie uma aba
+Com o stack do Lab 05 rodando (Parte 1), abra o Node-RED em `http://localhost:1880`. Crie uma aba
 nova chamada **Lab 05** e monte:
 
 ```mermaid
@@ -691,8 +710,7 @@ sequenceDiagram
   commands={[
     {
       codeTitle: "Terminal — Assinar via Docker",
-      command: `docker run --rm eclipse-mosquitto:2 mosquitto_sub -h broker.hivemq.com \\
-  -t '{course}/lab05/grupo-{group}/status' -v | tee evidencias/t6-status.txt`,
+      command: `docker run --rm --init -v "%cd%\\evidencias:/ev" eclipse-mosquitto:2 sh -c "mosquitto_sub -h broker.hivemq.com -t '{course}/lab05/grupo-{group}/status' -v | tee /ev/t6-status.txt"`,
     },
   ]}
 />
@@ -740,5 +758,9 @@ PubSubClient é **15 s**. Qual dos dois o Wokwi provocou? E o que muda se o firm
 />
 
 ---
+
+## Logout do seu ambiente dev, git e gh {/* #logout */}
+
+<GitLogOut />
 
 <LabLogout />
