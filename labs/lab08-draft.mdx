@@ -220,7 +220,7 @@ return msg;
 ### InfluxDB Query Test
 
 ```sql
-from(bucket: "Grupo-X")
+from(bucket: "grupo-x")
   |> range(start: -1h)
   |> filter(fn: (r) => r["_measurement"] == "test")
   |> filter(fn: (r) => r["_field"] == "adc1in1" or r["_field"] == "adc1in2" or r["_field"] == "blueled" or r["_field"] == "voltage1" or r["_field"] == "voltage2")

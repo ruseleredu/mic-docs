@@ -74,10 +74,11 @@ A documentação do Wokwi para PlatformIO aponta para
 toolchain novo (`toolchain-xtensa-esp-elf`, GCC 15), que **não tem GDB**: ele está em
 `~/.platformio/packages/tool-xtensa-esp-elf-gdb/`. Confira se a pasta existe:
 
-```bash title="Terminal (Linux/macOS; no Windows: dir %USERPROFILE%\.platformio\packages)"
+```bash title="Terminal (Linux/macOS; no Windows: dir %USERPROFILE%.platformio\packages)"
 ls ~/.platformio/packages/ | grep gdb
 ls ~/.platformio/packages/tool-xtensa-esp-elf-gdb/bin/
 ```
+
 :::
 
 ## Clonar o repositório do grupo {/* #clonar */}
@@ -112,7 +113,7 @@ e as falhas, ainda com os textos em `lab11`) e duas mudanças pequenas:
   details={true}
   defaultOpen={false}
   title="Estrutura de Arquivos do Projeto"
-  root="lab12-grupo-X"
+  root="lab12-grupo-x"
   files={[
     "platformio.ini r",
     "CMakeLists.txt u",
@@ -146,7 +147,7 @@ e as falhas, ainda com os textos em `lab11`) e duas mudanças pequenas:
 />
 
 :::info[Tópicos do Lab 12]
-Os mesmos do Lab 11, sob `elt85b/lab12/grupo-X/`. O `.../dht` ganha o campo `t_media`:
+Os mesmos do Lab 11, sob `elt85b/lab12/grupo-x/`. O `.../dht` ganha o campo `t_media`:
 `{"grupo":"a","seq":7,"t":24.5,"t_media":24.5,"h":55.0,...}`.
 :::
 
@@ -199,16 +200,16 @@ linhas) e **onde** está o servidor:
       "MIMode": "gdb",
       "miDebuggerServerAddress": "localhost:3333",
       "linux": {
-        "miDebuggerPath": "${userHome}/.platformio/packages/tool-xtensa-esp-elf-gdb/bin/xtensa-esp32-elf-gdb"
+        "miDebuggerPath": "${userHome}/.platformio/packages/tool-xtensa-esp-elf-gdb/bin/xtensa-esp32-elf-gdb",
       },
       "osx": {
-        "miDebuggerPath": "${userHome}/.platformio/packages/tool-xtensa-esp-elf-gdb/bin/xtensa-esp32-elf-gdb"
+        "miDebuggerPath": "${userHome}/.platformio/packages/tool-xtensa-esp-elf-gdb/bin/xtensa-esp32-elf-gdb",
       },
       "windows": {
-        "miDebuggerPath": "${userHome}/.platformio/packages/tool-xtensa-esp-elf-gdb/bin/xtensa-esp32-elf-gdb.exe"
-      }
-    }
-  ]
+        "miDebuggerPath": "${userHome}/.platformio/packages/tool-xtensa-esp-elf-gdb/bin/xtensa-esp32-elf-gdb.exe",
+      },
+    },
+  ],
 }
 ```
 
@@ -280,8 +281,7 @@ Thread 1 hit Breakpoint 1, app_main () at src/main.c:413
   2    Thread 1.2 (CPU#1 [halted ]) 0x4008565e in esp_cpu_wait_for_intr () at $IDF_PATH/components/esp_hw_support/cpu.c:64
 ```
 
-Por fim, acrescente temporariamente `"stopAtConnect": true` à configuração, reinicie (passos 2 e
-4) e veja **onde** o processador está antes de qualquer código seu: anote o `pc`. Depois, tire a
+Por fim, acrescente temporariamente `"stopAtConnect": true` à configuração, reinicie (passos 2 e 4) e veja **onde** o processador está antes de qualquer código seu: anote o `pc`. Depois, tire a
 linha.
 
 :::tip[Preveja antes de rodar]
@@ -297,7 +297,7 @@ visível) e `evidencias/t1-console.txt` (a saída dos quatro comandos do Debug C
 `stopAtConnect`).
 
 <FileTree
-  root="lab12-grupo-X"
+  root="lab12-grupo-x"
   files={[
     "wokwi.toml u",
     ".vscode/launch.json c",
@@ -327,18 +327,18 @@ visível) e `evidencias/t1-console.txt` (a saída dos quatro comandos do Debug C
 Tudo o que a interface faz é um comando do GDB por baixo. Quando a interface não oferecer algo,
 use o Debug Console.
 
-| Quero... | No VS Code | No Debug Console |
-| --- | --- | --- |
-| parar numa linha | clique na margem da linha | `-exec break main.c:278` |
-| parar numa função (sem abrir o arquivo) | Breakpoints ▸ **+** (Add Function Breakpoint) | `-exec break esp_panic_handler` |
-| parar só às vezes | botão direito no ponto ▸ **Edit Breakpoint** ▸ Expression | `-exec condition 2 ev.tipo == EV_COMANDO` |
-| executar a linha sem entrar na função | Step Over (F10) | `-exec next` |
-| entrar na função | Step Into (F11) | `-exec step` |
-| terminar a função e voltar | Step Out (Shift+F11) | `-exec finish` |
-| uma **instrução** de máquina | Disassembly View ▸ F11 | `-exec stepi` |
-| ver uma expressão sempre | painel **Watch** ▸ **+** | `-exec display setpoint` |
-| mudar uma variável | Variables ▸ duplo clique no valor | `-exec set var modo = MODO_AUTO` |
-| ver a memória crua | — | `-exec x/7xw &filtro_dht` |
+| Quero...                                | No VS Code                                                | No Debug Console                          |
+| --------------------------------------- | --------------------------------------------------------- | ----------------------------------------- |
+| parar numa linha                        | clique na margem da linha                                 | `-exec break main.c:278`                  |
+| parar numa função (sem abrir o arquivo) | Breakpoints ▸ **+** (Add Function Breakpoint)             | `-exec break esp_panic_handler`           |
+| parar só às vezes                       | botão direito no ponto ▸ **Edit Breakpoint** ▸ Expression | `-exec condition 2 ev.tipo == EV_COMANDO` |
+| executar a linha sem entrar na função   | Step Over (F10)                                           | `-exec next`                              |
+| entrar na função                        | Step Into (F11)                                           | `-exec step`                              |
+| terminar a função e voltar              | Step Out (Shift+F11)                                      | `-exec finish`                            |
+| uma **instrução** de máquina            | Disassembly View ▸ F11                                    | `-exec stepi`                             |
+| ver uma expressão sempre                | painel **Watch** ▸ **+**                                  | `-exec display setpoint`                  |
+| mudar uma variável                      | Variables ▸ duplo clique no valor                         | `-exec set var modo = MODO_AUTO`          |
+| ver a memória crua                      | —                                                         | `-exec x/7xw &filtro_dht`                 |
 
 ### 2.2 Dois caminhos até `ler_adc`
 
@@ -419,7 +419,7 @@ Wokwi?
 `ev.topico` e o `ev.texto` do breakpoint condicional, o Call Stack do breakpoint em `controlar` e
 o `x/6i $pc` com os registradores da 2.5.
 
-<FileTree root="lab12-grupo-X" files={["evidencias/t2-depuracao.md c"]} />
+<FileTree root="lab12-grupo-x" files={["evidencias/t2-depuracao.md c"]} />
 
 <CommitPoint
   id="t2"
@@ -468,7 +468,7 @@ $7 = {amostras = {24.5, 0, 0, 0}, soma = 24.5, pos = 1, n = 1}
 - `pxCurrentTCBs[n]` é a task que está rodando na CPU `n` (o TCB, _task control block_, guarda o
   nome, a pilha, a prioridade...).
 - A pilha da `app` vai de `pxStack` a `pxEndOfStack` e cresce **para baixo**: `pxEndOfStack −
-  $sp` é o quanto está em uso **agora**, nessa linha.
+$sp` é o quanto está em uso **agora**, nessa linha.
 - `x/7xw` mostra 7 palavras de 32 bits em hexadecimal. `0x41c40000` é o `float` 24,5 (confira
   com o `struct.unpack` do Lab 11).
 
@@ -484,7 +484,7 @@ que eles apontam para a ROM?
 
 **Evidência:** `evidencias/t3-memoria.txt` com a saída dos onze comandos e as contas da P3(b).
 
-<FileTree root="lab12-grupo-X" files={["evidencias/t3-memoria.txt c"]} />
+<FileTree root="lab12-grupo-x" files={["evidencias/t3-memoria.txt c"]} />
 
 <CommitPoint
   id="t3"
@@ -503,7 +503,8 @@ decodificar. Com o depurador conectado, dá para parar **antes** do reboot, e at
 <GroupCommands
   commands={[
     {
-      codeTitle: "Terminal — provocar uma falha via Docker (nulo, div0 ou travar)",
+      codeTitle:
+        "Terminal — provocar uma falha via Docker (nulo, div0 ou travar)",
       command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab12/grupo-{group}/cmd/falha' -m nulo`,
     },
   ]}
@@ -599,7 +600,7 @@ reclama. Por quê?
 **Evidência:** `evidencias/t4-falhas.md` com, para cada falha: os comandos que você usou, o `bt` e
 o que mudou no serial. Para o `nulo`, inclua a `XtExcFrame` e o Guru Meditation que veio depois.
 
-<FileTree root="lab12-grupo-X" files={["evidencias/t4-falhas.md c"]} />
+<FileTree root="lab12-grupo-x" files={["evidencias/t4-falhas.md c"]} />
 
 <CommitPoint
   id="t4"
@@ -656,7 +657,7 @@ code" para a linha 17, e onde foi parar o `f->pos++`? (c) Você depura em `-Og` 
 **Evidência:** `evidencias/t5-otimizado.md` com uma tabela "o que eu fiz × o que vi em `-Og` × o
 que vi em `-Os`" para os quatro itens, e a saída dos três comandos nos dois níveis.
 
-<FileTree root="lab12-grupo-X" files={["evidencias/t5-otimizado.md c"]} />
+<FileTree root="lab12-grupo-x" files={["evidencias/t5-otimizado.md c"]} />
 
 <CommitPoint
   id="t5"
@@ -749,7 +750,7 @@ teste unitário, no estilo do Lab 10, teria pegado esse defeito antes de ele che
 :::
 
 <FileTree
-  root="lab12-grupo-X"
+  root="lab12-grupo-x"
   files={[
     "src/filtro.c u",
     "evidencias/t6-filtro.md c",

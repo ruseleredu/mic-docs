@@ -123,7 +123,7 @@ prontos**, que substituem bibliotecas do Arduino que não existem no ESP-IDF:
   details={true}
   defaultOpen={false}
   title="Estrutura de Arquivos do Projeto"
-  root="lab09-grupo-X"
+  root="lab09-grupo-x"
   files={[
     "platformio.ini u",
     "CMakeLists.txt c",
@@ -163,7 +163,7 @@ prontos**, que substituem bibliotecas do Arduino que não existem no ESP-IDF:
 />
 
 :::info[Tópicos do Lab 09]
-Os mesmos do Lab 08, sob `elt85b/lab09/grupo-X/`: `dht`, `adc`, `pwm`, `status`, `oled`,
+Os mesmos do Lab 08, sob `elt85b/lab09/grupo-x/`: `dht`, `adc`, `pwm`, `status`, `oled`,
 `oled/fb` e os comandos `cmd/intervalo`, `cmd/modo`, `cmd/aquecedor` e `cmd/ventilador`, com o
 **mesmo JSON**. Novo só o `.../diag` (T6). Troque o `X` (e o `#define GRUPO`) pela letra do grupo.
 :::
@@ -333,7 +333,7 @@ programa não para? Quem chamava o `loop()` no Arduino?
 **Lab 08** e deste T1; em `evidencias/t1-serial.txt`, o monitor serial com pelo menos 3 voltas.
 
 <FileTree
-  root="lab09-grupo-X"
+  root="lab09-grupo-x"
   files={[
     "platformio.ini u",
     "CMakeLists.txt c",
@@ -720,7 +720,7 @@ passar os ponteiros do evento? (c) Por que o `client_id` do `main.c` é `static`
 comando e o `offline` depois de parar a simulação) em `evidencias/t2-mqtt.txt`.
 
 <FileTree
-  root="lab09-grupo-X"
+  root="lab09-grupo-x"
   files={[
     "src/CMakeLists.txt u",
     "src/idf_component.yml c",
@@ -1158,7 +1158,7 @@ elt85b/lab09/grupo-a/adc {"raw":3001,"mv":2420,"sp":45.5}
 ```
 
 <FileTree
-  root="lab09-grupo-X"
+  root="lab09-grupo-x"
   files={[
     "src/CMakeLists.txt u",
     "src/sensores.h c",
@@ -1405,7 +1405,7 @@ o `ledc_set_duty()` sozinho não faz?
 `evidencias/t4-pwm.png`.
 
 <FileTree
-  root="lab09-grupo-X"
+  root="lab09-grupo-x"
   files={[
     "src/atuadores.h c",
     "src/atuadores.c c",
@@ -2033,7 +2033,7 @@ lado, com a mesma tela; em `evidencias/t5-nodered.png`, o dashboard `/lab09` (c�
 com o histórico vindo do banco.
 
 <FileTree
-  root="lab09-grupo-X"
+  root="lab09-grupo-x"
   files={[
     "src/tela.h c",
     "src/tela.c c",
@@ -2067,16 +2067,16 @@ suficiente.
 2. **Diagnóstico.** Um terceiro `esp_timer` (30 s) gera o evento `EV_DIAG`, e a task `app`
    publica em `.../diag`:
 
-   ```text title="elt85b/lab09/grupo-X/diag (valores ilustrativos)"
+   ```text title="elt85b/lab09/grupo-x/diag (valores ilustrativos)"
    {"uptime_s":61,"heap_livre":231412,"heap_minimo":219808,"pilha_livre_app":4928,"rssi":-62,"reset":1}
    ```
 
-   | Campo | De onde vem |
-   | --- | --- |
+   | Campo                       | De onde vem                                                    |
+   | --------------------------- | -------------------------------------------------------------- |
    | `heap_livre`, `heap_minimo` | `esp_get_free_heap_size()`, `esp_get_minimum_free_heap_size()` |
-   | `pilha_livre_app` | `uxTaskGetStackHighWaterMark(NULL)`: no ESP-IDF, em **bytes** |
-   | `rssi` | `esp_wifi_sta_get_ap_info()` (use `rede_rssi()`) |
-   | `reset` | `esp_reset_reason()` (1 = ligou, 3 = `esp_restart()`, …) |
+   | `pilha_livre_app`           | `uxTaskGetStackHighWaterMark(NULL)`: no ESP-IDF, em **bytes**  |
+   | `rssi`                      | `esp_wifi_sta_get_ap_info()` (use `rede_rssi()`)               |
+   | `reset`                     | `esp_reset_reason()` (1 = ligou, 3 = `esp_restart()`, …)       |
 
 3. **Teste de reset.** Mande `cmd/modo auto` e `cmd/intervalo 10`, reinicie a simulação e mostre
    no serial que o ESP32 voltou em `auto` com 10 s.
@@ -2126,7 +2126,7 @@ flash a cada comando. A flash aguenta ~100 mil apagamentos por setor. É um prob
 :::
 
 <FileTree
-  root="lab09-grupo-X"
+  root="lab09-grupo-x"
   files={[
     "src/config.h u",
     "src/main.c u",

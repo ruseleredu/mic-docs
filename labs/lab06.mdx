@@ -95,7 +95,7 @@ O repositório do grupo nasce do `lab06-template`, que já traz o **firmware fin
   details={true}
   defaultOpen={false}
   title="Estrutura de Arquivos do Projeto"
-  root="lab06-grupo-X"
+  root="lab06-grupo-x"
   files={[
     "platformio.ini u",
     "src/main.cpp u",
@@ -115,7 +115,7 @@ O repositório do grupo nasce do `lab06-template`, que já traz o **firmware fin
 />
 
 :::info[Tópicos do Lab 06]
-Tudo fica sob `elt73a/lab06/grupo-X/`. Troque o `X` (e o `#define GRUPO`) pela letra do seu grupo.
+Tudo fica sob `elt73a/lab06/grupo-x/`. Troque o `X` (e o `#define GRUPO`) pela letra do seu grupo.
 
 | Tópico              | Sentido        | Payload                                                                       |
 | ------------------- | -------------- | ----------------------------------------------------------------------------- |
@@ -143,7 +143,7 @@ O SSD1306 do Wokwi (`board-ssd1306`) é um módulo **I2C** de 4 pinos: `GND`, `V
 `SDA`. No ESP32, o I2C padrão usa **GPIO21 = SDA** e **GPIO22 = SCL**. Acrescente o display
 ao `diagram.json` do Lab 05:
 
-<FileTree root="lab06-grupo-X" files={["diagram.json u"]} />
+<FileTree root="lab06-grupo-x" files={["diagram.json u"]} />
 
 ```json title="diagram.json"
 {
@@ -190,7 +190,7 @@ ao `diagram.json` do Lab 05:
 
 ### 1.2 Bibliotecas
 
-<FileTree root="lab06-grupo-X" files={["platformio.ini u"]} />
+<FileTree root="lab06-grupo-x" files={["platformio.ini u"]} />
 
 ```ini title="platformio.ini"
 [env:esp32dev]
@@ -252,7 +252,7 @@ sequenceDiagram
 
 Acrescente ao firmware do Lab 05:
 
-<FileTree root="lab06-grupo-X" files={["src/main.cpp u"]} />
+<FileTree root="lab06-grupo-x" files={["src/main.cpp u"]} />
 
 ```cpp title="src/main.cpp (trechos novos da T2)"
 #include <Wire.h>
@@ -358,7 +358,7 @@ Anote as previsões e o que observou no `README.md`.
 e uma captura do Wokwi com o display em `evidencias/t2-oled.png`.
 
 <FileTree
-  root="lab06-grupo-X"
+  root="lab06-grupo-x"
   files={["evidencias/t2-serial.txt c", "evidencias/t2-oled.png c"]}
 />
 
@@ -404,7 +404,7 @@ sequenceDiagram
 
 ### 3.2 Código completo até aqui
 
-<FileTree root="lab06-grupo-X" files={["src/main.cpp u"]} />
+<FileTree root="lab06-grupo-x" files={["src/main.cpp u"]} />
 
 ```cpp title="src/main.cpp (T3)"
 // elt73a - Lab 06 (T3): DHT22 + SSD1306 + MQTT nos dois sentidos
@@ -648,7 +648,7 @@ Num terminal, assine **todos** os tópicos do grupo. Num segundo terminal, mande
 
 **Saída esperada** (trecho; encerre o Terminal 1 com Ctrl+C depois de umas 8 linhas):
 
-<FileTree root="lab06-grupo-X" files={["evidencias/t3-mqtt.txt c"]} />
+<FileTree root="lab06-grupo-x" files={["evidencias/t3-mqtt.txt c"]} />
 
 <GroupCommands
   language="text"
@@ -773,7 +773,7 @@ Abra `http://localhost:1880/dashboard/lab06`, mova o slider para 10 s e confira:
 exportada (menu → _Export_ → _Current flow_) em `nodered/flows-lab06.json`.
 
 <FileTree
-  root="lab06-grupo-X"
+  root="lab06-grupo-x"
   files={["nodered/flows-lab06.json c", "evidencias/t4-dashboard.png c"]}
 />
 
@@ -813,7 +813,7 @@ Como o MQTT/JSON é texto, os bytes viajam em **base64**: 3 bytes viram 4 caract
 ### Requisitos
 
 1. **Firmware**
-   - Novo tópico `elt73a/lab06/grupo-X/oled/fb`.
+   - Novo tópico `elt73a/lab06/grupo-x/oled/fb`.
    - Depois de **cada** `desenharTela()`, codificar `oled.getBuffer()` (1024 bytes) em base64 e
      publicar nesse tópico.
    - Aumentar o buffer do PubSubClient, que por padrão tem **256 bytes**.
@@ -914,7 +914,7 @@ ou no dashboard?
 :::
 
 <FileTree
-  root="lab06-grupo-X"
+  root="lab06-grupo-x"
   files={[
     "src/main.cpp u",
     "nodered/flows-lab06.json u",

@@ -129,7 +129,7 @@ e diagnóstico, ainda com os textos em `lab09`) e o circuito:
   details={true}
   defaultOpen={false}
   title="Estrutura de Arquivos do Projeto"
-  root="lab11-grupo-X"
+  root="lab11-grupo-x"
   files={[
     "platformio.ini u",
     "CMakeLists.txt u",
@@ -167,13 +167,14 @@ e diagnóstico, ainda com os textos em `lab09`) e o circuito:
 />
 
 :::info[Tópicos do Lab 11]
-Os mesmos do Lab 09, sob `elt85b/lab11/grupo-X/`, e mais três:
+Os mesmos do Lab 09, sob `elt85b/lab11/grupo-x/`, e mais três:
 
-| Tópico | Direção | Conteúdo | Tarefa |
-| --- | --- | --- | --- |
-| `.../cmd/bancada` | → ESP32 | qualquer texto: roda a bancada de ciclos | T4 |
-| `.../bancada` | ESP32 → | JSON com os ciclos de cada operação | T4 |
-| `.../cmd/falha` | → ESP32 | `nulo`, `div0` ou `travar`: provoca uma falha **de propósito** | T6 |
+| Tópico            | Direção | Conteúdo                                                       | Tarefa |
+| ----------------- | ------- | -------------------------------------------------------------- | ------ |
+| `.../cmd/bancada` | → ESP32 | qualquer texto: roda a bancada de ciclos                       | T4     |
+| `.../bancada`     | ESP32 → | JSON com os ciclos de cada operação                            | T4     |
+| `.../cmd/falha`   | → ESP32 | `nulo`, `div0` ou `travar`: provoca uma falha **de propósito** | T6     |
+
 :::
 
 :::warning[Os endereços do seu firmware são outros]
@@ -195,11 +196,11 @@ espelho em texto) e `Lab 09` → `Lab 11` (o banner do serial). No `CMakeLists.t
 
 ### 1.2 Três jeitos de ver o assembly
 
-| O quê | Quem gera | Quando usar |
-| --- | --- | --- |
+| O quê                  | Quem gera                          | Quando usar                                                                                                                     |
+| ---------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | **`.s` do compilador** | `gcc -S` (aqui: `-save-temps=obj`) | ver o que o GCC escreveu **antes** do linker: nomes das variáveis nos comentários (`-fverbose-asm`), endereços ainda simbólicos |
-| **desmontagem do ELF** | `objdump -d -S` | ver o que **vai rodar**: endereços finais, bytes de cada instrução, o C intercalado |
-| **símbolos** | `nm -S --size-sort` | saber **onde** e **quanto** ocupa cada função e variável |
+| **desmontagem do ELF** | `objdump -d -S`                    | ver o que **vai rodar**: endereços finais, bytes de cada instrução, o C intercalado                                             |
+| **símbolos**           | `nm -S --size-sort`                | saber **onde** e **quanto** ocupa cada função e variável                                                                        |
 
 O `platformio.ini` ganha duas coisas: os `.s` (só para o `src/`, com `build_src_flags`) e um
 segundo script que roda depois de cada build:
@@ -403,7 +404,7 @@ python -m esp_idf_size --archives .pio/build/esp32dev/lab11.map
 `--archives`, mais a linha da biblioteca do `src/`.
 
 <FileTree
-  root="lab11-grupo-X"
+  root="lab11-grupo-x"
   files={[
     "platformio.ini u",
     "CMakeLists.txt u",
@@ -445,20 +446,20 @@ flowchart LR
   c10 -- "call8: a janela anda 8" --> f2
 ```
 
-| Instrução | O que faz |
-| --- | --- |
-| `entry a1, N` | primeira instrução de toda função: reserva **N bytes** de pilha |
-| `retw.n` | volta ao chamador e desfaz a janela. O valor de retorno sai em `a2` e o chamador o recebe em `a10` |
-| `call8 X` / `callx8 a8` | chama `X` (direto) ou o endereço que está em `a8` (para longe: IRAM, ROM, outro trecho da flash) |
-| `l32r aN, ...` | carrega uma **constante de 32 bits** de uma tabela (_literal pool_). O `objdump` mostra o valor entre parênteses |
-| `l32i` / `s32i` / `l8ui` / `s8i` | lê / grava 32 bits ou 8 bits na memória: `l32i a8, a9, 4` lê o endereço `a9 + 4` |
-| `memw` | barreira de memória: o compilador a põe antes de **todo** acesso a uma variável `volatile` |
-| `mull` / `quos` | multiplicação / divisão inteira com sinal, no hardware |
-| `wfr` / `rfr` | copia um registrador inteiro para um registrador da FPU (`f0…f15`) e vice-versa |
-| `lsi` / `ssi` | lê / grava um `float` direto na FPU |
-| `add.s` / `mul.s` / `madd.s` | soma / multiplicação / multiplica-e-soma em `float` (precisão simples) |
-| `float.s` | converte inteiro → `float` |
-| `.n` no fim (`mov.n`, `l32i.n`) | a mesma instrução em **2 bytes** em vez de 3: o compilador usa sempre que cabe |
+| Instrução                        | O que faz                                                                                                        |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `entry a1, N`                    | primeira instrução de toda função: reserva **N bytes** de pilha                                                  |
+| `retw.n`                         | volta ao chamador e desfaz a janela. O valor de retorno sai em `a2` e o chamador o recebe em `a10`               |
+| `call8 X` / `callx8 a8`          | chama `X` (direto) ou o endereço que está em `a8` (para longe: IRAM, ROM, outro trecho da flash)                 |
+| `l32r aN, ...`                   | carrega uma **constante de 32 bits** de uma tabela (_literal pool_). O `objdump` mostra o valor entre parênteses |
+| `l32i` / `s32i` / `l8ui` / `s8i` | lê / grava 32 bits ou 8 bits na memória: `l32i a8, a9, 4` lê o endereço `a9 + 4`                                 |
+| `memw`                           | barreira de memória: o compilador a põe antes de **todo** acesso a uma variável `volatile`                       |
+| `mull` / `quos`                  | multiplicação / divisão inteira com sinal, no hardware                                                           |
+| `wfr` / `rfr`                    | copia um registrador inteiro para um registrador da FPU (`f0…f15`) e vice-versa                                  |
+| `lsi` / `ssi`                    | lê / grava um `float` direto na FPU                                                                              |
+| `add.s` / `mul.s` / `madd.s`     | soma / multiplicação / multiplica-e-soma em `float` (precisão simples)                                           |
+| `float.s`                        | converte inteiro → `float`                                                                                       |
+| `.n` no fim (`mov.n`, `l32i.n`)  | a mesma instrução em **2 bytes** em vez de 3: o compilador usa sempre que cabe                                   |
 
 Os tipos têm tamanho fixo no Xtensa: `int`, `long` e ponteiros têm **4 bytes**, e `uint32_t` é
 `unsigned long` (é a P2 do Lab 10). Por isso o mesmo `l32i`/`s32i` lê e grava todos eles.
@@ -552,7 +553,7 @@ isso importa?
 `enfileirar`) copiadas do **seu** `app.lst` e anotadas linha a linha, e uma tabela "registrador →
 o que guarda" para `ler_adc`.
 
-<FileTree root="lab11-grupo-X" files={["evidencias/t2-anatomia.md c"]} />
+<FileTree root="lab11-grupo-x" files={["evidencias/t2-anatomia.md c"]} />
 
 <CommitPoint
   id="t2"
@@ -569,13 +570,13 @@ o que guarda" para `ler_adc`.
 
 O endereço já diz **onde** um símbolo está. No ESP32 (ESP-IDF, `soc.h`):
 
-| Faixa | Região | O que fica lá | Seção do ELF |
-| --- | --- | --- | --- |
-| `0x4000_0000`–`0x4006_FFFF` | **ROM** (gravada na fábrica) | `memset`, `strcmp`, `__muldf3`, ... | — (só endereço) |
-| `0x4008_0000`–`0x400A_9FFF` | **IRAM** (RAM de instruções) | interrupções, partes do FreeRTOS, `IRAM_ATTR` | `.iram0.vectors`, `.iram0.text` |
-| `0x400D_0000`–`0x403F_FFFF` | **flash, código** (via cache) | quase todo o código | `.flash.text` |
-| `0x3F40_0000`–`0x3F7F_FFFF` | **flash, dados** (via cache) | `const`, strings, tabelas | `.flash.rodata` |
-| `0x3FFA_E000`–`0x3FFF_FFFF` | **DRAM** (RAM de dados) | variáveis globais, heap, pilhas | `.dram0.data`, `.dram0.bss` |
+| Faixa                       | Região                        | O que fica lá                                 | Seção do ELF                    |
+| --------------------------- | ----------------------------- | --------------------------------------------- | ------------------------------- |
+| `0x4000_0000`–`0x4006_FFFF` | **ROM** (gravada na fábrica)  | `memset`, `strcmp`, `__muldf3`, ...           | — (só endereço)                 |
+| `0x4008_0000`–`0x400A_9FFF` | **IRAM** (RAM de instruções)  | interrupções, partes do FreeRTOS, `IRAM_ATTR` | `.iram0.vectors`, `.iram0.text` |
+| `0x400D_0000`–`0x403F_FFFF` | **flash, código** (via cache) | quase todo o código                           | `.flash.text`                   |
+| `0x3F40_0000`–`0x3F7F_FFFF` | **flash, dados** (via cache)  | `const`, strings, tabelas                     | `.flash.rodata`                 |
+| `0x3FFA_E000`–`0x3FFF_FFFF` | **DRAM** (RAM de dados)       | variáveis globais, heap, pilhas               | `.dram0.data`, `.dram0.bss`     |
 
 O código na flash não é lido direto: passa por um **cache**. Se o cache está desligado (durante uma
 gravação na flash, por exemplo) e uma interrupção precisa rodar, ela tem que estar na **IRAM**. É
@@ -587,13 +588,13 @@ Use o `firmware.sym` (ou `$XT nm -S .pio/build/esp32dev/firmware.elf | grep ...`
 da ROM não estão nele (não têm tamanho): procure o nome entre `<>` no `firmware.lst`, como
 `<memset>`.
 
-| Símbolo | De onde vem |
-| --- | --- |
-| `app_main`, `task_app`, `ler_adc` | `src/main.c` |
-| `esp_timer_get_time`, `_xt_lowint1` | ESP-IDF (`esp_timer`, vetores de interrupção) |
-| `memset`, `strcmp`, `__muldf3` | chamados pelo seu código (procure no `firmware.lst`) |
-| `NOME_MODO`, `estado`, `setpoint`, `seq`, `fila` | variáveis do `src/main.c` |
-| `b64$…` | o `static char b64[1400]` **dentro** de `publicar_framebuffer()` |
+| Símbolo                                          | De onde vem                                                      |
+| ------------------------------------------------ | ---------------------------------------------------------------- |
+| `app_main`, `task_app`, `ler_adc`                | `src/main.c`                                                     |
+| `esp_timer_get_time`, `_xt_lowint1`              | ESP-IDF (`esp_timer`, vetores de interrupção)                    |
+| `memset`, `strcmp`, `__muldf3`                   | chamados pelo seu código (procure no `firmware.lst`)             |
+| `NOME_MODO`, `estado`, `setpoint`, `seq`, `fila` | variáveis do `src/main.c`                                        |
+| `b64$…`                                          | o `static char b64[1400]` **dentro** de `publicar_framebuffer()` |
 
 Para cada um: endereço, região, seção, tamanho e **por que** ele está lá. Repare nas letras do
 `nm`: `T`/`t` código, `D`/`d` dado com valor inicial, `B`/`b` dado zerado (`.bss`), maiúscula =
@@ -632,7 +633,7 @@ espaço no `firmware.bin` e `.dram0.bss`, não. Por quê?
 **Evidência:** `evidencias/t3-memoria.md` com a tabela da 3.2 preenchida (endereço, região,
 seção, tamanho, por quê) e o experimento da 3.3 (endereços e IRAM antes e depois).
 
-<FileTree root="lab11-grupo-X" files={["evidencias/t3-memoria.md c"]} />
+<FileTree root="lab11-grupo-x" files={["evidencias/t3-memoria.md c"]} />
 
 <CommitPoint
   id="t3"
@@ -910,7 +911,7 @@ Em que situação, num chip real, eles seriam diferentes?
 mais que a `op_base` (ou "chama `__divsf3`", etc.) e uma frase de explicação.
 
 <FileTree
-  root="lab11-grupo-X"
+  root="lab11-grupo-x"
   files={[
     "src/bancada.h c",
     "src/bancada.c c",
@@ -1054,7 +1055,7 @@ e o que mudou) para as oito funções de `exemplos/otimizacao.c`; o `esperar` e 
 `-Os` comentados; e a tabela da 5.2 com os três níveis.
 
 <FileTree
-  root="lab11-grupo-X"
+  root="lab11-grupo-x"
   files={["exemplos/otimizacao.c c", "evidencias/t5-otimizacao.md c"]}
 />
 
@@ -1161,7 +1162,8 @@ No `main.c`, `#include "falhas.h"` e mais um ramo em `tratar_comando()`; no
 <GroupCommands
   commands={[
     {
-      codeTitle: "Terminal — provocar uma falha via Docker (troque nulo por div0 ou travar)",
+      codeTitle:
+        "Terminal — provocar uma falha via Docker (troque nulo por div0 ou travar)",
       command: `docker run --rm eclipse-mosquitto:2 mosquitto_pub -h broker.hivemq.com -t '{course}/lab11/grupo-{group}/cmd/falha' -m nulo`,
     },
   ]}
@@ -1186,15 +1188,15 @@ ELF file SHA256: 5384cd995
 Rebooting...
 ```
 
-| Campo | O que é |
-| --- | --- |
-| `Core 1 panic'ed (StoreProhibited)` | o núcleo e o **tipo** da exceção |
-| `PC` | o endereço da instrução que falhou |
-| `EXCCAUSE` | o código da causa: `6` IntegerDivideByZero, `28` (`0x1c`) LoadProhibited, `29` (`0x1d`) StoreProhibited, `0` IllegalInstruction |
-| `EXCVADDR` | o endereço de memória que a instrução tentou acessar |
-| `A0`…`A15` | os registradores da janela **da função que falhou**: os argumentos dela estão em `A2`, `A3`... |
-| `A0` | o endereço de retorno. Os 2 bits de cima guardam o tamanho da janela: `0x800dc090` → troque o `8` por `4` → `0x400dc090` |
-| `Backtrace` | pares `PC:SP` de cada função na pilha, da que falhou até a primeira |
+| Campo                               | O que é                                                                                                                         |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `Core 1 panic'ed (StoreProhibited)` | o núcleo e o **tipo** da exceção                                                                                                |
+| `PC`                                | o endereço da instrução que falhou                                                                                              |
+| `EXCCAUSE`                          | o código da causa: `6` IntegerDivideByZero, `28` (`0x1c`) LoadProhibited, `29` (`0x1d`) StoreProhibited, `0` IllegalInstruction |
+| `EXCVADDR`                          | o endereço de memória que a instrução tentou acessar                                                                            |
+| `A0`…`A15`                          | os registradores da janela **da função que falhou**: os argumentos dela estão em `A2`, `A3`...                                  |
+| `A0`                                | o endereço de retorno. Os 2 bits de cima guardam o tamanho da janela: `0x800dc090` → troque o `8` por `4` → `0x400dc090`        |
+| `Backtrace`                         | pares `PC:SP` de cada função na pilha, da que falhou até a primeira                                                             |
 
 Para transformar os endereços em funções e linhas:
 
@@ -1232,7 +1234,7 @@ Agora procure o `PC` no `app.lst`:
    o `divisor` precisa ser `volatile` para a falha acontecer?
 3. **`travar`.** O ESP32 **não** reinicia. Explique, pela mensagem do `task_wdt`, quem o watchdog
    está vigiando e por que ele aparece a cada 5 s. Explique também a enxurrada de `fila cheia:
-   evento 1 perdido` (qual evento é o 1, e em quanto tempo a fila enche). O `.../status` continua
+evento 1 perdido` (qual evento é o 1, e em quanto tempo a fila enche). O `.../status` continua
    `online`? Por quê? Para sair, reinicie a simulação.
 4. **O bug que sumiu.** Compile com `CONFIG_COMPILER_OPTIMIZATION_SIZE=y` (como na 5.2), mande
    `cmd/falha nulo` de novo e veja o que acontece. Procure `falhas_provocar` no `app.lst` e explique.
@@ -1272,14 +1274,14 @@ isso é pior do que o crash?
 - `addr2line` aceita vários endereços de uma vez. Basta colar a parte antes de cada `:`.
 - Para decodificar automaticamente, o Wokwi pode expor a serial por RFC2217: acrescente
   `rfc2217ServerPort = 4000` ao `[wokwi]` do `wokwi.toml` e rode `pio device monitor -p
-  rfc2217://localhost:4000`. O filtro `esp32_exception_decoder` do `platformio.ini` traduz o
+rfc2217://localhost:4000`. O filtro `esp32_exception_decoder` do `platformio.ini` traduz o
   backtrace sozinho. Faça a decodificação manual **antes**: é ela que vale a nota.
 - No pipeline do Lab 10, um crash vira CI vermelho com uma linha: acrescente
   `--fail-text "Guru Meditation"` à chamada do `wokwi-cli`. Ele encerra com erro assim que o
   texto aparece no serial, mesmo que o teste "esperado" ainda não tenha falhado.
 
 <FileTree
-  root="lab11-grupo-X"
+  root="lab11-grupo-x"
   files={[
     "src/falhas.h c",
     "src/falhas.c c",
