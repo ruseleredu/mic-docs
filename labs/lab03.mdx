@@ -116,7 +116,12 @@ pio project init -b esp32dev -O "framework=arduino" -O "monitor_speed=115200" --
 
 Depois, fixe a plataforma no `platformio.ini`, como no Lab 02: `platform = espressif32@6.9.0`.
 
-<CommitPoint id="t1" task="Projeto PlatformIO" pontos={5} files="platformio.ini src/main.cpp" />
+<CommitPoint
+  id="t1"
+  task="Projeto PlatformIO"
+  pontos={5}
+  files="platformio.ini src/main.cpp"
+/>
 
 ## Parte 2 — ESP32 Arduino HAL Logging {/* #parte-2 */}
 
@@ -629,7 +634,12 @@ Cada exercício é uma tarefa, entregue no seu commit `Tn:`.
 Modifique o Exercício 4 para contar quantas falhas ocorreram e, a cada 10 ciclos, emitir um `log_i`
 com a taxa de falhas em porcentagem (`%.1f%%`).
 
-<CommitPoint id="t5" task="Contador de erros" pontos={10} files="src/main.cpp" />
+<CommitPoint
+  id="t5"
+  task="Contador de erros"
+  pontos={10}
+  files="src/main.cpp"
+/>
 
 #### T6 — Nível de produção
 
@@ -637,21 +647,36 @@ Compile o projeto com `CORE_DEBUG_LEVEL=1` e descreva no `README.md` o que muda 
 por que essa seria a configuração para um produto entregue ao cliente. Faça o commit **com** o nível
 1; na T7, volte para 5.
 
-<CommitPoint id="t6" task="Nivel de producao" pontos={10} files="platformio.ini README.md" />
+<CommitPoint
+  id="t6"
+  task="Nivel de producao"
+  pontos={10}
+  files="platformio.ini README.md"
+/>
 
 #### T7 — Hexdump
 
 Volte para `CORE_DEBUG_LEVEL=5`. Crie um `uint8_t buffer[8]` preenchido com valores à sua escolha e
 imprima-o com `log_buf_i()`. Cole a saída no `README.md`.
 
-<CommitPoint id="t7" task="Hexdump" pontos={10} files="platformio.ini src/main.cpp README.md" />
+<CommitPoint
+  id="t7"
+  task="Hexdump"
+  pontos={10}
+  files="platformio.ini src/main.cpp README.md"
+/>
 
 #### T8 — Desafio: pisca com `log_d`
 
 O LED do diagrama já está no GPIO2 (T4). Junte ao código atual o pisca com `millis()` da T2, sem
 `delay()`, e emita um `log_d` a cada troca de estado do LED.
 
-<CommitPoint id="t8" task="Desafio: pisca com log_d" pontos={10} files="src/main.cpp diagram.json" />
+<CommitPoint
+  id="t8"
+  task="Desafio: pisca com log_d"
+  pontos={10}
+  files="src/main.cpp diagram.json"
+/>
 
 ---
 
@@ -759,7 +784,10 @@ int buttonPin = 3;
 Um workflow que compila o firmware a cada `push`. Se o código parar de compilar, a execução fica
 vermelha na aba **Actions**.
 
-<FileTree root="lab03-grupo-x" files={[".github/workflows/ci.yml c", "...", "src/main.cpp"]} />
+<FileTree
+  root="lab03-grupo-x"
+  files={[".github/workflows/ci.yml c", "...", "src/main.cpp"]}
+/>
 
 ```yaml title=".github/workflows/ci.yml"
 name: CI
@@ -815,7 +843,5 @@ analisador lógico) entram no pipeline no **Lab 10**. Referências:
 :::
 
 ## Logout do seu ambiente dev, git e gh {/* #logout */}
-
-<GitLogOut />
 
 <LabLogout />

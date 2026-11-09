@@ -107,10 +107,10 @@ flowchart LR
 :::info[Tópicos do Lab 04]
 Tudo fica sob `elt73a/lab04/grupo-x/`. Troque o `x` (e o `#define GRUPO`) pela letra do seu grupo.
 
-| Tópico            | Sentido        | Payload                     |
-| ----------------- | -------------- | --------------------------- |
-| `.../telemetria`  | ESP32 → broker | `{"n":7,"temp":32.00}` (T6) |
-| `.../cmd/led`     | broker → ESP32 | `on`/`off` ou `1`/`0` (T7)  |
+| Tópico           | Sentido        | Payload                     |
+| ---------------- | -------------- | --------------------------- |
+| `.../telemetria` | ESP32 → broker | `{"n":7,"temp":32.00}` (T6) |
+| `.../cmd/led`    | broker → ESP32 | `on`/`off` ou `1`/`0` (T7)  |
 
 :::
 
@@ -343,12 +343,7 @@ Conectado! IP: 10.13.37.2
 RSSI: -30
 ```
 
-<CommitPoint
-  id="t3"
-  task="Conexao Wi-Fi"
-  pontos={15}
-  files="src/main.cpp"
-/>
+<CommitPoint id="t3" task="Conexao Wi-Fi" pontos={15} files="src/main.cpp" />
 
 ---
 
@@ -715,7 +710,5 @@ template do repositório. Não apague nem renomeie os arquivos que já estão em
 ---
 
 ## Logout do seu ambiente dev, git e gh {/* #logout */}
-
-<GitLogOut />
 
 <LabLogout />
