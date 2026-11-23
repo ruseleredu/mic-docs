@@ -1,6 +1,6 @@
 ---
 title: Guia — Buck em malha fechada com ESP32
-sidebar_position: 12
+sidebar_position: 5
 ---
 
 {/* Figuras geradas pelo Kroki. Fontes em diagramas/; depois de editar, rode diagramas/gerar_kroki.py */}
@@ -68,15 +68,22 @@ A saída do guia anterior é o par **Vg / Vs**, com Vs no GND do circuito de com
 essa saída sem acionador flutuante, o MOSFET fica no **retorno**: fonte no GND, e a carga
 ligada entre o +Vin e o indutor.
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g2-buck-retorno"
     src="https://kroki.io/tikz/svg/eNptU8FymzAQvecrdOBgYkGhpok7Lae4SQ-xO5NkcjE0IwsZayIkjyTicRh_Uk_9hPxYJWGD3fGFEbtv375dPWWFwHVFuMYMKTVfCFkQmY7XOm-URrxATHCyu8hqRdYIv6KSzJ_ivFkKrgnHpwlUEUkx4lBpiWi50m-CaZNQeYOpxDXV9PW9LbEnRhcSyW2zMOWlFDUvFMSIWdIFKSlvDtK6wBHLXK3EBvSlQBJs9JaMwLPRT6HSW0bSZkkZSzcrqskOAjtGmqkKMZZfZIVEGzCIYOQDLeYLpDWR2xgClnrPLw3lOw_E4ww-5xaU-N_6isQHQQAGcRQmp4moTYzCK3Ps4rH5TVwTcuPob_b0yXWUQS-rau8WgsvgMm-xrpSLgsx5JRQEiOOVkOnEpKc-QLptYJA-aHZdl2n4eNwdOIJ2L_kJ7M7BhsNBEIWjDsnI0pjATF56PbjrY7RPrPSCikIctI7cXGfB9wb8knr3ZoUZrH4a8FX4uc1iYUxHOdJkMOuLbfr_HYlan1_SUd2snXkcjh17F7eBlu_B0mEkSwS8B-9AcbbgoN6YTWoYiHx_xy7utiStz81bQR9_CsMXeGDAP_6Cmd_vbO-KFm8tbHzXmRACCzL3cZZueLT62DphFF47QWJNOARvv79bawov36fj8GtnldbbSyE0F5oo-k4642yI0rnzTWK2bG79izGOe9KgEGD66_H2xxNIwd1sYr6mgXIyCC9O37EN9G_0H5uzVa8="
     alt="Conversor buck com o MOSFET no retorno e a carga entre +Vin e o nó N"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>Buck com a chave no retorno: a saída fica entre +Vin e o nó N.</figcaption>
+  <figcaption>
+    Buck com a chave no retorno: a saída fica entre +Vin e o nó N.
+  </figcaption>
 </figure>
 
 - MOSFET conduzindo: a corrente sai do +Vin, passa pela carga, pelo indutor e pelo MOSFET.
@@ -94,14 +101,14 @@ ligado ao terra do computador: a garra de terra do osciloscópio só pode ir ao 
 
 ### Projeto de referência
 
-| Grandeza                   | Valor                | Constante no firmware |
-| -------------------------- | -------------------- | --------------------- |
-| Tensão de entrada          | 18 V                 | `VIN_NOMINAL`         |
-| Indutor                    | 1 mH                 | `L_H`                 |
-| Capacitor de saída         | 470 µF               | `C_F`                 |
-| Carga                      | 22 Ω                 | `R_CARGA`             |
-| Frequência de comutação    | 20,9 kHz             | `F_PWM`               |
-| Faixa da referência        | 2 V a 12 V           | `REF_MIN`, `REF_MAX`  |
+| Grandeza                | Valor      | Constante no firmware |
+| ----------------------- | ---------- | --------------------- |
+| Tensão de entrada       | 18 V       | `VIN_NOMINAL`         |
+| Indutor                 | 1 mH       | `L_H`                 |
+| Capacitor de saída      | 470 µF     | `C_F`                 |
+| Carga                   | 22 Ω       | `R_CARGA`             |
+| Frequência de comutação | 20,9 kHz   | `F_PWM`               |
+| Faixa da referência     | 2 V a 12 V | `REF_MIN`, `REF_MAX`  |
 
 ```text title="Contas do estágio de potência (Vo = 9 V)"
 D  = Vo / Vin               = 9 / 18                 = 0,50
@@ -123,24 +130,31 @@ projeto do controlador na [Parte 3](#parte-3) parte de `f0`, `Q` e `Vin`.
 
 Dois divisores iguais levam o +Vin e o nó N ao ADC1:
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g2-divisor"
     src="https://kroki.io/tikz/svg/eNp1UkFu2zAQvOcVe9DBTijFkprEQaFTgRa9NEVR5GIKwZqiZMI06ZJUjYTQq_KEfqyk5dgO0J64mN2ZnVmQNpr1G64ck2jtYqlNw00137raW4eqQakVHy5ob_kW2Ro7vviZ177VynHF3jdww41gqIh1BkW3cr-1dKFha8-EYb1wYv0yUmIlxdKgefbLQO-M7lVjCUMZRZe8E8q_WTsCZyoLu9I7OFHBcBb8dpKTf6LXmXXPkle-FVJWu5VwfCAQY1TUblDK-oI2BncwmZFiCko3fCF56wigFJ2qTMxT--Tq8ckLNSSU6h7Un1f4NoDT0Y1xRKd14GdlVAjgDwKyKu4oWSf0YcM7TAikl2GkyOZxhOlwbaHQ8QlOP77txyP3qSo9Gcoz_oE7OxgcQ9Z-OCenKUw-ZMXBw6foIZ9Roj4TuIz-Yu__AifmGCnVgXKT3R6PcjjEl-9fH8oCwhH21U1U2PfHk7ZaO6Udt-KF14AOJmUQTvMsn4Jv0WkDVchyB1ewzziF67EI8H148znQXz02kM8peYSE7teiMXqXQB4G7m8jrjRshdJxOVfN-18WgdMP-gswtPyP"
     alt="Divisor de 27 kΩ e 3,3 kΩ com 10 nF para o ADC"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>Divisor de medida (monte dois: um para +Vin, outro para o nó N).</figcaption>
+  <figcaption>
+    Divisor de medida (monte dois: um para +Vin, outro para o nó N).
+  </figcaption>
 </figure>
 
-| Sinal              | Pino do ESP32 | Observação                                         |
-| ------------------ | ------------- | -------------------------------------------------- |
-| Referência         | **GPIO34**    | trimpot em 3V3, como no guia anterior              |
-| Vin                | **GPIO32**    | divisor ligado ao +Vin                             |
-| Nó N               | **GPIO35**    | divisor ligado à saída −                           |
-| PWM                | **GPIO27**    | entrada da interface de 18 V                       |
-| GND                | **GND**       | GND da fonte e fonte do MOSFET                     |
+| Sinal      | Pino do ESP32 | Observação                            |
+| ---------- | ------------- | ------------------------------------- |
+| Referência | **GPIO34**    | trimpot em 3V3, como no guia anterior |
+| Vin        | **GPIO32**    | divisor ligado ao +Vin                |
+| Nó N       | **GPIO35**    | divisor ligado à saída −              |
+| PWM        | **GPIO27**    | entrada da interface de 18 V          |
+| GND        | **GND**       | GND da fonte e fonte do MOSFET        |
 
 - Os três pinos de medida são do **ADC1**. O fator 9,18 mantém a leitura abaixo de 2,45 V,
   na faixa em que o ADC do ESP32 é mais linear, para entradas de até 22 V.
@@ -439,15 +453,15 @@ void loop() {
 
 Envie cada comando com fim de linha.
 
-| Comando  | Efeito                                                                   |
-| -------- | ------------------------------------------------------------------------ |
-| `r 9`    | referência de 9 V pelo serial (o trimpot é ignorado); `r 0` para o PWM   |
-| `p`      | volta a usar o trimpot                                                   |
-| `i 3.5`  | muda `ki` com o conversor funcionando                                    |
-| `g 0.002` | muda `kp`                                                               |
-| `x`      | rearma depois de uma sobretensão                                         |
-| `c 44`   | só no modelo: muda a carga para 44 Ω                                     |
-| `v 15`   | só no modelo: muda a tensão de entrada para 15 V                         |
+| Comando   | Efeito                                                                 |
+| --------- | ---------------------------------------------------------------------- |
+| `r 9`     | referência de 9 V pelo serial (o trimpot é ignorado); `r 0` para o PWM |
+| `p`       | volta a usar o trimpot                                                 |
+| `i 3.5`   | muda `ki` com o conversor funcionando                                  |
+| `g 0.002` | muda `kp`                                                              |
+| `x`       | rearma depois de uma sobretensão                                       |
+| `c 44`    | só no modelo: muda a carga para 44 Ω                                   |
+| `v 15`    | só no modelo: muda a tensão de entrada para 15 V                       |
 
 ---
 
@@ -476,14 +490,14 @@ para compensar a queda nas perdas em série.
 
 O que o modelo prevê para o projeto de referência:
 
-| Ensaio no modelo                         | Resultado previsto                                         |
-| ---------------------------------------- | ---------------------------------------------------------- |
-| Partida até 9 V                          | sem sobressinal apreciável, regime em cerca de 0,5 s        |
-| Carga de 22 Ω para 44 Ω (`c 44`)         | pico de cerca de 0,15 V, volta a 9 V em cerca de 0,1 s      |
-| Vin de 18 V para 15 V (`v 15`)           | afundamento até cerca de 7,5 V, depois volta a 9 V com D próximo de 61 % |
-| `ki` crescente, perdas de 0,3 Ω          | oscilação sustentada aparece entre `ki` = 14 e 20           |
-| `ki` crescente, sem perdas (`RL_OHM 0`)  | oscilação sustentada aparece entre `ki` = 5 e 7             |
-| `kp` crescente, com `ki` = 1,75          | oscilação aparece entre `kp` = 0,01 e 0,03                  |
+| Ensaio no modelo                        | Resultado previsto                                                       |
+| --------------------------------------- | ------------------------------------------------------------------------ |
+| Partida até 9 V                         | sem sobressinal apreciável, regime em cerca de 0,5 s                     |
+| Carga de 22 Ω para 44 Ω (`c 44`)        | pico de cerca de 0,15 V, volta a 9 V em cerca de 0,1 s                   |
+| Vin de 18 V para 15 V (`v 15`)          | afundamento até cerca de 7,5 V, depois volta a 9 V com D próximo de 61 % |
+| `ki` crescente, perdas de 0,3 Ω         | oscilação sustentada aparece entre `ki` = 14 e 20                        |
+| `ki` crescente, sem perdas (`RL_OHM 0`) | oscilação sustentada aparece entre `ki` = 5 e 7                          |
+| `kp` crescente, com `ki` = 1,75         | oscilação aparece entre `kp` = 0,01 e 0,03                               |
 
 :::info[O modelo é uma aproximação]
 Ele é um modelo médio: não tem a ondulação de comutação, o ruído do ADC, o atraso da
@@ -511,16 +525,16 @@ Volte para `SIMULAR_PLANTA 0` e grave o firmware.
    (3,5 · 5 · 7 · 10 ...) até a saída oscilar. Anote o valor e a frequência da oscilação.
    Volte para `i 1.75`.
 
-| Medida                                     | Previsto                      | Medido |
-| ------------------------------------------ | ----------------------------- | ------ |
-| `Vo` com referência de 9 V, 22 Ω           | 9,0 V                         |        |
-| `D` com referência de 9 V, 22 Ω            | pouco acima de 50 %           |        |
-| `Vo` com 47 Ω                              | 9,0 V                         |        |
-| `Vo` com Vin de 15 V e de 20 V             | 9,0 V                         |        |
-| Tempo de acomodação, degrau de 6 V para 9 V | cerca de 0,15 s a 0,3 s      |        |
-| Pico no degrau de carga                    | décimos de volt               |        |
-| `ki` no limite de estabilidade             | acima de 5,4                  |        |
-| Frequência da oscilação no limite          | próxima de 232 Hz             |        |
+| Medida                                      | Previsto                | Medido |
+| ------------------------------------------- | ----------------------- | ------ |
+| `Vo` com referência de 9 V, 22 Ω            | 9,0 V                   |        |
+| `D` com referência de 9 V, 22 Ω             | pouco acima de 50 %     |        |
+| `Vo` com 47 Ω                               | 9,0 V                   |        |
+| `Vo` com Vin de 15 V e de 20 V              | 9,0 V                   |        |
+| Tempo de acomodação, degrau de 6 V para 9 V | cerca de 0,15 s a 0,3 s |        |
+| Pico no degrau de carga                     | décimos de volt         |        |
+| `ki` no limite de estabilidade              | acima de 5,4            |        |
+| Frequência da oscilação no limite           | próxima de 232 Hz       |        |
 
 :::tip[Preveja antes de medir]
 
@@ -539,23 +553,23 @@ Volte para `SIMULAR_PLANTA 0` e grave o firmware.
 
 ## Parte 7 — Limites deste projeto {/* #parte-7 */}
 
-| Aspecto               | Como está                                             | Caminho para melhorar                                        |
-| --------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
-| Velocidade da malha   | cruzamento em 5 Hz, bem abaixo de `f0`                | compensador com dois zeros (PID) ou controle por corrente    |
-| Variação de Vin       | corrigida só pelo integrador, com afundamento         | _feedforward_: dividir a saída do controlador por `Vin` medido |
-| Amostragem            | 2 ms pelo `Ticker`, com variação de alguns microssegundos | amostrar em sincronismo com o PWM                         |
-| Proteção              | sobretensão e subtensão em firmware, a cada 2 ms      | limite de corrente em hardware                               |
-| Medição de `Vo`       | diferença de dois canais                              | amplificador de diferença, ou chave no lado positivo         |
-| Condução descontínua  | não tratada: com carga muito leve o ganho da planta muda | manter carga mínima                                       |
+| Aspecto              | Como está                                                 | Caminho para melhorar                                          |
+| -------------------- | --------------------------------------------------------- | -------------------------------------------------------------- |
+| Velocidade da malha  | cruzamento em 5 Hz, bem abaixo de `f0`                    | compensador com dois zeros (PID) ou controle por corrente      |
+| Variação de Vin      | corrigida só pelo integrador, com afundamento             | _feedforward_: dividir a saída do controlador por `Vin` medido |
+| Amostragem           | 2 ms pelo `Ticker`, com variação de alguns microssegundos | amostrar em sincronismo com o PWM                              |
+| Proteção             | sobretensão e subtensão em firmware, a cada 2 ms          | limite de corrente em hardware                                 |
+| Medição de `Vo`      | diferença de dois canais                                  | amplificador de diferença, ou chave no lado positivo           |
+| Condução descontínua | não tratada: com carga muito leve o ganho da planta muda  | manter carga mínima                                            |
 
 ## Se algo não funcionar {/* #problemas */}
 
-| Sintoma                                      | Verifique                                                                       |
-| -------------------------------------------- | ------------------------------------------------------------------------------- |
-| Estado `SUBTENSAO` com a fonte ligada        | divisor de Vin no GPIO32; valor de `K_DIV`; GND comum                            |
-| `Vo` negativo ou absurdo com o PWM parado    | divisores trocados entre GPIO32 e GPIO35; calibração                             |
+| Sintoma                                       | Verifique                                                                              |
+| --------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Estado `SUBTENSAO` com a fonte ligada         | divisor de Vin no GPIO32; valor de `K_DIV`; GND comum                                  |
+| `Vo` negativo ou absurdo com o PWM parado     | divisores trocados entre GPIO32 e GPIO35; calibração                                   |
 | Estado `SATURADO` e `Vo` abaixo da referência | referência maior do que `D_MAX × Vin`; fonte em limite de corrente; MOSFET sem comando |
-| `Vo` sobe até Vin e dá `SOBRETENSAO`         | MOSFET em curto ou interface invertida; sinal do erro; `CHAVE_NO_RETORNO` errado |
-| Saída oscila em torno de 230 Hz              | `ki` alto para a carga usada; `kp` diferente de zero                             |
-| `Vo` do serial difere do multímetro          | multímetro sobre a carga, não em relação ao GND; refaça a calibração             |
-| Leituras ruidosas                            | capacitores de 10 nF nos divisores; fios curtos; GND do ESP32 junto à fonte do MOSFET |
+| `Vo` sobe até Vin e dá `SOBRETENSAO`          | MOSFET em curto ou interface invertida; sinal do erro; `CHAVE_NO_RETORNO` errado       |
+| Saída oscila em torno de 230 Hz               | `ki` alto para a carga usada; `kp` diferente de zero                                   |
+| `Vo` do serial difere do multímetro           | multímetro sobre a carga, não em relação ao GND; refaça a calibração                   |
+| Leituras ruidosas                             | capacitores de 10 nF nos divisores; fios curtos; GND do ESP32 junto à fonte do MOSFET  |

@@ -1,6 +1,6 @@
 ---
 title: Guia — Chip personalizado do TL494 no Wokwi
-sidebar_position: 16
+sidebar_position: 7
 ---
 
 {/* Figuras geradas pelo Kroki. Fontes em diagramas/; depois de editar, rode diagramas/gerar_kroki.py */}
@@ -81,15 +81,23 @@ O código roda uma vez por período do oscilador. A cada período ele:
 6. no modo _push-pull_, alterna a saída que vai conduzir;
 7. agenda o início do pulso com um temporizador.
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="t4-rampa"
     src="https://kroki.io/tikz/svg/eNqdVMFy2jAQvfcr9sABEuHYkJC0qTuTJvTSY9NcbA8jZIE1yBKR5FDQ-GM6Pecr-LHKNoYwEw7tbS1p9-17-7xxKkmRU2EIx1pHU6lSqsKbpUmsNlikmEtByw9xoekSkwWe0-gxSOxMCkMFOb7AOVWMYIG0UZjNM_MiuXEXOrGEKVIwwxabJqWKOJsqrNZ26tLnShYi1YhgXhWd0jkTtm1tf_CmSqQzuYJDKihKXL9zTtG7pxeeNmtOQztjnIerjBlaIqhohLHOMedJC6KJXNIy-hUG3uCK5AjWoe_duMi9SBVeRf0vCXR95Peg34fuyLuqQiFTGqmKdGI7plPevvvYR0PvevcYT-ULTayTUW__yCphJhXFJIN4AUyA9VGABqVt6piMkYUrNTiLF221Kj4foOHRl9-7LRts6PZ9zx-1921cg3M6M-GgmvIwRk_7blOsM5oiqNGckLygdfuBN2rZDpuPA18EmLO5CKuSjvvTxA5L6INvUXndccXjuPttPH74enf_vXcKSNG0kalSp8Xx91KdwHl4vC_hvEYKgh2UoflSQi6VkTVand-MeSalEdJQzTbOJFiQTKpwRbVJAJtKn8BN57IHVuF8iYHm0LmfPNajPHLGWmfMqdcfeKN_N8Ve_ZZOc9104ChfOXyNt69OIMdmHCAYD3r_Yw7b-OHMTetiWJ44DY6sE5wwUvS5ZmcPaV7ruSasSeUsXeG1o1X5uv213mpeaTCxUpS1EFSkO0GP49MDq-Uibh9Q1eh16fmoP_Q-OskwNKIBkSItNkDFc4GFkYBhN01ttr8BE5ZjcNrCw8-7H8CZyLD-FMcvmFP39LmgsKQpU-DWjtQudeN-TSDbV8LdYmvbPlpm1cFhUf0FT0_Aag=="
     alt="Rampa do oscilador comparada com as linhas do FEEDBACK e do DTC, e as saídas resultantes"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>O modelo reproduz esta comparação: o pulso começa quando a rampa passa a linha mais alta.</figcaption>
+  <figcaption>
+    O modelo reproduz esta comparação: o pulso começa quando a rampa passa a
+    linha mais alta.
+  </figcaption>
 </figure>
 
 ```text title="Equações do modelo"
@@ -117,24 +125,24 @@ FEEDBACK = 0,5 V → D máxima   ·   FEEDBACK = 3,5 V → D = 0   ·   DTC = 0 
 
 ## Parte 2 — Pinos e atributos {/* #parte-2 */}
 
-| Pino | Nome          | No modelo                                                                  |
-| ---- | ------------- | -------------------------------------------------------------------------- |
-| 1    | `1IN+`        | entrada analógica do amplificador de erro 1                                |
-| 2    | `1IN-`        | entrada analógica do amplificador de erro 1                                |
-| 3    | `FEEDBACK`    | saída analógica (entrada com `feedbackExterno = 1`)                        |
-| 4    | `DTC`         | entrada analógica de tempo morto                                           |
-| 5    | `CT`          | rampa do oscilador, só com `rampaNoCT = 1`                                 |
-| 6    | `RT`          | sem função (RT é atributo)                                                 |
-| 7    | `GND`         | referência                                                                 |
-| 8    | `C1`          | digital: baixo durante o pulso                                             |
-| 9    | `E1`          | digital: alto durante o pulso                                              |
-| 10   | `E2`          | digital: alto durante o pulso (saída 2)                                    |
-| 11   | `C2`          | digital: baixo durante o pulso (saída 2)                                   |
-| 12   | `VCC`         | digital, com _pull-down_: alto = alimentado                                |
-| 13   | `OUTPUT_CTRL` | digital, com _pull-down_: baixo = paralelo, alto = _push-pull_             |
-| 14   | `REF`         | analógica: 5 V com VCC em nível alto                                       |
-| 15   | `2IN-`        | entrada analógica do amplificador de erro 2                                |
-| 16   | `2IN+`        | entrada analógica do amplificador de erro 2                                |
+| Pino | Nome          | No modelo                                                      |
+| ---- | ------------- | -------------------------------------------------------------- |
+| 1    | `1IN+`        | entrada analógica do amplificador de erro 1                    |
+| 2    | `1IN-`        | entrada analógica do amplificador de erro 1                    |
+| 3    | `FEEDBACK`    | saída analógica (entrada com `feedbackExterno = 1`)            |
+| 4    | `DTC`         | entrada analógica de tempo morto                               |
+| 5    | `CT`          | rampa do oscilador, só com `rampaNoCT = 1`                     |
+| 6    | `RT`          | sem função (RT é atributo)                                     |
+| 7    | `GND`         | referência                                                     |
+| 8    | `C1`          | digital: baixo durante o pulso                                 |
+| 9    | `E1`          | digital: alto durante o pulso                                  |
+| 10   | `E2`          | digital: alto durante o pulso (saída 2)                        |
+| 11   | `C2`          | digital: baixo durante o pulso (saída 2)                       |
+| 12   | `VCC`         | digital, com _pull-down_: alto = alimentado                    |
+| 13   | `OUTPUT_CTRL` | digital, com _pull-down_: baixo = paralelo, alto = _push-pull_ |
+| 14   | `REF`         | analógica: 5 V com VCC em nível alto                           |
+| 15   | `2IN-`        | entrada analógica do amplificador de erro 2                    |
+| 16   | `2IN+`        | entrada analógica do amplificador de erro 2                    |
 
 :::warning[Duas diferenças de ligação em relação ao CI real]
 
@@ -147,18 +155,18 @@ FEEDBACK = 0,5 V → D máxima   ·   FEEDBACK = 3,5 V → D = 0   ·   DTC = 0 
 Os atributos ficam em `attrs` da peça no `diagram.json`. `rt` e `ct` também aparecem como
 controles deslizantes durante a simulação.
 
-| Atributo          | Padrão | Unidade | Significado                                                        |
-| ----------------- | ------ | ------- | ------------------------------------------------------------------ |
-| `rt`              | 47     | kΩ      | resistor do oscilador                                              |
-| `ct`              | 1      | nF      | capacitor do oscilador                                             |
-| `vref`            | 5.0    | V       | tensão do REF                                                      |
-| `rampa`           | 3.0    | V       | amplitude da rampa                                                 |
-| `ofsFeedback`     | 0.5    | V       | deslocamento do comparador PWM                                     |
-| `ofsDtc`          | 0.11   | V       | _offset_ do comparador de tempo morto                              |
-| `feedbackExterno` | 0      | —       | 1: o pino 3 é entrada (fonte externa comanda a modulação)          |
-| `coletorAberto`   | 0      | —       | 1: C1 e C2 em dreno aberto                                         |
-| `rampaNoCT`       | 0      | —       | 1: escreve a rampa no pino CT (8 degraus por período)              |
-| `debug`           | 0      | —       | 1: duas linhas por segundo no _Chips Console_                      |
+| Atributo          | Padrão | Unidade | Significado                                               |
+| ----------------- | ------ | ------- | --------------------------------------------------------- |
+| `rt`              | 47     | kΩ      | resistor do oscilador                                     |
+| `ct`              | 1      | nF      | capacitor do oscilador                                    |
+| `vref`            | 5.0    | V       | tensão do REF                                             |
+| `rampa`           | 3.0    | V       | amplitude da rampa                                        |
+| `ofsFeedback`     | 0.5    | V       | deslocamento do comparador PWM                            |
+| `ofsDtc`          | 0.11   | V       | _offset_ do comparador de tempo morto                     |
+| `feedbackExterno` | 0      | —       | 1: o pino 3 é entrada (fonte externa comanda a modulação) |
+| `coletorAberto`   | 0      | —       | 1: C1 e C2 em dreno aberto                                |
+| `rampaNoCT`       | 0      | —       | 1: escreve a rampa no pino CT (8 degraus por período)     |
+| `debug`           | 0      | —       | 1: duas linhas por segundo no _Chips Console_             |
 
 Os padrões reproduzem o texto do datasheet. A revisão J dá limiares típicos um pouco diferentes
 (razão cíclica zero com o DTC em 2,5 V e com o FEEDBACK em 3,4 V). Para imitar um CI medido na
@@ -184,7 +192,12 @@ TL494: energizado, REF = 5.00 V, f = 21.3 kHz
 
 <FileTree
   root="projeto-wokwi"
-  files={["sketch.ino c", "diagram.json c", "tl494.chip.json c", "tl494.chip.c c"]}
+  files={[
+    "sketch.ino c",
+    "diagram.json c",
+    "tl494.chip.json c",
+    "tl494.chip.c c",
+  ]}
 />
 
 :::tip[Depuração]
@@ -226,8 +239,22 @@ RT e CT; o código lê os valores pelos atributos de mesmo nome.
     "2IN+"
   ],
   "controls": [
-    { "id": "rt", "label": "RT (kΩ)", "type": "range", "min": 1.8, "max": 500, "step": 0.1 },
-    { "id": "ct", "label": "CT (nF)", "type": "range", "min": 0.47, "max": 100, "step": 0.01 }
+    {
+      "id": "rt",
+      "label": "RT (kΩ)",
+      "type": "range",
+      "min": 1.8,
+      "max": 500,
+      "step": 0.1
+    },
+    {
+      "id": "ct",
+      "label": "CT (nF)",
+      "type": "range",
+      "min": 0.47,
+      "max": 100,
+      "step": 0.01
+    }
   ]
 }
 ```
@@ -476,16 +503,16 @@ void chip_init(void) {
 
 ## Parte 5 — Demonstração com ESP32 {/* #parte-5 */}
 
-| Ligação                              | Função                                                    |
-| ------------------------------------ | --------------------------------------------------------- |
-| Potenciômetro 1 → `1IN+` e GPIO34    | tensão de controle                                        |
-| `1IN-` ↔ `FEEDBACK`                  | amplificador de erro 1 como seguidor (como na experiência) |
-| Potenciômetro 2 → `DTC` e GPIO32     | limite de razão cíclica                                   |
-| `FEEDBACK` → GPIO35                  | o ESP32 lê o pino 3                                       |
-| `E1` → GPIO27 e analisador (D0)      | o ESP32 mede a razão cíclica com `pulseIn`                |
-| `E2` e `C1` → analisador (D1 e D2)   | formas de onda                                            |
-| GPIO26 → `OUTPUT_CTRL`               | comando `p`: paralelo ou _push-pull_                      |
-| GPIO33 → `VCC`                       | comando `v`: liga ou desliga o TL494                      |
+| Ligação                            | Função                                                     |
+| ---------------------------------- | ---------------------------------------------------------- |
+| Potenciômetro 1 → `1IN+` e GPIO34  | tensão de controle                                         |
+| `1IN-` ↔ `FEEDBACK`                | amplificador de erro 1 como seguidor (como na experiência) |
+| Potenciômetro 2 → `DTC` e GPIO32   | limite de razão cíclica                                    |
+| `FEEDBACK` → GPIO35                | o ESP32 lê o pino 3                                        |
+| `E1` → GPIO27 e analisador (D0)    | o ESP32 mede a razão cíclica com `pulseIn`                 |
+| `E2` e `C1` → analisador (D1 e D2) | formas de onda                                             |
+| GPIO26 → `OUTPUT_CTRL`             | comando `p`: paralelo ou _push-pull_                       |
+| GPIO33 → `VCC`                     | comando `v`: liga ou desliga o TL494                       |
 
 ```json title="diagram.json"
 {
@@ -493,33 +520,63 @@ void chip_init(void) {
   "author": "Guia ESP32 + TL494",
   "editor": "wokwi",
   "parts": [
-    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
-    { "type": "chip-tl494", "id": "tl1", "top": 10, "left": 260, "attrs": { "rt": "47", "ct": "1", "debug": "0" } },
-    { "type": "wokwi-potentiometer", "id": "potfb", "top": -150, "left": 120, "attrs": {} },
-    { "type": "wokwi-potentiometer", "id": "potdtc", "top": -150, "left": 260, "attrs": {} },
-    { "type": "wokwi-logic-analyzer", "id": "logic1", "top": 230, "left": 280, "attrs": {} }
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "chip-tl494",
+      "id": "tl1",
+      "top": 10,
+      "left": 260,
+      "attrs": { "rt": "47", "ct": "1", "debug": "0" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "potfb",
+      "top": -150,
+      "left": 120,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "potdtc",
+      "top": -150,
+      "left": 260,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-logic-analyzer",
+      "id": "logic1",
+      "top": 230,
+      "left": 280,
+      "attrs": {}
+    }
   ],
   "connections": [
-    [ "esp:TX", "$serialMonitor:RX", "", [] ],
-    [ "esp:RX", "$serialMonitor:TX", "", [] ],
-    [ "potfb:VCC", "esp:3V3", "red", [] ],
-    [ "potfb:GND", "esp:GND.2", "black", [] ],
-    [ "potfb:SIG", "tl1:1IN+", "orange", [] ],
-    [ "potfb:SIG", "esp:34", "orange", [] ],
-    [ "potdtc:VCC", "esp:3V3", "red", [] ],
-    [ "potdtc:GND", "esp:GND.2", "black", [] ],
-    [ "potdtc:SIG", "tl1:DTC", "purple", [] ],
-    [ "potdtc:SIG", "esp:32", "purple", [] ],
-    [ "tl1:1IN-", "tl1:FEEDBACK", "green", [] ],
-    [ "tl1:FEEDBACK", "esp:35", "green", [] ],
-    [ "tl1:GND", "esp:GND.1", "black", [] ],
-    [ "tl1:VCC", "esp:33", "red", [] ],
-    [ "tl1:OUTPUT_CTRL", "esp:26", "blue", [] ],
-    [ "tl1:E1", "esp:27", "yellow", [] ],
-    [ "tl1:E1", "logic1:D0", "yellow", [] ],
-    [ "tl1:E2", "logic1:D1", "cyan", [] ],
-    [ "tl1:C1", "logic1:D2", "gray", [] ],
-    [ "logic1:GND", "esp:GND.1", "black", [] ]
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []],
+    ["potfb:VCC", "esp:3V3", "red", []],
+    ["potfb:GND", "esp:GND.2", "black", []],
+    ["potfb:SIG", "tl1:1IN+", "orange", []],
+    ["potfb:SIG", "esp:34", "orange", []],
+    ["potdtc:VCC", "esp:3V3", "red", []],
+    ["potdtc:GND", "esp:GND.2", "black", []],
+    ["potdtc:SIG", "tl1:DTC", "purple", []],
+    ["potdtc:SIG", "esp:32", "purple", []],
+    ["tl1:1IN-", "tl1:FEEDBACK", "green", []],
+    ["tl1:FEEDBACK", "esp:35", "green", []],
+    ["tl1:GND", "esp:GND.1", "black", []],
+    ["tl1:VCC", "esp:33", "red", []],
+    ["tl1:OUTPUT_CTRL", "esp:26", "blue", []],
+    ["tl1:E1", "esp:27", "yellow", []],
+    ["tl1:E1", "logic1:D0", "yellow", []],
+    ["tl1:E2", "logic1:D1", "cyan", []],
+    ["tl1:C1", "logic1:D2", "gray", []],
+    ["logic1:GND", "esp:GND.1", "black", []]
   ],
   "dependencies": {}
 }
@@ -618,14 +675,14 @@ dessa ordem entre o medido e o previsto são esperadas.
 6. **Frequência.** Mude o controle CT para 10 nF durante a simulação. A frequência deve cair para
    cerca de 2,1 kHz.
 
-| 1IN+ (V) | DTC (V) | Modo       | D prevista em E1 | f em E1      | Medido |
-| -------- | ------- | ---------- | ---------------- | ------------ | ------ |
-| 1,93     | 0       | paralelo   | 52,3 %           | 21,3 kHz     |        |
-| 0        | 0,79    | paralelo   | 70,0 %           | 21,3 kHz     |        |
-| 0        | 0       | paralelo   | 96,3 %           | 21,3 kHz     |        |
-| 3,3      | 0       | paralelo   | 6,7 %            | 21,3 kHz     |        |
-| 0        | 3,3     | paralelo   | 0 %              | —            |        |
-| 1,0      | 0       | _push-pull_ | 41,7 %          | 10,6 kHz     |        |
+| 1IN+ (V) | DTC (V) | Modo        | D prevista em E1 | f em E1  | Medido |
+| -------- | ------- | ----------- | ---------------- | -------- | ------ |
+| 1,93     | 0       | paralelo    | 52,3 %           | 21,3 kHz |        |
+| 0        | 0,79    | paralelo    | 70,0 %           | 21,3 kHz |        |
+| 0        | 0       | paralelo    | 96,3 %           | 21,3 kHz |        |
+| 3,3      | 0       | paralelo    | 6,7 %            | 21,3 kHz |        |
+| 0        | 3,3     | paralelo    | 0 %              | —        |        |
+| 1,0      | 0       | _push-pull_ | 41,7 %           | 10,6 kHz |        |
 
 :::tip[Preveja antes de medir]
 
@@ -648,7 +705,14 @@ nome.
 
 <FileTree
   root="exemplo"
-  files={["platformio.ini c", "wokwi.toml c", "diagram.json c", "src/main.cpp c", "chips/tl494.chip.json c", "chips/tl494.chip.wasm c"]}
+  files={[
+    "platformio.ini c",
+    "wokwi.toml c",
+    "diagram.json c",
+    "src/main.cpp c",
+    "chips/tl494.chip.json c",
+    "chips/tl494.chip.wasm c",
+  ]}
 />
 
 ```toml title="wokwi.toml"
@@ -692,27 +756,27 @@ cabeçalho já vem pronto.
 
 ## Parte 8 — Limites do modelo {/* #parte-8 */}
 
-| Limite                                   | Consequência                                                         |
-| ---------------------------------------- | -------------------------------------------------------------------- |
-| Sem resistores e capacitores analógicos  | redes de compensação, RC no DTC e divisores não têm efeito           |
-| Leitura uma vez por período              | mudanças mais rápidas que um período não aparecem                    |
-| Amplificador de erro simplificado        | não serve para estudar ganho, banda ou margem de fase                |
-| Sem estágio de potência                  | o chip gera só o sinal PWM; não há Vo para fechar a malha            |
-| Tensões fora de 0 V a 3,3 V no ESP32     | o Wokwi não danifica o pino; na bancada, use os divisores dos guias  |
-| Carga da simulação                       | dois eventos por período: aumente CT se a simulação ficar lenta      |
-| DAC do ESP32 como entrada do chip        | não verificado neste guia; a demonstração usa potenciômetros         |
+| Limite                                  | Consequência                                                        |
+| --------------------------------------- | ------------------------------------------------------------------- |
+| Sem resistores e capacitores analógicos | redes de compensação, RC no DTC e divisores não têm efeito          |
+| Leitura uma vez por período             | mudanças mais rápidas que um período não aparecem                   |
+| Amplificador de erro simplificado       | não serve para estudar ganho, banda ou margem de fase               |
+| Sem estágio de potência                 | o chip gera só o sinal PWM; não há Vo para fechar a malha           |
+| Tensões fora de 0 V a 3,3 V no ESP32    | o Wokwi não danifica o pino; na bancada, use os divisores dos guias |
+| Carga da simulação                      | dois eventos por período: aumente CT se a simulação ficar lenta     |
+| DAC do ESP32 como entrada do chip       | não verificado neste guia; a demonstração usa potenciômetros        |
 
 ---
 
 ## Se algo não funcionar {/* #problemas */}
 
-| Sintoma                                     | Verifique                                                              |
-| ------------------------------------------- | ---------------------------------------------------------------------- |
-| Peça não aparece ou erro ao compilar o chip | nome `tl494` nos dois arquivos; tipo `chip-tl494` no `diagram.json`     |
-| Nada no _Chips Console_                     | mensagens sem `\n` não aparecem; o chip pode não ter sido compilado    |
-| `VCC em nivel baixo` no console             | pino `VCC` sem ligação ou GPIO33 em nível baixo                        |
-| Razão cíclica sempre 0 %                    | `1IN-` sem ligação ao `FEEDBACK` (AE1 satura); DTC acima de 2,9 V      |
-| Razão cíclica sempre ~96 %                  | 1IN+ e DTC em 0 V: confira os potenciômetros                           |
-| E2 sem pulsos                               | modo paralelo: E2 pulsa junto com E1; em _push-pull_, se alterna      |
-| C1 e C2 sempre em nível alto ou indefinidos | `coletorAberto = 1` sem resistor de _pull-up_                         |
-| Simulação lenta                             | aumente `ct` (10 nF → 2,1 kHz) ou desligue `rampaNoCT`                 |
+| Sintoma                                     | Verifique                                                           |
+| ------------------------------------------- | ------------------------------------------------------------------- |
+| Peça não aparece ou erro ao compilar o chip | nome `tl494` nos dois arquivos; tipo `chip-tl494` no `diagram.json` |
+| Nada no _Chips Console_                     | mensagens sem `\n` não aparecem; o chip pode não ter sido compilado |
+| `VCC em nivel baixo` no console             | pino `VCC` sem ligação ou GPIO33 em nível baixo                     |
+| Razão cíclica sempre 0 %                    | `1IN-` sem ligação ao `FEEDBACK` (AE1 satura); DTC acima de 2,9 V   |
+| Razão cíclica sempre ~96 %                  | 1IN+ e DTC em 0 V: confira os potenciômetros                        |
+| E2 sem pulsos                               | modo paralelo: E2 pulsa junto com E1; em _push-pull_, se alterna    |
+| C1 e C2 sempre em nível alto ou indefinidos | `coletorAberto = 1` sem resistor de _pull-up_                       |
+| Simulação lenta                             | aumente `ct` (10 nF → 2,1 kHz) ou desligue `rampaNoCT`              |

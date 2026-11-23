@@ -1,6 +1,6 @@
 ---
 title: Guia — ESP32 no lugar do SG3525A
-sidebar_position: 11
+sidebar_position: 15
 ---
 
 {/* Figuras geradas pelo Kroki. Fontes em diagramas/; depois de editar, rode diagramas/gerar_kroki.py */}
@@ -69,18 +69,18 @@ No circuito da experiência o CI trabalha em **malha aberta**: a conexão tempor
 pinos 1 e 9 transforma o amplificador de erro em seguidor, e a tensão do trimpot (pino 2) vai
 direto ao comparador PWM.
 
-| Bloco do SG3525A                       | No circuito original                              | No ESP32                                                         |
-| -------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
-| Referência de 5,1 V (pino 16)          | alimenta o trimpot                                | pino **3V3** alimenta o trimpot                                  |
-| Oscilador (pinos 5, 6 e 7)             | RT = 6,8 kΩ, CT = 10 nF, RD = 10 Ω                | timer do **LEDC**, frequência calculada com os mesmos valores    |
-| Amplificador de erro (pinos 1, 2 e 9)  | seguidor: a tensão do pino 2 aparece no pino 9    | **ADC** no GPIO34 lê o cursor do trimpot                         |
-| Comparador PWM + latch                 | compara o pino 9 com a rampa de 0,9 V a 3,3 V     | função `dutyDe()`: mesma reta, calculada a cada 5 ms             |
-| Flip-flop e saídas A/B (pinos 11 e 14) | pulsos alternados, cada saída em metade de f_osc  | dois canais do LEDC no mesmo timer, B com `hpoint` de meio período |
-| Diodos 1N4148                          | fazem o OU de A e B para um único transistor      | terceiro canal no **GPIO27**, já com o sinal A OU B              |
-| Partida suave (pino 8)                 | 10 µF carregado por 50 µA                         | variável `vss` que sobe 5 V/s                                    |
-| Shutdown (pino 10)                     | ligado ao GND (sem uso)                           | **GPIO33**, ativo em nível alto (opcional)                       |
-| Estágio de saída                       | até 400 mA de pico, alimentado em 18 V            | **não existe**: GPIO de 3,3 V, precisa da interface              |
-| Subtensão (UVLO)                       | bloqueia as saídas com VCC abaixo de ~7 V         | não há equivalente para o barramento de 18 V                     |
+| Bloco do SG3525A                       | No circuito original                             | No ESP32                                                           |
+| -------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------ |
+| Referência de 5,1 V (pino 16)          | alimenta o trimpot                               | pino **3V3** alimenta o trimpot                                    |
+| Oscilador (pinos 5, 6 e 7)             | RT = 6,8 kΩ, CT = 10 nF, RD = 10 Ω               | timer do **LEDC**, frequência calculada com os mesmos valores      |
+| Amplificador de erro (pinos 1, 2 e 9)  | seguidor: a tensão do pino 2 aparece no pino 9   | **ADC** no GPIO34 lê o cursor do trimpot                           |
+| Comparador PWM + latch                 | compara o pino 9 com a rampa de 0,9 V a 3,3 V    | função `dutyDe()`: mesma reta, calculada a cada 5 ms               |
+| Flip-flop e saídas A/B (pinos 11 e 14) | pulsos alternados, cada saída em metade de f_osc | dois canais do LEDC no mesmo timer, B com `hpoint` de meio período |
+| Diodos 1N4148                          | fazem o OU de A e B para um único transistor     | terceiro canal no **GPIO27**, já com o sinal A OU B                |
+| Partida suave (pino 8)                 | 10 µF carregado por 50 µA                        | variável `vss` que sobe 5 V/s                                      |
+| Shutdown (pino 10)                     | ligado ao GND (sem uso)                          | **GPIO33**, ativo em nível alto (opcional)                         |
+| Estágio de saída                       | até 400 mA de pico, alimentado em 18 V           | **não existe**: GPIO de 3,3 V, precisa da interface                |
+| Subtensão (UVLO)                       | bloqueia as saídas com VCC abaixo de ~7 V        | não há equivalente para o barramento de 18 V                       |
 
 ### Os números do circuito original
 
@@ -121,30 +121,30 @@ reproduza **aquele** CI, ajuste `V_VALE` e `V_PICO` no firmware.
 Desligue a fonte de 18 V e retire o CI do soquete. O soquete vazio serve de ponto de acesso
 aos nós do circuito.
 
-| Componente                                   | Destino                                                           |
-| -------------------------------------------- | ----------------------------------------------------------------- |
-| CI 3525                                      | sai do soquete                                                    |
-| 6,8 kΩ, 10 nF e 10 Ω (pinos 5, 6 e 7)        | ficam sem função: viram constantes no firmware                    |
-| 10 µF do pino 8                              | fica sem função: a partida suave é feita em firmware              |
-| 3,3 nF, 220 kΩ, 10 nF e a conexão temporária | ficam sem função                                                  |
-| Trimpot de 10 kΩ e o 10 µF do cursor         | **ficam**, com o trimpot religado em 3V3                          |
-| 2 diodos 1N4148                              | ficam sem função: o OU já sai pronto no GPIO27                    |
-| 1 kΩ em série, 1 kΩ para o GND               | **ficam**                                                         |
-| BC548, BC558, 22 Ω e zener de 18 V           | **ficam**                                                         |
-| 100 µF no +18 V                              | **fica**                                                          |
-| 330 kΩ, 5,6 kΩ, 270 Ω, 10 kΩ e 68 nF         | ficam desconectados do ESP32 (veja a [Parte 7](#parte-7))         |
+| Componente                                   | Destino                                                   |
+| -------------------------------------------- | --------------------------------------------------------- |
+| CI 3525                                      | sai do soquete                                            |
+| 6,8 kΩ, 10 nF e 10 Ω (pinos 5, 6 e 7)        | ficam sem função: viram constantes no firmware            |
+| 10 µF do pino 8                              | fica sem função: a partida suave é feita em firmware      |
+| 3,3 nF, 220 kΩ, 10 nF e a conexão temporária | ficam sem função                                          |
+| Trimpot de 10 kΩ e o 10 µF do cursor         | **ficam**, com o trimpot religado em 3V3                  |
+| 2 diodos 1N4148                              | ficam sem função: o OU já sai pronto no GPIO27            |
+| 1 kΩ em série, 1 kΩ para o GND               | **ficam**                                                 |
+| BC548, BC558, 22 Ω e zener de 18 V           | **ficam**                                                 |
+| 100 µF no +18 V                              | **fica**                                                  |
+| 330 kΩ, 5,6 kΩ, 270 Ω, 10 kΩ e 68 nF         | ficam desconectados do ESP32 (veja a [Parte 7](#parte-7)) |
 
 ### Ligações do ESP32
 
-| Sinal                 | Pino do ESP32 | Ligar em                                                       |
-| --------------------- | ------------- | -------------------------------------------------------------- |
-| Alimentação do trimpot | **3V3**      | extremo do trimpot que ia ao pino 16                           |
-| Tensão de controle    | **GPIO34**    | cursor do trimpot (nó do pino 2), com o 10 µF para o GND       |
-| Saída A               | **GPIO25**    | osciloscópio, canal 1 (equivale ao pino 11)                    |
-| Saída B               | **GPIO26**    | osciloscópio, canal 2 (equivale ao pino 14)                    |
-| A OU B                | **GPIO27**    | entrada da interface 3,3 V → 18 V                              |
-| Shutdown (opcional)   | **GPIO33**    | chave para o 3V3; solto, o pino fica em nível baixo            |
-| Referência            | **GND**       | GND da fonte de 18 V (nó do pino 12)                           |
+| Sinal                  | Pino do ESP32 | Ligar em                                                 |
+| ---------------------- | ------------- | -------------------------------------------------------- |
+| Alimentação do trimpot | **3V3**       | extremo do trimpot que ia ao pino 16                     |
+| Tensão de controle     | **GPIO34**    | cursor do trimpot (nó do pino 2), com o 10 µF para o GND |
+| Saída A                | **GPIO25**    | osciloscópio, canal 1 (equivale ao pino 11)              |
+| Saída B                | **GPIO26**    | osciloscópio, canal 2 (equivale ao pino 14)              |
+| A OU B                 | **GPIO27**    | entrada da interface 3,3 V → 18 V                        |
+| Shutdown (opcional)    | **GPIO33**    | chave para o 3V3; solto, o pino fica em nível baixo      |
+| Referência             | **GND**       | GND da fonte de 18 V (nó do pino 12)                     |
 
 :::warning[Religue o trimpot antes de conectar o GPIO34]
 No circuito original o trimpot recebe 5,1 V do pino 16. Com o CI fora do soquete esse nó fica
@@ -166,15 +166,22 @@ interruptor. É preciso um estágio que leve o nó **X** (onde ficavam os catodo
 
 ### Opção A — dois transistores do kit (sem isolação)
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g1-interface-18v"
     src="https://kroki.io/tikz/svg/eNqNVEFu2zAQvOcVDMCDXVOKpTiN0UKXBEHRU-qgKApYQkBTtKyEJgWSjq0ofkwf0FOfkI-VpGRZQlO0N2l3OTs7w2WcCrJZU64Jw0rNF0KmVEbTQieV0pinmAlO9yfxRtECk0ec0fnXIKmWgmvKST-B11TmBHOktMR5ttJPgmmTUElFckk2uc4fn-sj9ovlC4llWS3M8UyKDU8VIphZ0AXNcl4dqLWBDspcrcQWHI8CSYnhmzGK3oye-UqXjEbVMmcs2q5yTfcI2DGiWK0xY8lJzEVK57zgCRjMgiHAGgzO0XgIqv3HJintVInLzAKfYqVNFs7uAwiuri8mU1uYSrx16ashGI0GXui_tyDuPKNLI-ynL59vw8s90MJOITUSXmJLx75rZ8J3CLAI3lncSYX2lzF6hPHtmmYYIuC9MwRh3cHgj_0LcwoOARHGvJxjTQcLQ9_zGhYtJxttwO8teghBMO5AJ7YEvHhgjAzrsOFcK5lUvdluWvyb_ztw3W99_rfBrAzIYXXGKYcHAwpeIIA5MbJFV9ansPYJmprRIPDDWoq3HQs7joXOsYuOY2UzUtiVrOzZMfmTteFQ1gpM_GmPtBbFEcf-HOCdYr3AsQ66ylPj6WmvFDbaPhGSVKNgGqNvHXlDK28Ddl2zCayE7QVrlA2dPl2SuwYXL8QTTSr--gt8PwDPU6xWNDUT7o4qBP3Zd_90v0FBHjP9djWYoerYjNvFcDYZZ1me8ajekm4nAGNXgaUUW2gWXFEFUhHHbuvOnJMgpUDh158pbs2v13sphOZCU5U_m8fBkNBRJnHZ3qMtVc0Nge08gT8Z2oWcNPfJPGiEPuBUfAAPrz_A2gCbH8AxKBgmriPlaf-Zs4HjE_YbqDq1pg=="
     alt="Interface não inversora com BC548 e BC558 entre o GPIO27 e o nó X"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>Interface de 3,3 V para 18 V (opção A). O tracejado já existe na placa.</figcaption>
+  <figcaption>
+    Interface de 3,3 V para 18 V (opção A). O tracejado já existe na placa.
+  </figcaption>
 </figure>
 
 - GPIO27 em nível alto: Q1 conduz, puxa a base de Q2 e o nó X sobe para perto de 18 V.
@@ -198,12 +205,12 @@ compare com o período de 47,9 µs: ele limita a menor e a maior razão cíclica
 Um TLP250 ou HCPL-3120 substitui a interface **e** o par BC548/BC558, e isola o ESP32 do
 circuito de potência.
 
-| Pino do optoacoplador | Ligar em                                                  |
-| --------------------- | --------------------------------------------------------- |
-| Anodo do LED          | GPIO27, por um resistor de **180 Ω** (cerca de 9 mA)      |
-| Catodo do LED         | GND do **ESP32**                                          |
-| VCC                   | +18 V da placa, com 100 nF junto ao CI                    |
-| GND de saída          | GND da placa (Vs)                                         |
+| Pino do optoacoplador | Ligar em                                                    |
+| --------------------- | ----------------------------------------------------------- |
+| Anodo do LED          | GPIO27, por um resistor de **180 Ω** (cerca de 9 mA)        |
+| Catodo do LED         | GND do **ESP32**                                            |
+| VCC                   | +18 V da placa, com 100 nF junto ao CI                      |
+| GND de saída          | GND da placa (Vs)                                           |
 | Saída                 | resistor de 22 Ω e zener de 18 V, como no circuito original |
 
 Nesta opção o GND do ESP32 **não** é ligado ao GND da placa. O trimpot continua do lado do
@@ -229,15 +236,22 @@ No LEDC, cada canal tem dois pontos de comparação: o `hpoint`, onde a saída s
 `hpoint + duty`, onde ela desce. Dois canais no **mesmo timer**, um com `hpoint = 0` e outro
 com `hpoint` de meio período, dão as duas saídas defasadas de 180°:
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g1-ledc"
     src="https://kroki.io/wavedrom/svg/eNqFkstKw0AUhvd5ip9ZKYSahNZeoIt6QQWhblxJkeMkbYNNRprx1lJwqc8huOvavX2TPolncqkajA5kTs75Zz7-nJO5BZGEo5gmooMLC5jzAxFTFHBBSBVr8tUUvoIOo2Aq7FS_p7tU79ayVRXz4z5pyvmcOVg_vcFz6s1MhuD3VlqsO-1GUfzvmKkNeFsYdZ7tP8wntFr6hB4-3nF0dtL3GiX3Ljt0al-rnIsN_Tfu3oa7W-I6FbwiF3-57qF_zuytlNzcrrBcFVO0hQHfEuOAfL5j8EIHD9rcPz082O_wNMMEkmLiECtEQRLl84UfwPVwFerEZhdSRRjfqDDW6JpRtJhvPIuhUrrMlsRdyZrTwfBSJRI78LB-eYbr2HVcH89My7IPLE4Y1XPsdqFOabZ6VZCrpZyEkoyfvCNd-Lf60SC_-eAfdBiOCifjRNLE9Mll2VpYn8QfukQ="
     alt="Formas de onda das saídas A, B e A OU B geradas pelo LEDC"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>Saídas A e B no mesmo timer, com B deslocada de meio período pelo hpoint.</figcaption>
+  <figcaption>
+    Saídas A e B no mesmo timer, com B deslocada de meio período pelo hpoint.
+  </figcaption>
 </figure>
 
 O `ledcWrite()` do Arduino não dá acesso ao `hpoint`. O firmware usa direto o driver da
@@ -258,7 +272,12 @@ período do oscilador.
 
 <FileTree
   root="pwm-esp32-3525"
-  files={["platformio.ini c", "src/main.cpp c", "diagram.json c", "wokwi.toml c"]}
+  files={[
+    "platformio.ini c",
+    "src/main.cpp c",
+    "diagram.json c",
+    "wokwi.toml c",
+  ]}
 />
 
 ```ini title="platformio.ini"
@@ -483,7 +502,13 @@ O Wokwi permite conferir a lógica antes de ir para a bancada. Ele não simula o
   "author": "Guia ESP32 x SG3525A",
   "editor": "wokwi",
   "parts": [
-    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
     {
       "type": "wokwi-potentiometer",
       "id": "pot1",
@@ -548,17 +573,17 @@ ligue a fonte e repita em Vg.
    saída A.
 5. **Trimpot em V2 = 2 V** (1,29 V no cursor). Meça a razão cíclica.
 
-| Medida                         | Previsto para o ESP32 | SG3525A (medido) | ESP32 (medido) |
-| ------------------------------ | --------------------- | ---------------- | -------------- |
-| f em A OU B                    | 20,9 kHz              |                  |                |
-| f em A                         | 10,4 kHz              |                  |                |
-| D em A OU B, V2 = 3 V          | 87,5 %                |                  |                |
-| D em A OU B, V2 = 2 V          | 45,8 %                |                  |                |
-| D máximo em A                  | 49 %                  |                  |                |
-| D mínimo em A                  | 0 %                   |                  |                |
-| Defasagem entre A e B          | 180° (47,9 µs)        |                  |                |
-| Tempo da partida suave até D máximo | 0,66 s           |                  |                |
-| Vg em nível alto               | próximo de 17 V (opção A) |              |                |
+| Medida                              | Previsto para o ESP32     | SG3525A (medido) | ESP32 (medido) |
+| ----------------------------------- | ------------------------- | ---------------- | -------------- |
+| f em A OU B                         | 20,9 kHz                  |                  |                |
+| f em A                              | 10,4 kHz                  |                  |                |
+| D em A OU B, V2 = 3 V               | 87,5 %                    |                  |                |
+| D em A OU B, V2 = 2 V               | 45,8 %                    |                  |                |
+| D máximo em A                       | 49 %                      |                  |                |
+| D mínimo em A                       | 0 %                       |                  |                |
+| Defasagem entre A e B               | 180° (47,9 µs)            |                  |                |
+| Tempo da partida suave até D máximo | 0,66 s                    |                  |                |
+| Vg em nível alto                    | próximo de 17 V (opção A) |                  |                |
 
 :::tip[Preveja antes de medir]
 
@@ -577,14 +602,14 @@ ligue a fonte e repita em Vg.
 
 ## Parte 7 — Diferenças que continuam existindo {/* #parte-7 */}
 
-| Aspecto                    | SG3525A                                           | ESP32 com este firmware                                                  |
-| -------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
-| Atualização da razão cíclica | a cada ciclo, comparador analógico              | a cada 5 ms, valor quantizado em contagens de 23 ns                      |
-| Resposta ao shutdown       | típica de 0,2 µs (hardware)                       | depende do `loop()`: é uma proteção lenta, não serve para limitar corrente pulso a pulso |
-| Tempo morto                | definido por RD e CT                              | fixo pelo limite `D_MAX`                                                 |
-| Saída durante a energização | UVLO mantém as saídas em nível baixo             | GPIOs em alta impedância: a interface é que garante o nível baixo        |
-| Corrente de saída          | até 400 mA de pico                                | precisa de interface ou de acionador de gate                             |
-| Ajustes                    | troca de componentes                              | constantes no código, com leitura pelo serial                            |
+| Aspecto                      | SG3525A                              | ESP32 com este firmware                                                                  |
+| ---------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Atualização da razão cíclica | a cada ciclo, comparador analógico   | a cada 5 ms, valor quantizado em contagens de 23 ns                                      |
+| Resposta ao shutdown         | típica de 0,2 µs (hardware)          | depende do `loop()`: é uma proteção lenta, não serve para limitar corrente pulso a pulso |
+| Tempo morto                  | definido por RD e CT                 | fixo pelo limite `D_MAX`                                                                 |
+| Saída durante a energização  | UVLO mantém as saídas em nível baixo | GPIOs em alta impedância: a interface é que garante o nível baixo                        |
+| Corrente de saída            | até 400 mA de pico                   | precisa de interface ou de acionador de gate                                             |
+| Ajustes                      | troca de componentes                 | constantes no código, com leitura pelo serial                                            |
 
 Para proteção rápida, o periférico indicado é o **MCPWM** do ESP32, que tem entrada de falha
 tratada em hardware e gerador de tempo morto. A API dele mudou entre os cores 2.x e 3.x do
@@ -608,13 +633,13 @@ compensa o amplificador de erro. Com o ESP32:
 
 ## Se algo não funcionar {/* #problemas */}
 
-| Sintoma                                   | Verifique                                                                            |
-| ----------------------------------------- | ------------------------------------------------------------------------------------ |
-| Sem pulsos, `V2` baixo no serial          | trimpot ligado ao 3V3; cursor no GPIO34; `V2` precisa passar de 0,9 V                 |
-| Sem pulsos, mensagem `[SHUT]` no serial   | GPIO33 em nível alto ou captando ruído: ligue-o ao GND se não for usar               |
-| Pulsos nos GPIOs, mas Vg em 0 V           | +18 V na interface; GND comum (opção A); pinagem do BC548 e do BC558                 |
-| Vg com cerca de 2,6 V                     | GPIO ligado direto ao 1 kΩ das bases, sem a interface                                |
-| Vg em nível alto com o ESP32 em reset     | interface com um só transistor (inversora): monte os dois estágios                   |
-| Razão cíclica em Vg maior que no GPIO27   | atraso de desligamento da interface: meça e, se preciso, use a opção B               |
-| A e B em fase                             | `hpoint` do canal B; os dois canais precisam estar no **mesmo** timer                |
-| ESP32 reinicia ao ligar os 18 V           | ruído no GND: encurte os fios e confira o 100 µF no +18 V                            |
+| Sintoma                                 | Verifique                                                              |
+| --------------------------------------- | ---------------------------------------------------------------------- |
+| Sem pulsos, `V2` baixo no serial        | trimpot ligado ao 3V3; cursor no GPIO34; `V2` precisa passar de 0,9 V  |
+| Sem pulsos, mensagem `[SHUT]` no serial | GPIO33 em nível alto ou captando ruído: ligue-o ao GND se não for usar |
+| Pulsos nos GPIOs, mas Vg em 0 V         | +18 V na interface; GND comum (opção A); pinagem do BC548 e do BC558   |
+| Vg com cerca de 2,6 V                   | GPIO ligado direto ao 1 kΩ das bases, sem a interface                  |
+| Vg em nível alto com o ESP32 em reset   | interface com um só transistor (inversora): monte os dois estágios     |
+| Razão cíclica em Vg maior que no GPIO27 | atraso de desligamento da interface: meça e, se preciso, use a opção B |
+| A e B em fase                           | `hpoint` do canal B; os dois canais precisam estar no **mesmo** timer  |
+| ESP32 reinicia ao ligar os 18 V         | ruído no GND: encurte os fios e confira o 100 µF no +18 V              |

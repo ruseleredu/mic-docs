@@ -1,0 +1,255 @@
+---
+title: Comparação — TL494 × SG3525A
+sidebar_position: 4
+---
+
+## Comparação completa — TL494 × SG3525A {/* #inicio */}
+
+Esta página reúne, lado a lado, os valores dos dois datasheets usados nos guias e o que cada
+diferença muda na prática. Ela serve de referência para o
+[guia do SG3525A](./guia-esp32-sg3525a-cooperacao.mdx) e para o
+[guia do TL494](./guia-esp32-tl494-cooperacao.mdx).
+
+:::info[De onde vêm os números]
+
+- **SG3525A:** datasheet onsemi SG3525A/D, rev. 7, fevereiro de 2024. Ensaios com VCC = 20 V,
+  TA de 0 °C a 70 °C.
+- **TL494:** datasheet Texas Instruments SLVS074J, rev. J, setembro de 2026. Ensaios com
+  VCC = 15 V.
+- Valores escritos como `típ. / máx.` ou `mín. / típ.`, conforme o datasheet. "—" significa que o
+  datasheet não especifica.
+- As condições de ensaio dos dois não são iguais. Compare ordens de grandeza, não décimos.
+
+:::
+
+---
+
+## 1. Identificação e disponibilidade {/* #identificacao */}
+
+| Item                         | SG3525A                                                                                                          | TL494                                                                                     | Na prática                                                             |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Fabricante do datasheet      | onsemi                                                                                                           | Texas Instruments                                                                         | Os dois têm outros fabricantes; confira a folha do CI que você comprou |
+| Função                       | Controlador PWM em modo tensão, duas saídas                                                                      | Controlador PWM em modo tensão, duas saídas                                               | Mesma classe de CI                                                     |
+| Encapsulamentos              | PDIP-16, SOIC-16 largo                                                                                           | PDIP-16, SOIC-16, SOP-16, TSSOP-16                                                        | Os dois têm versão DIP para protoboard                                 |
+| Códigos de encomenda         | SG3525ANG (PDIP), SG3525ADWR2G (SOIC)                                                                            | TL494CN (PDIP), TL494CDR (SOIC), TL494CNSR, TL494CPWR, TL494IDR                           | —                                                                      |
+| Faixa de temperatura         | 0 °C a 70 °C                                                                                                     | 0 °C a 70 °C (C); −40 °C a 85 °C (I)                                                      | Só o TL494 tem versão industrial                                       |
+| Situação (nov/2026)          | O datasheet não informa. Agregadores listam o SG3525ANG como ativo e as versões antigas sem o "G" como obsoletas | Pelo anexo do datasheet: versões C e TL494IDR ativas; TL494IN como NRND; TL494CD obsoleto | Para projeto novo em DIP: TL494CN                                      |
+| Variante com saída invertida | SG3527A (lógica OU)                                                                                              | —                                                                                         | —                                                                      |
+
+---
+
+## 2. Alimentação e limites absolutos {/* #alimentacao */}
+
+| Item                                   | SG3525A                                              | TL494                                               | Na prática                                             |
+| -------------------------------------- | ---------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------ |
+| VCC recomendado                        | 8 V a 35 V                                           | 7 V a 40 V                                          | O TL494 aceita 40 V                                    |
+| VCC máximo absoluto                    | 40 V                                                 | 41 V                                                | —                                                      |
+| Tensão nas saídas                      | VC de 4,5 V a 35 V (40 V absoluto)                   | C1/C2 até 40 V (41 V absoluto)                      | No SG3525A as saídas têm alimentação própria (pino 13) |
+| Entradas analógicas                    | −0,3 V a VCC                                         | até VCC + 0,3 V                                     | —                                                      |
+| Entradas lógicas                       | −0,3 V a 5,5 V (SYNC, SHUTDOWN)                      | — (não tem)                                         | —                                                      |
+| Corrente da referência (máx. absoluto) | 50 mA                                                | —                                                   | —                                                      |
+| Dissipação                             | 1 W a 25 °C (ar), redução de 10 mW/°C acima de 50 °C | —                                                   | —                                                      |
+| Resistência térmica junção–ar          | 100 °C/W                                             | 73,8 °C/W (PDIP), 88 (SOIC), 95,3 (SO), 114 (TSSOP) | O TL494 dissipa menos (ver consumo)                    |
+| Temperatura de junção                  | 150 °C                                               | —                                                   | —                                                      |
+| ESD                                    | —                                                    | 500 V (HBM), 200 V (CDM)                            | Manuseie o TL494 com pulseira                          |
+
+---
+
+## 3. Referência de tensão {/* #referencia */}
+
+| Item                       | SG3525A                                     | TL494                                                   | Na prática                                                                                           |
+| -------------------------- | ------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Tensão nominal             | 5,1 V                                       | 5 V                                                     | —                                                                                                    |
+| Tolerância inicial         | 5,00 V a 5,20 V (±1 %, ajustada em fábrica) | 4,75 V a 5,25 V (±5 %)                                  | Com o TL494, a tensão de saída depende de um divisor ou de uma referência externa (o DAC, nos guias) |
+| Variação total             | 4,95 V a 5,25 V                             | —                                                       | —                                                                                                    |
+| Corrente disponível        | 20 mA                                       | 10 mA                                                   | —                                                                                                    |
+| Regulação de linha         | 10 / 20 mV                                  | 2 / 25 mV                                               | —                                                                                                    |
+| Regulação de carga         | 20 / 50 mV (0 a 20 mA)                      | 6 / 15 mV (1 a 10 mA)                                   | —                                                                                                    |
+| Corrente de curto          | 80 / 100 mA                                 | 35 mA típ. (até 1 s)                                    | —                                                                                                    |
+| Variação com a temperatura | 20 mV típ.                                  | 2 / 10 mV/V                                             | —                                                                                                    |
+| Ruído                      | 40 / 200 µV RMS                             | —                                                       | —                                                                                                    |
+| Abaixo da tensão mínima    | O bloqueio por subtensão desliga as saídas  | REF fica em 0 V até cerca de 7 V e depois sobe para 5 V | O TL494 não tem um bloqueio especificado das saídas                                                  |
+
+---
+
+## 4. Oscilador {/* #oscilador */}
+
+| Item                       | SG3525A                                                                           | TL494                                     | Na prática                                                   |
+| -------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------ |
+| Faixa de frequência        | 100 Hz a 400 kHz                                                                  | 1 kHz a 300 kHz                           | —                                                            |
+| RT                         | 2 kΩ a 150 kΩ                                                                     | 1,8 kΩ a 500 kΩ                           | —                                                            |
+| CT                         | 1 nF a 0,2 µF                                                                     | 0,47 nF a 10 µF                           | —                                                            |
+| Resistor de tempo morto    | RD de 0 Ω a 500 Ω, entre CT e Discharge                                           | não tem (tempo morto pelo DTC)            | —                                                            |
+| Fórmula                    | Só gráficos (figuras 3 e 4). Outros fabricantes usam `1 / [CT × (0,7 RT + 3 RD)]` | `f = 1 / (RT × CT)`                       | O TL494 é mais fácil de calcular                             |
+| Forma de onda              | Rampa de ~0,9 V a ~3,3 V                                                          | Rampa de 0 V a 3 V                        | —                                                            |
+| Precisão inicial           | 2 / 6 %                                                                           | desvio padrão de 100 Hz/kHz (~10 %)       | Nos dois, confira no osciloscópio                            |
+| Variação com VCC           | 1 / 2 % (8 V a 35 V)                                                              | 1 Hz/kHz (0,1 %) típ. (7 V a 40 V)        | —                                                            |
+| Variação com a temperatura | 0,3 % típ.                                                                        | até 50 Hz/kHz (5 %)                       | —                                                            |
+| Sincronismo                | Pino 3 (SYNC, limiar de 1,2 V a 2,8 V) e saída de clock no pino 4                 | Sem pino: RT ao REF e rampa externa em CT | O SG3525A sincroniza com menos peças                         |
+| Frequência nas saídas      | Cada saída comuta em f/2 (o flip-flop está sempre ativo)                          | f em saída simples; f/2 em _push-pull_    | No TL494, a saída simples usa toda a frequência do oscilador |
+
+---
+
+## 5. Amplificador(es) de erro {/* #amplificador */}
+
+| Item                                   | SG3525A                                                      | TL494                                                        | Na prática                                                                       |
+| -------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Quantidade                             | 1                                                            | 2, com as saídas em OU                                       | O segundo serve para limite de corrente ou desligamento                          |
+| Tipo de saída                          | Transcondutância: corrente limitada a cerca de ±100 µA       | Tensão, só ativa para cima: fornece 2 mA, drena 0,3 / 0,7 mA | Com o SG3525A, capacitor grande na compensação cria um zero no semiplano direito |
+| Tensão de offset                       | 2 / 10 mV                                                    | 2 / 10 mV                                                    | Iguais                                                                           |
+| Corrente de polarização                | 1 / 10 µA                                                    | 0,2 / 1 µA                                                   | No TL494 os resistores da rede podem ser maiores                                 |
+| Corrente de offset                     | — / 1 µA                                                     | 25 / 250 nA                                                  | —                                                                                |
+| Ganho em malha aberta                  | 60 / 75 dB (carga ≥ 10 MΩ)                                   | 70 / 80 dB (carga de 2 kΩ)                                   | O ganho do SG3525A cai com qualquer carga no pino 9                              |
+| Banda                                  | Só em gráfico (figura 5)                                     | 800 kHz de ganho unitário                                    | —                                                                                |
+| Faixa de modo comum                    | 1,5 V a 5,2 V (faixa do ensaio de CMRR); inclui a referência | −0,3 V a VCC − 2 V                                           | O TL494 aceita referência a partir de 0 V                                        |
+| CMRR                                   | 60 / 75 dB                                                   | 65 / 100 dB                                                  | —                                                                                |
+| PSRR                                   | 50 / 60 dB                                                   | —                                                            | —                                                                                |
+| Faixa de saída                         | 0,2 / 0,5 V (baixo); 3,8 V mín. e 5,6 V típ. (alto)          | ensaiada de 0,5 V a 3,5 V                                    | —                                                                                |
+| Pino de compensação                    | 9 (COMPENSATION)                                             | 3 (FEEDBACK), com no máximo 0,3 mA entrando                  | —                                                                                |
+| Ganho (gm) para projeto da compensação | Não especificado (estimado entre 0,5 e 4 mS)                 | Não precisa: é amp-op                                        | Margens mais previsíveis no TL494                                                |
+
+---
+
+## 6. Comparador PWM e modulação {/* #modulacao */}
+
+| Item                             | SG3525A                                      | TL494                                       | Na prática                                                |
+| -------------------------------- | -------------------------------------------- | ------------------------------------------- | --------------------------------------------------------- |
+| Sentido                          | Pino 9 sobe → razão cíclica sobe             | Pino 3 sobe → razão cíclica **desce**       | No TL494 a realimentação vai para a entrada não inversora |
+| Limiar de razão cíclica zero     | 0,6 V mín., 0,9 V típ.                       | 3,4 V típ., 4,5 V máx.                      | —                                                         |
+| Limiar de razão cíclica máxima   | 3,3 V típ., 3,6 V máx.                       | 0,5 V (97 %)                                | —                                                         |
+| Ganho do modulador (típico)      | ~0,41 por volt (98 % em 2,4 V, sinal A OU B) | ~0,32 por volt (97 % em 3 V)                | Entra no cálculo da compensação                           |
+| Corrente de entrada              | 0,05 / 1 µA                                  | drena 0,3 / 0,7 mA no pino 3                | —                                                         |
+| Tempo de resposta                | —                                            | 400 ns com 100 mV de sobretensão            | —                                                         |
+| Histerese                        | —                                            | Não tem                                     | No TL494, evite sinais lentos perto do limiar             |
+| Proteção contra pulsos múltiplos | Latch PWM                                    | Flip-flop impede pulso duplo em _push-pull_ | —                                                         |
+
+---
+
+## 7. Razão cíclica e tempo morto {/* #tempo-morto */}
+
+| Item                                | SG3525A                                            | TL494                                                 | Na prática                                               |
+| ----------------------------------- | -------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------- |
+| Máxima por saída                    | 45 / 49 %                                          | 45 % em _push-pull_ com DTC em 0 V                    | Equivalentes em _push-pull_                              |
+| Máxima em saída simples             | 98 % no sinal A OU B (com dois diodos)             | cerca de 97 % (saídas em paralelo)                    | O TL494 não precisa dos diodos                           |
+| Mínima                              | 0 %                                                | 0 %                                                   | —                                                        |
+| Como se ajusta o tempo morto        | Resistor RD (descarga de CT): fixo pelo componente | Entrada DTC: 0 V a 3,3 V → 3 % a 100 % de tempo morto | O DTC aceita a faixa do DAC de um microcontrolador       |
+| Tempo morto mínimo                  | Largura do pulso de clock: 0,3 / 0,5 / 1,0 µs      | cerca de 3 % do período (offset de 110 mV)            | —                                                        |
+| Limiar de razão cíclica zero no DTC | —                                                  | 2,5 V típ., 3,3 V máx.                                | Para garantir zero, leve o DTC acima de 3,3 V            |
+| Corrente de entrada do DTC          | —                                                  | −0,006 / −10 µA                                       | Pode ser acionado por divisor ou DAC; nunca deixe aberto |
+
+---
+
+## 8. Partida suave {/* #partida */}
+
+| Item                       | SG3525A                                                              | TL494                                                                        | Na prática                         |
+| -------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------- |
+| Circuito interno           | Sim: pino 8, carregado por 25 / 50 / 80 µA                           | Não                                                                          | No TL494 a partida suave é externa |
+| Como fazer                 | Capacitor do pino 8 ao GND                                           | RC no DTC (o datasheet sugere 25 a 100 ciclos) ou rampa por microcontrolador | —                                  |
+| Reinício após desligamento | Desligamento longo descarrega o capacitor (150 µA) e refaz a partida | Depende do circuito externo                                                  | —                                  |
+
+---
+
+## 9. Desligamento e proteções {/* #protecoes */}
+
+| Item                       | SG3525A                                                              | TL494                                                                          | Na prática                                                                      |
+| -------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Pino de desligamento       | Pino 10: entrada lógica, 0,4 / 1,0 mA em 2,5 V                       | Não tem                                                                        | —                                                                               |
+| Atraso de desligamento     | 0,2 / 0,5 µs                                                         | 400 ns (pelo comparador, via DTC ou pino 3)                                    | Os dois servem para proteção pulso a pulso                                      |
+| Limite de corrente         | Pelo pino 10 (pulso a pulso) ou puxando o pino 9 para baixo (100 µA) | Pelo segundo amplificador de erro (exemplo do datasheet com 1 V de referência) | O TL494 limita corrente de forma linear, sem outro CI (só o resistor de medida) |
+| Bloqueio por subtensão     | 6 / 7 / 8 V                                                          | Não especificado; REF em 0 V abaixo de ~7 V                                    | —                                                                               |
+| Pino de desligamento solto | Não deve ficar solto                                                 | DTC não deve ficar aberto                                                      | Nos dois, termine todas as entradas                                             |
+
+---
+
+## 10. Saídas {/* #saidas */}
+
+| Item                       | SG3525A                                                                            | TL494                                                                          | Na prática                                    |
+| -------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------- |
+| Estrutura                  | Duas saídas _totem-pole_ com lógica NOR: nível baixo quando desligadas             | Dois transistores com os dois terminais livres (rev. J: MOSFET, dreno e fonte) | —                                             |
+| Corrente                   | 100 mA contínuos, 400 mA de pico (500 mA absoluto)                                 | 200 mA cada (250 mA absoluto)                                                  | —                                             |
+| Nível alto                 | 18 V mín. e 19 V típ. (20 mA); 17 / 18 V (100 mA), com VC = 20 V                   | Seguidor: queda de 1,65 / 2,5 V em 200 mA                                      | —                                             |
+| Nível baixo                | 0,2 / 0,4 V (20 mA); 1,0 / 2,0 V (100 mA)                                          | Fonte comum: 0,5 / 1,3 V em 200 mA                                             | —                                             |
+| Acionar gate de MOSFET     | Direto: a saída fornece e drena corrente                                           | Precisa de um estágio (ou resistor para descarregar o gate)                    | Nos guias, os dois usam o estágio BC548/BC558 |
+| Configurações              | Duas saídas alternadas (_push-pull_); saída simples com diodos ou com uma só saída | OUTPUT CTRL no GND: paralelo; no REF: _push-pull_                              | —                                             |
+| Fuga com a saída desligada | até 200 µA (VC = 35 V)                                                             | 4 / 100 µA                                                                     | —                                             |
+
+---
+
+## 11. Comutação e consumo {/* #consumo */}
+
+| Item                    | SG3525A                      | TL494                                             | Na prática                     |
+| ----------------------- | ---------------------------- | ------------------------------------------------- | ------------------------------ |
+| Subida                  | 100 / 600 ns (carga de 1 nF) | 70 / 200 ns (fonte comum); 85 / 200 ns (seguidor) | Condições de ensaio diferentes |
+| Descida                 | 50 / 300 ns (carga de 1 nF)  | 20 / 100 ns (fonte comum); 35 / 100 ns (seguidor) | —                              |
+| Corrente de alimentação | 14 / 20 mA (VCC = 35 V)      | 1,62 / 10 mA em repouso (15 V); 2,2 mA médio      | O TL494 consome muito menos    |
+
+---
+
+## 12. Equivalência de pinos {/* #pinos */}
+
+Os dois CIs **não** são compatíveis pino a pino.
+
+| Função                                    | SG3525A               | TL494                |
+| ----------------------------------------- | --------------------- | -------------------- |
+| Entrada inversora do amplificador de erro | 1                     | 2 (1IN−)             |
+| Entrada não inversora                     | 2                     | 1 (1IN+)             |
+| Segundo amplificador de erro              | —                     | 15 (2IN−), 16 (2IN+) |
+| Saída do amplificador / compensação       | 9                     | 3 (FEEDBACK)         |
+| Sincronismo                               | 3 (SYNC)              | —                    |
+| Saída do oscilador                        | 4 (OSC OUTPUT)        | —                    |
+| CT                                        | 5                     | 5                    |
+| RT                                        | 6                     | 6                    |
+| Tempo morto                               | 7 (DISCHARGE, com RD) | 4 (DTC)              |
+| Partida suave                             | 8                     | —                    |
+| Desligamento                              | 10                    | —                    |
+| Saída A / 1                               | 11                    | 8 (C1), 9 (E1)       |
+| GND                                       | 12                    | 7                    |
+| Alimentação das saídas                    | 13 (VC)               | C1 e C2              |
+| Saída B / 2                               | 14                    | 11 (C2), 10 (E2)     |
+| VCC                                       | 15                    | 12                   |
+| Referência                                | 16 (5,1 V)            | 14 (REF, 5 V)        |
+| Modo das saídas                           | —                     | 13 (OUTPUT CTRL)     |
+
+---
+
+## 13. Com o ESP32 (resultados dos guias) {/* #esp32 */}
+
+Valores dos guias desta série, com o buck de 18 V, L = 1 mH e C = 470 µF. Os números de
+desempenho vêm de simulação, não de bancada.
+
+| Item                                  | SG3525A                                               | TL494                                                                |
+| ------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------- |
+| Referência pelo DAC                   | Só acima de 1,5 V: saída de 7 V a 12 V                | Desde 0 V: saída de 2 V a 12 V                                       |
+| Medida da saída                       | LM358                                                 | LM324-A (mesmo circuito)                                             |
+| Referência para a rede                | DAC direto, com RC                                    | DAC com seguidor (LM324-B), porque a rede fica no lado da referência |
+| Compensação tipo 3                    | Inversora; R2 18 kΩ, C1 82 nF, C2 820 pF              | Não inversora; R2 22 kΩ, C1 68 nF, C2 680 pF                         |
+| Cruzamento e margem de fase           | 610 Hz a 830 Hz; 32° a 64° (depende de `gm` e da RSE) | 880 Hz a 1,1 kHz; 49° a 86° (depende só da RSE)                      |
+| Limite de razão cíclica               | BC558 no pino 9 + medida da VEB na partida            | DTC pelo LM324-C (ganho 1,2)                                         |
+| Desligamento seguro                   | BC548 no pino 10                                      | BC548 no segundo amplificador de erro                                |
+| Partida suave                         | Interna + espera de 0,7 s no firmware                 | Rampa do ESP32 pelo DTC                                              |
+| Modo 2 (malha digital)                | Pinos 1 e 9 ligados (jumper)                          | Pelo DTC, sem jumper; o AE1 vira teto analógico                      |
+| Pico com a medida perdida, sem limite | pico de ~17,7 V, depois ~17,4 V                       | pico de ~21,5 V, depois ~17,1 V (razão cíclica de até 97 %)          |
+| Pico com a medida perdida, com limite | ~14 V, depois ~12,4 V                                 | ~14,3 V, depois ~12,4 V                                              |
+| Peças extras                          | LM358, BC558, BC548                                   | LM324, BC548                                                         |
+
+---
+
+## 14. Quando usar cada um {/* #escolha */}
+
+**Prefira o TL494 quando:**
+
+- o projeto é novo e precisa de versão industrial (−40 °C a 85 °C) ou de vários encapsulamentos;
+- a referência ou o limite de razão cíclica vêm de um microcontrolador (DTC e modo comum a partir
+  de 0 V);
+- é preciso limitar corrente sem outro CI (segundo amplificador de erro);
+- a saída simples precisa de razão cíclica alta (até ~97 %) na frequência do oscilador;
+- o consumo do controlador importa.
+
+**O SG3525A ainda faz sentido quando:**
+
+- o projeto usa _push-pull_ ou meia-ponte e precisa acionar gates direto (_totem-pole_ de 400 mA);
+- partida suave, bloqueio por subtensão e desligamento rápido precisam estar dentro do CI, sem
+  firmware;
+- a referência precisa de ±1 % sem ajuste;
+- vários conversores precisam ser sincronizados pelo pino SYNC;
+- a placa já existe e foi projetada para ele.

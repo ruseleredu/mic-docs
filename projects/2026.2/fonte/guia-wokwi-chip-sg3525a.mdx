@@ -1,6 +1,6 @@
 ---
 title: Guia — Chip personalizado do SG3525A no Wokwi
-sidebar_position: 17
+sidebar_position: 6
 ---
 
 {/* Figuras geradas pelo Kroki. Fontes em diagramas/; depois de editar, rode diagramas/gerar_kroki.py */}
@@ -82,15 +82,23 @@ O código roda uma vez por ciclo do oscilador. A cada ciclo ele:
 5. troca a saída do flip-flop e gera o pulso de clock no `OSC` (o tempo morto);
 6. no fim do clock, liga a saída da vez e agenda o desligamento.
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="s5-rampa"
     src="https://kroki.io/tikz/svg/eNq1Vc1y2jAQvucpdOAAjez6JwQyqTvTptdOOwntxXgYIQusQZYYSYQSj5-mj9IXq2RjDI0zJZ3pTbvSfvt9uytpmgq8yQnXmCGl4rmQKZHReK2TQmnEU8QEJ-XFdKPIGuEVWpJ44ifFQnBNOD7dQDmRFCMOlZaILjP9KJg2GyopMJV4QzVdPdUhdsXoXCK5K-YmfCnFhqcKYsQs6JwsKS8aagfHEUqsMrEFbSiQBBu-S0Zgp_etq_SOkahYUMaibUY1KSGwMqKpyhFjSZNEYbEmZfwj8t0hziHYRZ47xrnZTyXaxs77BPQ96A2A44D-2L2ySy5SEksrOSl6ulfedh72YOje7A-juXgkSWGKqH79FDZgISRBOAPTFaAcFB70YQDDsrgAoAbTGcUrg1cEb6arEnoWy8JW9qXn-sNnzqA0KcM_PPbM7UVZUwR9x3O9YRvYWhVPRhY6Cte6qdVCCM2FJoo-GfoevJnC743cBuuQsrXOwApheIQVp0hlJIWgUm16yjakqmXg-k3p_dpoiw8BYnTJI5uoO0lOef_uy-evEDw8DGyuKvj5SYPEcSZktCVKJwBpK8Y3Wq6HA1BIlK8RIDno3c0mVbdPRmenMmqUOr57U83NQXwnpxrclPzKIH95uAN9zAReDQ6VaPpu58gOw0uD0na5bCbuMCrjrlHpcg5AWVfXLA0BwtO9qhc0mu6-WuO3yYfzxQXHwlqWf1Hju97oZe9rRV65o38Q-fFckf5p9_6_yIrUu_3j5Fy7ozo-2K8rmTlNt2hnLh5hYtt9mXoTEAFzA_peAcvR_WwCLkF4P_s0aB_AfRLDHjpB88RUDPf22bn0rBC8rJCPpdj1yediHe3H8RsyfCkv"
     alt="Rampa do SG3525A, pulsos de clock e as saídas A e B alternadas"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>O pulso começa no fim do clock e termina quando a rampa passa a menor tensão entre COMP e SS. As saídas se alternam a cada ciclo.</figcaption>
+  <figcaption>
+    O pulso começa no fim do clock e termina quando a rampa passa a menor tensão
+    entre COMP e SS. As saídas se alternam a cada ciclo.
+  </figcaption>
 </figure>
 
 ```text title="Equações do modelo (valores do circuito da experiência)"
@@ -124,24 +132,24 @@ SHUTDOWN: dV/dt = −150 µA / CSS = −15 V/s → SS vai de 5 V a 0 em ~0,33 s
 
 ## Parte 2 — Pinos e atributos {/* #parte-2 */}
 
-| Pino | Nome        | No modelo                                                                  |
-| ---- | ----------- | -------------------------------------------------------------------------- |
-| 1    | `ERR-`      | entrada analógica inversora do amplificador de erro                        |
-| 2    | `ERR+`      | entrada analógica não inversora                                            |
-| 3    | `SYNC`      | digital, com _pull-down_: borda de subida inicia um ciclo                  |
-| 4    | `OSC`       | digital: alto durante o pulso de clock                                     |
-| 5    | `CT`        | rampa de 0,9 V a 3,3 V, só com `rampaNoCT = 1`                             |
-| 6    | `RT`        | sem função (RT é atributo)                                                 |
-| 7    | `DISCHARGE` | sem função (RD é atributo)                                                 |
-| 8    | `SS`        | analógica: tensão da partida suave                                         |
-| 9    | `COMP`      | analógica: saída do amplificador de erro (entrada com `compExterno = 1`)   |
-| 10   | `SHUTDOWN`  | digital, com _pull-down_: alto corta as saídas na hora                     |
-| 11   | `OUTA`      | digital: alto durante o pulso (lógica NOR: baixo quando desligada)         |
-| 12   | `GND`       | referência                                                                 |
-| 13   | `VC`        | digital, com _pull-down_: baixo mantém as saídas em nível baixo            |
-| 14   | `OUTB`      | digital: alto durante o pulso da saída B                                   |
-| 15   | `VCC`       | digital, com _pull-down_: baixo = subtensão                                |
-| 16   | `VREF`      | analógica: 5,1 V com VCC em nível alto                                     |
+| Pino | Nome        | No modelo                                                                |
+| ---- | ----------- | ------------------------------------------------------------------------ |
+| 1    | `ERR-`      | entrada analógica inversora do amplificador de erro                      |
+| 2    | `ERR+`      | entrada analógica não inversora                                          |
+| 3    | `SYNC`      | digital, com _pull-down_: borda de subida inicia um ciclo                |
+| 4    | `OSC`       | digital: alto durante o pulso de clock                                   |
+| 5    | `CT`        | rampa de 0,9 V a 3,3 V, só com `rampaNoCT = 1`                           |
+| 6    | `RT`        | sem função (RT é atributo)                                               |
+| 7    | `DISCHARGE` | sem função (RD é atributo)                                               |
+| 8    | `SS`        | analógica: tensão da partida suave                                       |
+| 9    | `COMP`      | analógica: saída do amplificador de erro (entrada com `compExterno = 1`) |
+| 10   | `SHUTDOWN`  | digital, com _pull-down_: alto corta as saídas na hora                   |
+| 11   | `OUTA`      | digital: alto durante o pulso (lógica NOR: baixo quando desligada)       |
+| 12   | `GND`       | referência                                                               |
+| 13   | `VC`        | digital, com _pull-down_: baixo mantém as saídas em nível baixo          |
+| 14   | `OUTB`      | digital: alto durante o pulso da saída B                                 |
+| 15   | `VCC`       | digital, com _pull-down_: baixo = subtensão                              |
+| 16   | `VREF`      | analógica: 5,1 V com VCC em nível alto                                   |
 
 :::warning[Ligações diferentes do CI real]
 
@@ -151,18 +159,18 @@ SHUTDOWN: dV/dt = −150 µA / CSS = −15 V/s → SS vai de 5 V a 0 em ~0,33 s
 
 :::
 
-| Atributo      | Padrão | Unidade | Significado                                              |
-| ------------- | ------ | ------- | -------------------------------------------------------- |
-| `rt`          | 6.8    | kΩ      | resistor do oscilador                                    |
-| `ct`          | 10     | nF      | capacitor do oscilador                                   |
-| `rd`          | 10     | Ω       | resistor de descarga (tempo morto)                       |
-| `css`         | 10     | µF      | capacitor da partida suave                               |
-| `vref`        | 5.1    | V       | tensão do VREF                                           |
-| `vVale`       | 0.9    | V       | COMP para razão cíclica zero (datasheet: 0,6 V a 0,9 V)  |
-| `vPico`       | 3.3    | V       | COMP para razão cíclica máxima (datasheet: até 3,6 V)    |
+| Atributo      | Padrão | Unidade | Significado                                               |
+| ------------- | ------ | ------- | --------------------------------------------------------- |
+| `rt`          | 6.8    | kΩ      | resistor do oscilador                                     |
+| `ct`          | 10     | nF      | capacitor do oscilador                                    |
+| `rd`          | 10     | Ω       | resistor de descarga (tempo morto)                        |
+| `css`         | 10     | µF      | capacitor da partida suave                                |
+| `vref`        | 5.1    | V       | tensão do VREF                                            |
+| `vVale`       | 0.9    | V       | COMP para razão cíclica zero (datasheet: 0,6 V a 0,9 V)   |
+| `vPico`       | 3.3    | V       | COMP para razão cíclica máxima (datasheet: até 3,6 V)     |
 | `compExterno` | 0      | —       | 1: o pino 9 é entrada (fonte externa comanda a modulação) |
-| `rampaNoCT`   | 0      | —       | 1: escreve a rampa no pino CT (8 degraus por ciclo)      |
-| `debug`       | 0      | —       | 1: duas linhas por segundo no _Chips Console_            |
+| `rampaNoCT`   | 0      | —       | 1: escreve a rampa no pino CT (8 degraus por ciclo)       |
+| `debug`       | 0      | —       | 1: duas linhas por segundo no _Chips Console_             |
 
 `rt`, `ct`, `rd` e `css` também aparecem como controles deslizantes durante a simulação.
 
@@ -185,7 +193,12 @@ SG3525A: energizado, VREF = 5.10 V, f = 20.88 kHz (saidas em 10.44 kHz)
 
 <FileTree
   root="projeto-wokwi"
-  files={["sketch.ino c", "diagram.json c", "sg3525a.chip.json c", "sg3525a.chip.c c"]}
+  files={[
+    "sketch.ino c",
+    "diagram.json c",
+    "sg3525a.chip.json c",
+    "sg3525a.chip.c c",
+  ]}
 />
 
 ---
@@ -219,10 +232,38 @@ SG3525A: energizado, VREF = 5.10 V, f = 20.88 kHz (saidas em 10.44 kHz)
     "VREF"
   ],
   "controls": [
-    { "id": "rt", "label": "RT (kΩ)", "type": "range", "min": 2, "max": 150, "step": 0.1 },
-    { "id": "ct", "label": "CT (nF)", "type": "range", "min": 1, "max": 200, "step": 0.1 },
-    { "id": "rd", "label": "RD (Ω)", "type": "range", "min": 0, "max": 500, "step": 1 },
-    { "id": "css", "label": "Partida suave (µF)", "type": "range", "min": 0.1, "max": 100, "step": 0.1 }
+    {
+      "id": "rt",
+      "label": "RT (kΩ)",
+      "type": "range",
+      "min": 2,
+      "max": 150,
+      "step": 0.1
+    },
+    {
+      "id": "ct",
+      "label": "CT (nF)",
+      "type": "range",
+      "min": 1,
+      "max": 200,
+      "step": 0.1
+    },
+    {
+      "id": "rd",
+      "label": "RD (Ω)",
+      "type": "range",
+      "min": 0,
+      "max": 500,
+      "step": 1
+    },
+    {
+      "id": "css",
+      "label": "Partida suave (µF)",
+      "type": "range",
+      "min": 0.1,
+      "max": 100,
+      "step": 0.1
+    }
   ]
 }
 ```
@@ -503,17 +544,17 @@ void chip_init(void) {
 
 ## Parte 5 — Demonstração com ESP32 {/* #parte-5 */}
 
-| Ligação                            | Função                                                         |
-| ---------------------------------- | -------------------------------------------------------------- |
-| Potenciômetro → `ERR+` e GPIO34    | tensão de controle                                             |
-| `ERR-` ↔ `COMP`                    | amplificador de erro como seguidor (conexão temporária da experiência) |
-| `COMP` → GPIO35                    | o ESP32 lê o pino 9                                            |
-| `SS` → GPIO32                      | o ESP32 lê a partida suave                                     |
-| `OUTA` → GPIO27 e analisador (D0)  | o ESP32 mede a razão cíclica com `pulseIn`                     |
-| `OUTB` e `OSC` → analisador (D1, D2) | formas de onda                                               |
-| GPIO25 → `SHUTDOWN`                | comando `s`                                                    |
-| GPIO26 → `SYNC`                    | comando `y`: pulsos de 25 kHz pelo LEDC                        |
-| GPIO33 → `VCC`; 3V3 → `VC`         | comando `v`: subtensão                                         |
+| Ligação                              | Função                                                                 |
+| ------------------------------------ | ---------------------------------------------------------------------- |
+| Potenciômetro → `ERR+` e GPIO34      | tensão de controle                                                     |
+| `ERR-` ↔ `COMP`                      | amplificador de erro como seguidor (conexão temporária da experiência) |
+| `COMP` → GPIO35                      | o ESP32 lê o pino 9                                                    |
+| `SS` → GPIO32                        | o ESP32 lê a partida suave                                             |
+| `OUTA` → GPIO27 e analisador (D0)    | o ESP32 mede a razão cíclica com `pulseIn`                             |
+| `OUTB` e `OSC` → analisador (D1, D2) | formas de onda                                                         |
+| GPIO25 → `SHUTDOWN`                  | comando `s`                                                            |
+| GPIO26 → `SYNC`                      | comando `y`: pulsos de 25 kHz pelo LEDC                                |
+| GPIO33 → `VCC`; 3V3 → `VC`           | comando `v`: subtensão                                                 |
 
 ```json title="diagram.json"
 {
@@ -521,31 +562,55 @@ void chip_init(void) {
   "author": "Guia ESP32 + SG3525A",
   "editor": "wokwi",
   "parts": [
-    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
-    { "type": "chip-sg3525a", "id": "sg1", "top": 10, "left": 260, "attrs": { "rt": "6.8", "ct": "10", "rd": "10", "css": "10" } },
-    { "type": "wokwi-potentiometer", "id": "pot1", "top": -150, "left": 180, "attrs": {} },
-    { "type": "wokwi-logic-analyzer", "id": "logic1", "top": 230, "left": 280, "attrs": {} }
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "chip-sg3525a",
+      "id": "sg1",
+      "top": 10,
+      "left": 260,
+      "attrs": { "rt": "6.8", "ct": "10", "rd": "10", "css": "10" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot1",
+      "top": -150,
+      "left": 180,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-logic-analyzer",
+      "id": "logic1",
+      "top": 230,
+      "left": 280,
+      "attrs": {}
+    }
   ],
   "connections": [
-    [ "esp:TX", "$serialMonitor:RX", "", [] ],
-    [ "esp:RX", "$serialMonitor:TX", "", [] ],
-    [ "pot1:VCC", "esp:3V3", "red", [] ],
-    [ "pot1:GND", "esp:GND.2", "black", [] ],
-    [ "pot1:SIG", "sg1:ERR+", "orange", [] ],
-    [ "pot1:SIG", "esp:34", "orange", [] ],
-    [ "sg1:ERR-", "sg1:COMP", "green", [] ],
-    [ "sg1:COMP", "esp:35", "green", [] ],
-    [ "sg1:SS", "esp:32", "purple", [] ],
-    [ "sg1:GND", "esp:GND.1", "black", [] ],
-    [ "sg1:VCC", "esp:33", "red", [] ],
-    [ "sg1:VC", "esp:3V3", "red", [] ],
-    [ "sg1:SHUTDOWN", "esp:25", "blue", [] ],
-    [ "sg1:SYNC", "esp:26", "cyan", [] ],
-    [ "sg1:OUTA", "esp:27", "yellow", [] ],
-    [ "sg1:OUTA", "logic1:D0", "yellow", [] ],
-    [ "sg1:OUTB", "logic1:D1", "magenta", [] ],
-    [ "sg1:OSC", "logic1:D2", "gray", [] ],
-    [ "logic1:GND", "esp:GND.1", "black", [] ]
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []],
+    ["pot1:VCC", "esp:3V3", "red", []],
+    ["pot1:GND", "esp:GND.2", "black", []],
+    ["pot1:SIG", "sg1:ERR+", "orange", []],
+    ["pot1:SIG", "esp:34", "orange", []],
+    ["sg1:ERR-", "sg1:COMP", "green", []],
+    ["sg1:COMP", "esp:35", "green", []],
+    ["sg1:SS", "esp:32", "purple", []],
+    ["sg1:GND", "esp:GND.1", "black", []],
+    ["sg1:VCC", "esp:33", "red", []],
+    ["sg1:VC", "esp:3V3", "red", []],
+    ["sg1:SHUTDOWN", "esp:25", "blue", []],
+    ["sg1:SYNC", "esp:26", "cyan", []],
+    ["sg1:OUTA", "esp:27", "yellow", []],
+    ["sg1:OUTA", "logic1:D0", "yellow", []],
+    ["sg1:OUTB", "logic1:D1", "magenta", []],
+    ["sg1:OSC", "logic1:D2", "gray", []],
+    ["logic1:GND", "esp:GND.1", "black", []]
   ],
   "dependencies": {}
 }
@@ -670,15 +735,15 @@ A primeira linha mostra a partida suave em andamento. A medida com `pulseIn` tem
 7. **Tempo morto.** Leve o controle RD a 500 Ω. O clock passa a durar 15 µs, a frequência cai e a
    razão cíclica máxima de cada saída cai para cerca de 38 %.
 
-| Situação                                 | D prevista em OUTA | f em OUTA  | Medido |
-| ---------------------------------------- | ------------------ | ---------- | ------ |
-| ERR+ = 2,12 V                            | 25,2 %             | 10,4 kHz   |        |
-| ERR+ = 3,3 V (máximo)                    | 49,5 %             | 10,4 kHz   |        |
-| ERR+ = 1,5 V                             | 12,4 %             | 10,4 kHz   |        |
-| ERR+ = 0,5 V                             | 0 %                | —          |        |
-| ERR+ = 2,12 V e `SYNC` a 25 kHz           | 30,1 %             | 12,5 kHz   |        |
-| ERR+ = 3,3 V e RD = 500 Ω                | 38,0 %             | 8,0 kHz    |        |
-| `SHUTDOWN` em nível alto                 | 0 %                | —          |        |
+| Situação                        | D prevista em OUTA | f em OUTA | Medido |
+| ------------------------------- | ------------------ | --------- | ------ |
+| ERR+ = 2,12 V                   | 25,2 %             | 10,4 kHz  |        |
+| ERR+ = 3,3 V (máximo)           | 49,5 %             | 10,4 kHz  |        |
+| ERR+ = 1,5 V                    | 12,4 %             | 10,4 kHz  |        |
+| ERR+ = 0,5 V                    | 0 %                | —         |        |
+| ERR+ = 2,12 V e `SYNC` a 25 kHz | 30,1 %             | 12,5 kHz  |        |
+| ERR+ = 3,3 V e RD = 500 Ω       | 38,0 %             | 8,0 kHz   |        |
+| `SHUTDOWN` em nível alto        | 0 %                | —         |        |
 
 :::tip[Preveja antes de medir]
 
@@ -698,7 +763,14 @@ A primeira linha mostra a partida suave em andamento. A medida com `pulseIn` tem
 
 <FileTree
   root="exemplo"
-  files={["platformio.ini c", "wokwi.toml c", "diagram.json c", "src/main.cpp c", "chips/sg3525a.chip.json c", "chips/sg3525a.chip.wasm c"]}
+  files={[
+    "platformio.ini c",
+    "wokwi.toml c",
+    "diagram.json c",
+    "src/main.cpp c",
+    "chips/sg3525a.chip.json c",
+    "chips/sg3525a.chip.wasm c",
+  ]}
 />
 
 ```toml title="wokwi.toml"
@@ -721,41 +793,41 @@ binary = 'chips/sg3525a.chip.wasm'  # ao lado de chips/sg3525a.chip.json
 
 ## Parte 8 — Comparação com o chip do TL494 {/* #parte-8 */}
 
-| Recurso no modelo           | `chip-sg3525a`                                   | `chip-tl494`                                     |
-| --------------------------- | ------------------------------------------------ | ------------------------------------------------ |
-| Oscilador                   | `CT × (0,7 RT + 3 RD)`, controles RT, CT e RD    | `RT × CT`, controles RT e CT                     |
-| Tempo morto                 | pulso de clock (RD)                              | entrada analógica DTC                            |
-| Saídas                      | OUTA e OUTB sempre alternadas, até 49,5 % cada   | paralelo (até 96 %) ou push-pull                 |
-| Sentido do PWM              | COMP sobe → razão cíclica sobe                   | FEEDBACK sobe → razão cíclica desce              |
-| Partida suave               | interna (pino 8, atributo `css`)                 | não tem                                          |
-| Desligamento                | pino 10, corte imediato                          | pelo DTC ou pelo segundo amplificador de erro    |
-| Sincronismo                 | pino 3                                           | não tem                                          |
-| Subtensão                   | VCC em nível baixo                               | VCC em nível baixo                               |
-| Amplificadores de erro      | 1                                                | 2, em OU                                         |
+| Recurso no modelo      | `chip-sg3525a`                                 | `chip-tl494`                                  |
+| ---------------------- | ---------------------------------------------- | --------------------------------------------- |
+| Oscilador              | `CT × (0,7 RT + 3 RD)`, controles RT, CT e RD  | `RT × CT`, controles RT e CT                  |
+| Tempo morto            | pulso de clock (RD)                            | entrada analógica DTC                         |
+| Saídas                 | OUTA e OUTB sempre alternadas, até 49,5 % cada | paralelo (até 96 %) ou push-pull              |
+| Sentido do PWM         | COMP sobe → razão cíclica sobe                 | FEEDBACK sobe → razão cíclica desce           |
+| Partida suave          | interna (pino 8, atributo `css`)               | não tem                                       |
+| Desligamento           | pino 10, corte imediato                        | pelo DTC ou pelo segundo amplificador de erro |
+| Sincronismo            | pino 3                                         | não tem                                       |
+| Subtensão              | VCC em nível baixo                             | VCC em nível baixo                            |
+| Amplificadores de erro | 1                                              | 2, em OU                                      |
 
 ---
 
 ## Parte 9 — Limites do modelo {/* #parte-9 */}
 
-| Limite                                  | Consequência                                                       |
-| --------------------------------------- | ------------------------------------------------------------------ |
+| Limite                                  | Consequência                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------------ |
 | Sem resistores e capacitores analógicos | rede de compensação, divisores e o RC da partida suave externos não têm efeito |
-| Leitura uma vez por ciclo               | mudanças em COMP mais rápidas que um ciclo não aparecem            |
-| Amplificador de erro simplificado       | sem `gm` nem limite de ±100 µA: não serve para estudar a compensação |
-| Puxar o pino 9 para baixo               | o modelo não simula a disputa de corrente; use `compExterno = 1`   |
-| Sem estágio de potência                 | só o sinal PWM; não há Vo para fechar a malha                      |
-| Carga da simulação                      | três a quatro eventos por ciclo: aumente CT se ficar lento         |
+| Leitura uma vez por ciclo               | mudanças em COMP mais rápidas que um ciclo não aparecem                        |
+| Amplificador de erro simplificado       | sem `gm` nem limite de ±100 µA: não serve para estudar a compensação           |
+| Puxar o pino 9 para baixo               | o modelo não simula a disputa de corrente; use `compExterno = 1`               |
+| Sem estágio de potência                 | só o sinal PWM; não há Vo para fechar a malha                                  |
+| Carga da simulação                      | três a quatro eventos por ciclo: aumente CT se ficar lento                     |
 
 ---
 
 ## Se algo não funcionar {/* #problemas */}
 
-| Sintoma                                   | Verifique                                                            |
-| ----------------------------------------- | -------------------------------------------------------------------- |
-| Peça não aparece ou erro ao compilar      | nome `sg3525a` nos dois arquivos; tipo `chip-sg3525a` no `diagram.json` |
-| Sem pulsos nos primeiros 0,2 s            | é a partida suave: espere ou reduza `css`                            |
-| Sem pulsos, SS parado em 0 V              | `SHUTDOWN` em nível alto ou `VCC` em nível baixo                     |
-| Sem pulsos, SS em 5 V                     | `VC` sem ligação; COMP abaixo de 0,9 V; `ERR-` sem ligação ao `COMP` |
-| OUTB sem pulsos                           | as saídas se alternam: OUTB pulsa nos ciclos ímpares                 |
-| `SYNC` não muda a frequência              | frequência do `SYNC` menor que a do oscilador livre                  |
-| Simulação lenta                           | aumente `ct` ou desligue `rampaNoCT`                                 |
+| Sintoma                              | Verifique                                                               |
+| ------------------------------------ | ----------------------------------------------------------------------- |
+| Peça não aparece ou erro ao compilar | nome `sg3525a` nos dois arquivos; tipo `chip-sg3525a` no `diagram.json` |
+| Sem pulsos nos primeiros 0,2 s       | é a partida suave: espere ou reduza `css`                               |
+| Sem pulsos, SS parado em 0 V         | `SHUTDOWN` em nível alto ou `VCC` em nível baixo                        |
+| Sem pulsos, SS em 5 V                | `VC` sem ligação; COMP abaixo de 0,9 V; `ERR-` sem ligação ao `COMP`    |
+| OUTB sem pulsos                      | as saídas se alternam: OUTB pulsa nos ciclos ímpares                    |
+| `SYNC` não muda a frequência         | frequência do `SYNC` menor que a do oscilador livre                     |
+| Simulação lenta                      | aumente `ct` ou desligue `rampaNoCT`                                    |

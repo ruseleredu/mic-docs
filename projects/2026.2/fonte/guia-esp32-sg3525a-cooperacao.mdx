@@ -1,6 +1,6 @@
 ---
 title: Guia — ESP32 e SG3525A trabalhando juntos
-sidebar_position: 13
+sidebar_position: 2
 ---
 
 {/* Figuras geradas pelo Kroki. Fontes em diagramas/; depois de editar, rode diagramas/gerar_kroki.py */}
@@ -103,15 +103,15 @@ impedância como a de um amp-op comum. Três consequências guiam todo o guia:
    dezenas de hertz e torna a malha instável. A compensação precisa usar capacitores de
    nanofarads.
 
-| Parâmetro (datasheet, VCC = 20 V)          | Valor                                  | O que significa para o ESP32                                 |
-| ------------------------------------------ | -------------------------------------- | ------------------------------------------------------------ |
-| Faixa de modo comum (teste de CMRR)        | 1,5 V a 5,2 V                          | referência do DAC acima de 1,5 V no ponto de operação         |
-| Corrente de polarização das entradas       | 1 µA típico, 10 µA máximo              | resistências baixas (≤ 10 kΩ) nos pinos 1 e 2                 |
-| Saída do amplificador                      | 0,2 V (baixo) a 5,6 V típico (alto)    | o pino 9 ultrapassa 3,3 V: medir com divisor                  |
-| Rampa do comparador PWM                    | 0,9 V (D = 0) a 3,3 V (D máx.), típicos | a faixa útil do pino 9 cabe no DAC de 3,3 V                  |
-| Razão cíclica máxima por saída             | 49 % típico                            | 98 % no sinal A OU B                                          |
-| Corrente para desligar pelo pino 9         | até 100 µA                             | um BC558 comandado pelo DAC basta                             |
-| Ganho em malha aberta (carga ≥ 10 MΩ)      | 75 dB típico                           | sugere `gm` da ordem de 0,5 mS ou mais (não especificado)     |
+| Parâmetro (datasheet, VCC = 20 V)     | Valor                                   | O que significa para o ESP32                              |
+| ------------------------------------- | --------------------------------------- | --------------------------------------------------------- |
+| Faixa de modo comum (teste de CMRR)   | 1,5 V a 5,2 V                           | referência do DAC acima de 1,5 V no ponto de operação     |
+| Corrente de polarização das entradas  | 1 µA típico, 10 µA máximo               | resistências baixas (≤ 10 kΩ) nos pinos 1 e 2             |
+| Saída do amplificador                 | 0,2 V (baixo) a 5,6 V típico (alto)     | o pino 9 ultrapassa 3,3 V: medir com divisor              |
+| Rampa do comparador PWM               | 0,9 V (D = 0) a 3,3 V (D máx.), típicos | a faixa útil do pino 9 cabe no DAC de 3,3 V               |
+| Razão cíclica máxima por saída        | 49 % típico                             | 98 % no sinal A OU B                                      |
+| Corrente para desligar pelo pino 9    | até 100 µA                              | um BC558 comandado pelo DAC basta                         |
+| Ganho em malha aberta (carga ≥ 10 MΩ) | 75 dB típico                            | sugere `gm` da ordem de 0,5 mS ou mais (não especificado) |
 
 O `gm` do amplificador não aparece no datasheet. Pela corrente de cauda de 200 µA ele deve ficar
 entre 0,5 mS e 4 mS. O projeto da [Parte 4](#parte-4) foi verificado nessa faixa inteira.
@@ -120,14 +120,14 @@ entre 0,5 mS e 4 mS. O projeto da [Parte 4](#parte-4) foi verificado nessa faixa
 
 ## Parte 2 — Duas formas de dividir o trabalho {/* #parte-2 */}
 
-| | **Modo 1 — malha analógica, supervisão digital** | **Modo 2 — malha digital, CI como modulador** |
-| --- | --- | --- |
-| Pino 2 (ERR+) | DAC1: referência `0,24 × Vo desejada` | DAC1: tensão de controle calculada pelo ESP32 |
-| Pino 1 (ERR−) | realimentação pela rede tipo 3 | ligado ao pino 9 (seguidor, como na experiência) |
-| Pino 9 (COMP) | sai da rede tipo 3; o ESP32 lê e limita | copia o pino 2; o ESP32 lê e limita |
-| Quem regula | o SG3525A, em tempo contínuo | o ESP32, a cada 2 ms |
-| Cruzamento da malha | cerca de 600 Hz a 850 Hz | cerca de 5 Hz |
-| Papel do ESP32 | referência, rampa, grampo, proteções, telemetria | tudo isso e o controlador |
+|                     | **Modo 1 — malha analógica, supervisão digital** | **Modo 2 — malha digital, CI como modulador**    |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------ |
+| Pino 2 (ERR+)       | DAC1: referência `0,24 × Vo desejada`            | DAC1: tensão de controle calculada pelo ESP32    |
+| Pino 1 (ERR−)       | realimentação pela rede tipo 3                   | ligado ao pino 9 (seguidor, como na experiência) |
+| Pino 9 (COMP)       | sai da rede tipo 3; o ESP32 lê e limita          | copia o pino 2; o ESP32 lê e limita              |
+| Quem regula         | o SG3525A, em tempo contínuo                     | o ESP32, a cada 2 ms                             |
+| Cruzamento da malha | cerca de 600 Hz a 850 Hz                         | cerca de 5 Hz                                    |
+| Papel do ESP32      | referência, rampa, grampo, proteções, telemetria | tudo isso e o controlador                        |
 
 Nos dois modos o ESP32 também faz o **grampo adaptativo** no pino 9, o **shutdown** pelo pino 10
 e a detecção de falhas. O `#define MODO` do firmware escolhe o modo, e um jumper muda a ligação
@@ -139,24 +139,29 @@ do pino 1.
 
 ### 3.1 Mudanças na placa da experiência
 
-| Na experiência original                        | Neste guia                                                         |
-| ---------------------------------------------- | ------------------------------------------------------------------ |
-| Trimpot e 10 µF no pino 2                      | saem do pino 2. O trimpot vai ao GPIO34 do ESP32, entre 3V3 e GND  |
-| Conexão temporária entre os pinos 1 e 9        | jumper **J1**: fechado no modo 2, aberto no modo 1                 |
-| 3,3 nF + 220 kΩ entre os pinos 1 e 9           | substituídos pela rede tipo 3 (modo 1)                             |
-| Pino 10 ligado ao GND                          | _shutdown_ seguro comandado pelo GPIO27                            |
-| RT, CT, RD, 10 µF no pino 8, saídas e diodos   | **iguais**: 20,9 kHz no sinal A OU B                               |
-| 330 kΩ, 5,6 kΩ, 270 Ω, 10 kΩ e 68 nF           | não usados aqui                                                    |
+| Na experiência original                      | Neste guia                                                        |
+| -------------------------------------------- | ----------------------------------------------------------------- |
+| Trimpot e 10 µF no pino 2                    | saem do pino 2. O trimpot vai ao GPIO34 do ESP32, entre 3V3 e GND |
+| Conexão temporária entre os pinos 1 e 9      | jumper **J1**: fechado no modo 2, aberto no modo 1                |
+| 3,3 nF + 220 kΩ entre os pinos 1 e 9         | substituídos pela rede tipo 3 (modo 1)                            |
+| Pino 10 ligado ao GND                        | _shutdown_ seguro comandado pelo GPIO27                           |
+| RT, CT, RD, 10 µF no pino 8, saídas e diodos | **iguais**: 20,9 kHz no sinal A OU B                              |
+| 330 kΩ, 5,6 kΩ, 270 Ω, 10 kΩ e 68 nF         | não usados aqui                                                   |
 
 ### 3.2 Referência: DAC1 no pino 2
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g3-dac-err"
     src="https://kroki.io/tikz/svg/eNp1kTtPwzAUhXd-hYcMSXFCm1KpEsqAykMMqKhiSyLkOLepVceubIeqRPnv2PSRFsFmHZ_vnvvISkmbGoShnGidFlKVoJLpxuStNkSUhEsB3VXWaNgQuiYVpO-jvF1KYUDQyw9Sg2KUCKyNIqxamU_Jjf3QeUuZog0zbP21R9yLs0IRtWsLi1dKNqLUmBLuihZQMdEeWzsJZ1VSvZJb1KNIAbX9Vhzwn-pNpM2OQ9IuGefJdsUMdBi5MZJM14Tz_CorFdkif4jjAAlZQsphadfw_PYyjyfIf7ifjYIOGemilcEyzK05Gju7FRcY8WSU4bWXzWuoiIdROLCOOLp1DirtZpkgBnwS3B2zyA86s-iHY72sbrynAzQ8dLGfJG-7cyoMkT-Opr-yX_vsgevOOf4v0_P7gUJpkUkUn-ZX7oZ5u2FCohj5j4vFdeBwEOXlQZ3QH-sbETfMLA=="
     alt="DAC1 ligado ao pino 2 por 1 kΩ, com 1 µF e 1 MΩ para o GND"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
   <figcaption>Referência: DAC1 no pino 2 (ERR+).</figcaption>
 </figure>
@@ -171,27 +176,34 @@ O buck do guia anterior tem a chave no retorno: a saída fica entre o +Vin e o n
 dois lados está no GND. O amplificador de erro precisa de uma amostra **referenciada ao GND**,
 e um LM358 faz essa conversão:
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g3-amp-diferenca"
     src="https://kroki.io/tikz/svg/eNqFk82OmzAUhffzFHfBAgZDYZJIUSsWkap2006lqsomoMgxhlgxNrKdRjOUR-pqHmFerDZM_qqZdmddn3P9Hfs6LyXZN1QYwrHWq41UJVXZvDVFpw0WJeZS0P4m32vaYrLDNV39SIuuksJQQa43cEMVI1ggbRRm9db8lNzYDV10hCmyZ4btHkeLW3G2UVg9dBtrr5Xci1IjgrlruqE1E90R7VS46LLSW3mAsxUUJZa35hS9Wn0Xa_PAadZVjPPssGWG9ghcjCzXDea8uMmFLOlKtoCbtgB_EQA24M_iGUoC6PoPL4LRU0lphDRUs0daDELPX8TE0lIVhH6UxKm1edb45etkNnfuUuGDbRtHAUQRhFbkJECkvXMmsKF-E1zIwjdl7VnWBINiEk-dZuDjtLKPJ56f4B58jZ9_lxi8yAt6MNLdmjJIRoWzJfHEuWz5OwKepUmSo52Xf2tojT0E0W0Bl0jNEShBaTy7IqrOXe6mF01sgwqiX7CI5d4Mdn9cnpq2bwXwwuW6Y6L3ziHC_4dYv56ivTrwpP2LdYgW3b1gjBNUdJdPN6Q4EdxGcjCl8d0JXrm5t_QWvtr0kEHSod6eQ0ppYLmW3j_mCAEWxHbODlSbcahmlieeHKfoPbRMSJgDbSBM5zla2kdoYIgsPqFxd2pB4PP9R3cQFeX113OF87f6A7BlSqE="
     alt="Amplificador de diferença com LM358 e resistores de 100 kΩ e 24 kΩ"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>Amplificador de diferença: converte Vo em 0,24 × Vo referenciado ao GND.</figcaption>
+  <figcaption>
+    Amplificador de diferença: converte Vo em 0,24 × Vo referenciado ao GND.
+  </figcaption>
 </figure>
 
 Cada entrada recebe 100 kΩ do seu lado da carga. A entrada + tem 24 kΩ para o GND; a entrada −
 tem 24 kΩ para a saída do LM358. A saída vale
 `(24 / 100) × (V+ − VN) = 0,24 × Vo`.
 
-| Grandeza                   | Valor                                                                 |
-| -------------------------- | --------------------------------------------------------------------- |
-| Vfb com Vo = 9 V           | 2,16 V (dentro da faixa de modo comum do SG3525A)                     |
-| Faixa de Vo do guia        | 7 V a 12 V → Vfb de 1,68 V a 2,88 V                                   |
-| Modo comum no LM358        | 18 × 24 / 124 = 3,5 V (dentro da faixa, com alimentação de 18 V)      |
-| Alimentação                | pino 8 no +18 V com 100 nF, pino 4 no GND                             |
+| Grandeza            | Valor                                                            |
+| ------------------- | ---------------------------------------------------------------- |
+| Vfb com Vo = 9 V    | 2,16 V (dentro da faixa de modo comum do SG3525A)                |
+| Faixa de Vo do guia | 7 V a 12 V → Vfb de 1,68 V a 2,88 V                              |
+| Modo comum no LM358 | 18 × 24 / 124 = 3,5 V (dentro da faixa, com alimentação de 18 V) |
+| Alimentação         | pino 8 no +18 V com 100 nF, pino 4 no GND                        |
 
 O LM358 só rejeita a tensão comum (cerca de 13 V) se os quatro resistores forem iguais dois a
 dois. Com resistores de 1 %, o erro em Vo pode chegar a algumas centenas de milivolts. A
@@ -204,26 +216,36 @@ um divisor de 100 kΩ / 24 kΩ ligado direto em Vo. O resto do guia não muda.
 
 A saída do LM358 vai a dois lugares: ao pino 1, pela rede tipo 3 (modo 1), e ao ESP32:
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g3-vfb-adc"
     src="https://kroki.io/tikz/svg/eNp1kk1v2zAMhu_9FTz44BSyF9tJV2DwYR_YsFOHocglMgJZlh0hitRJcoNW8H-v5LhJunU36yUfviRN3Cja75m0VBBj1rXSDdPl7YOtnLFENkQoyYYr3Bv2QOiOdGx9n1WuVdIySd8GyJ5pTolExmrCu619VML6gKkc5Zr23PLd8xEJX4LXmugnV3u806qXjUGUiFC0Zh2X7rW1k3BRZW226gBnFDSjvt9OMPSu-iE19kmw0rVciPKw5ZYNCMIYJTZ7IkR1hRtNDhDPUT4DqRq2Fqz1a4hWG9fWQzSAVcFVW6SSyuelRcj04m8EoszmGO0ifLdnHYkQJNc-JU_zkEKV3yqXxLKYzD69-pATuynzS3gC51MXx0kqN7xDltm_pot08ZdpfTatR_TraBo6lt8n4v9uHkkSiJfpzTSu-TbiXz7fLxcIrsMuQrBIb6caj5RWrlgV5xoX8LjARHno42nROhxL5X78-nlXLAM1qsef0yplpbLM8GdWAbEQF77dJEuzGUwElDB3aMhuIkwbZWG1URHgPz1pII7GRwnZEqMVRHi0IlqrQwS5hxZengVLJpu3VxqE8wW-AHJ9DP8="
     alt="Divisor de 10 kΩ e 20 kΩ, filtro de 1 kΩ e 10 nF e grampo BAT54 no GPIO35"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
   <figcaption>Medida de Vo pelo GPIO35, com grampo de proteção.</figcaption>
 </figure>
 
 ### 3.4 Lendo o pino 9
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g3-comp-adc"
     src="https://kroki.io/tikz/svg/eNp1kctuwjAQRfd8hRcsADlpIH2hKiukVl1UoKq7JKomzhAsHBvZThGN8u-1xbtqd9ade8Z3ZrJSsaZGaZkAY9JC6RJ18rixeWssyBKEktj1ssbgBtgaKkw_xnm7VNKiZNcFqFFzBpIaq4FXK_ulhHUFk7eMa9Zwy9ffe8S_BC806F1bOLzSqpGloQyEb1pgxWV7jHYSLrqkZqW25IwSjczlrQTSP9Wb0NidwKRdciGS7Ypb7CjxYySZqUGIvJeVGrZkENHJkEhVYipw6daw4VKRKRnM5m-LYUes8l9rS1WQO3MYe7sT3ykRye1DlNF1P5vXWEGfkmDkPJPw3nuYcrvlEiwOYPh0_A1O8Ocv-kBGhzD7gfK2u0SDgAzicHqIMPMRxpFrIp8pGfl8vvh_hzO6HylQDrkLJ6cNaH_FvH1ZvM7j2HMoy-tbeuF8px_Crcsk"
     alt="Divisor de 470 kΩ com 100 nF entre o pino 9 e o GPIO33"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
   <figcaption>Leitura do pino 9 (COMP) pelo GPIO33.</figcaption>
 </figure>
@@ -234,15 +256,22 @@ tempo de 24 ms), o que basta para telemetria e para a calibração.
 
 ### 3.5 Grampo no pino 9: DAC2 e BC558
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g3-grampo"
     src="https://kroki.io/tikz/svg/eNptUrFu2zAU3PMVb9Ag1ZQqu0mQIPBQu0HRoXBSFFksIaCoZ5kwRRokHSNh9O8lJdd2gGzEvbvjHfmKWrFdi9IyQY1ZVkrXqKc3W1s6Y6msqVASu4tiZ3BL2YY2uPw7Lt1KSYuSfRzQFjVnVBJjNeXN2r4oYf3AlI5xzXbc8s3bIAknwStN9aurvLzRaidrQxgVwbTChkv3P9oROHNZmrXaw0kKGpnP2wgkn6JfM2NfBU7digsx3a-5xY5AqDEtTEuFKC8KqWpcbuW2hPgxAWohviTjBFx3d5jpUKrsJ48ZUmP9cDa_uroJjFrTfcDvE7AqxNOWpKqE0SjOSZ5dJ9B70Eq9YOm2XCq4hXi--P2QnMvnCaTpIErz7PKgGuqU7pw5SwIt_UbyA0ngyn_bz4dfi8k1xD--zydJd8qi0iFL1gs8_IeAmI7zgmyiYtFiQyMC6RdfPurNvbVP7blRAkz5veCSWoyrPl_POGapjn7P3vDc0btV8J6CLzPOJp-U6YHhG1ZKWaksGv6GwyNP_P3pJPNxXfT07IqW2rVuXXizroNCIOSOdLfjgtXKwhkjdPeMUcDuZ10UbkJZf1zDAJxW7B9EuwSa"
     alt="BC558 com emissor no pino 9, base comandada pelo DAC2"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>Grampo de razão cíclica no pino 9, comandado pelo DAC2.</figcaption>
+  <figcaption>
+    Grampo de razão cíclica no pino 9, comandado pelo DAC2.
+  </figcaption>
 </figure>
 
 - O BC558 só conduz quando o pino 9 tenta subir acima de `VB + VEB`. A tensão do pino 9 fica
@@ -256,15 +285,22 @@ tempo de 24 ms), o que basta para telemetria e para a calibração.
 
 ### 3.6 Shutdown seguro no pino 10
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g3-shutdown"
     src="https://kroki.io/tikz/svg/eNptkkFzmzAQhe_5FXvgAI2gQO00Mx0uSTttL3XTpunBMBkhZKyxLDGSHE-q8t8rYYLtTm7M7n6P93ZVNpLstlQYwrHWy1qqhqriujOV1QaLBnMpaH9R7jTtMNngli7vs8qupDBUkPMG3lLFCBZIG4VZuzZPkhvX0JUlTJEdM2zz54D4L85qhdWzrR3eKrkTjUYEcy9a05YJ-2JtKpyoLPVa7uGIgqLE-W05Ra9W3ybaPHNa2BXjvNivmaE9Ah-jKPUWc15dlEI2dCk6UUF4FwE2EM5QFoHtP4w95UNVQ-cuoVgb17y5nc-u_USj8N7XP0UQx3B5GaYoTpNZBAN68FPZ08nbCIz0QZRB8ZvqwKTJPAIi3R2YwIaGXTQR3TD_AwEvcov6vESboFxsaYuDEc7Hvz0RUtmOCQnZFYTBw6NVdNUHUMDcgVmJHqL-P9nRhhyUsuQKpaPWIfSolkL488uv-4-L39-i0yg3kcfidxPF6cpBn79_XeTv-6O-jA9Ok2HyJU2WnkRB4HcRBoOq00wHL8HZUuphx8PEZKKe9B6dYHq2nLCGvzG4g2RJ_spBqGjOX6gvHF_fP3NQCS0="
     alt="BC548 com coletor no pino 10 e 2,2 kΩ para o pino 16"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>Shutdown seguro: o CI só opera com o GPIO27 em nível alto.</figcaption>
+  <figcaption>
+    Shutdown seguro: o CI só opera com o GPIO27 em nível alto.
+  </figcaption>
 </figure>
 
 - GPIO27 em nível **alto**: o BC548 conduz, o pino 10 vai a 0 V e o CI opera.
@@ -275,16 +311,16 @@ tempo de 24 ms), o que basta para telemetria e para a calibração.
 
 ### 3.7 Resumo das ligações
 
-| ESP32         | Função                        | Liga em                                                  |
-| ------------- | ----------------------------- | -------------------------------------------------------- |
-| GPIO25 (DAC1) | referência / controle         | 1 kΩ → pino 2                                            |
-| GPIO26 (DAC2) | grampo                        | 10 kΩ → base do BC558, emissor no pino 9                 |
-| GPIO27        | _shutdown_                    | 10 kΩ → base do BC548, coletor no pino 10                |
-| GPIO32        | Vin                           | divisor 27 kΩ / 3,3 kΩ com 10 nF (como no guia anterior) |
-| GPIO33        | COMP                          | divisor 470 kΩ / 470 kΩ com 100 nF                       |
-| GPIO34        | trimpot de referência         | cursor do trimpot entre 3V3 e GND                        |
-| GPIO35        | Vo                            | saída do LM358 por 10 kΩ / 20 kΩ, 1 kΩ e BAT54           |
-| GND           | referência comum              | pino 12 do CI, GND da fonte, fonte do MOSFET             |
+| ESP32         | Função                | Liga em                                                  |
+| ------------- | --------------------- | -------------------------------------------------------- |
+| GPIO25 (DAC1) | referência / controle | 1 kΩ → pino 2                                            |
+| GPIO26 (DAC2) | grampo                | 10 kΩ → base do BC558, emissor no pino 9                 |
+| GPIO27        | _shutdown_            | 10 kΩ → base do BC548, coletor no pino 10                |
+| GPIO32        | Vin                   | divisor 27 kΩ / 3,3 kΩ com 10 nF (como no guia anterior) |
+| GPIO33        | COMP                  | divisor 470 kΩ / 470 kΩ com 100 nF                       |
+| GPIO34        | trimpot de referência | cursor do trimpot entre 3V3 e GND                        |
+| GPIO35        | Vo                    | saída do LM358 por 10 kΩ / 20 kΩ, 1 kΩ e BAT54           |
+| GND           | referência comum      | pino 12 do CI, GND da fonte, fonte do MOSFET             |
 
 ---
 
@@ -298,23 +334,31 @@ em tempo contínuo e pode cruzar bem acima da ressonância, desde que a compensa
 que o filtro tira. É o papel da rede **tipo 3**: dois zeros perto de `f0` e dois polos acima do
 cruzamento.
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g3-tipo3"
     src="https://kroki.io/tikz/svg/eNptlE-PokAQxe_zKfrAQRRYwdF1svFg3D-nyUxmN7sHIaaFFjs2XaRp18wwfPetBlRw9iRWv3rvV9WEMIH4mDGpY0GLYr0FlTC1mOc6KgtNZUIFSFbdhceC5TQ-0JStf_lRuQOpmYz7BzRjisdUOoVWlKd7_ReExoMiKmOu4iPX_PDWtJgnwbeKqtdyi-2pgqNMCiemwphuWcpleUa7FDou62IPJ3JtJYrFyJsK5vy3-skr9Ktgi3LHhVic9lyzyiFmjEVYZFSI6C6UkLA15IRmeUQGS5tQTQZz794Z26SsvjSCurj0YuRiCuvLb-eTdeO2A9ASNCv4G4tqtXXVjwZjx_U9f2pb2ItBgu9wZQkogtZMKSAJkJ8_JtNgujTGiaInk-faxHXJaDRwx95nAxQDXhWXVLOBtM8EWyZwK8rs_jzcRxyJyTmXQPxuwOg2oDYUbIdvQq0OiBWavxQhTxb5ulz1-uGobaLB3IvSjjuMjNdHVuiKoBU9XPJadCp4Khed8AcyWD09PtthaIW1pqWIIcupqvf3_OfxyoMzmlGm3vxmFOv3ptxtK6u6YoDbYkxuWLmsYV8cIhbWy8a3iD8OnYMVPmUspZZDhmbMZv1NrOlotojXHHj3l_6NMZigQelUfsejTg68mUlG6aqRrox0Ng8d-b0r6KCpSR2Ev8R9J01qF6TD4XuzXqv2e1MFCDW_JfKbK-l0Zf4F0PDhLuZBw4eGhgEaBrgytEHNkoftkhFn2scJesaBMcYt57Vz0Dr33qtLICYxmfS_LaZw_W78Ay_1i2E="
     alt="Rede de compensação tipo 3 em volta do amplificador de erro do SG3525A"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>Rede tipo 3 do modo 1 (J1 aberto). O pino 2 recebe a referência 0,24 × Vo desejada.</figcaption>
+  <figcaption>
+    Rede tipo 3 do modo 1 (J1 aberto). O pino 2 recebe a referência 0,24 × Vo
+    desejada.
+  </figcaption>
 </figure>
 
-| Elemento        | Posição                     | Valor                                         |
-| --------------- | --------------------------- | --------------------------------------------- |
-| R2 · C1         | zero 1                      | 1 / (2π × 18 kΩ × 82 nF) = 108 Hz             |
-| (R1 + R3) · C3  | zero 2                      | 1 / (2π × 11,1 kΩ × 68 nF) = 211 Hz           |
-| R3 · C3         | polo 1, perto do zero da RSE | 1 / (2π × 1,1 kΩ × 68 nF) = 2,1 kHz          |
-| R2 · C2         | polo 2, metade da comutação | 1 / (2π × 18 kΩ × 820 pF) = 10,8 kHz          |
+| Elemento       | Posição                      | Valor                                |
+| -------------- | ---------------------------- | ------------------------------------ |
+| R2 · C1        | zero 1                       | 1 / (2π × 18 kΩ × 82 nF) = 108 Hz    |
+| (R1 + R3) · C3 | zero 2                       | 1 / (2π × 11,1 kΩ × 68 nF) = 211 Hz  |
+| R3 · C3        | polo 1, perto do zero da RSE | 1 / (2π × 1,1 kΩ × 68 nF) = 2,1 kHz  |
+| R2 · C2        | polo 2, metade da comutação  | 1 / (2π × 18 kΩ × 820 pF) = 10,8 kHz |
 
 ```text title="Ganho de malha no cruzamento (fc ≈ 800 Hz)"
 modulador:      0,98 / (3,3 − 0,9 V)            = 0,408 por volt
@@ -336,15 +380,15 @@ Verifiquei o projeto num modelo médio do buck (L = 1 mH, C = 470 µF, perdas de
 amplificador como OTA de ±100 µA, para `gm` de 0,5 mS a 4 mS e RSE do capacitor de 0,05 Ω a
 0,3 Ω. São resultados de simulação, não de bancada:
 
-| Situação                                    | Resultado previsto                                    |
-| ------------------------------------------- | ----------------------------------------------------- |
-| Cruzamento e margem de fase (RSE 0,15 Ω)    | 610 Hz a 830 Hz, 44° a 64°                            |
-| Pior caso (RSE 0,05 Ω, `gm` 0,5 mS)         | margem de fase de cerca de 32°                        |
-| Estabilidade condicional abaixo do cruzamento | não aparece (fase acima de −150°)                   |
-| Erro em regime                              | cerca de 0,1 % (ganho finito do OTA com o divisor do GPIO33) |
-| Carga de 22 Ω para 47 Ω e de volta          | cerca de ±35 mV, recupera em poucos milissegundos    |
-| Degrau de referência de 9 V para 6 V        | vale de cerca de 5,0 V, acomoda em ~20 ms             |
-| Partida com rampa de 20 V/s após a partida suave do CI | sem sobressinal                            |
+| Situação                                               | Resultado previsto                                           |
+| ------------------------------------------------------ | ------------------------------------------------------------ |
+| Cruzamento e margem de fase (RSE 0,15 Ω)               | 610 Hz a 830 Hz, 44° a 64°                                   |
+| Pior caso (RSE 0,05 Ω, `gm` 0,5 mS)                    | margem de fase de cerca de 32°                               |
+| Estabilidade condicional abaixo do cruzamento          | não aparece (fase acima de −150°)                            |
+| Erro em regime                                         | cerca de 0,1 % (ganho finito do OTA com o divisor do GPIO33) |
+| Carga de 22 Ω para 47 Ω e de volta                     | cerca de ±35 mV, recupera em poucos milissegundos            |
+| Degrau de referência de 9 V para 6 V                   | vale de cerca de 5,0 V, acomoda em ~20 ms                    |
+| Partida com rampa de 20 V/s após a partida suave do CI | sem sobressinal                                              |
 
 Compare com o guia anterior: o mesmo degrau de carga levava ~100 ms para ser corrigido.
 
@@ -418,12 +462,12 @@ ref = 9 V, Vin = 18 V  →  Dmax = 70 %    (em regime o conversor usa ~51 %)
 
 ### Falhas
 
-| Falha             | Como o ESP32 detecta                                              | Reação                                       |
-| ----------------- | ----------------------------------------------------------------- | -------------------------------------------- |
-| Subtensão         | Vin < 8 V                                                         | _shutdown_; volta sozinho com Vin > 8,5 V    |
-| Sobretensão       | Vo > 15 V                                                         | _shutdown_ até o comando `x`                 |
-| Saída sem resposta | pino 9 no grampo e Vo abaixo de metade da referência por 50 ms   | _shutdown_ até o comando `x`                 |
-| Acima da referência | Vo mais de 2 V acima da referência por 50 ms                    | _shutdown_ até o comando `x`                 |
+| Falha               | Como o ESP32 detecta                                           | Reação                                    |
+| ------------------- | -------------------------------------------------------------- | ----------------------------------------- |
+| Subtensão           | Vin < 8 V                                                      | _shutdown_; volta sozinho com Vin > 8,5 V |
+| Sobretensão         | Vo > 15 V                                                      | _shutdown_ até o comando `x`              |
+| Saída sem resposta  | pino 9 no grampo e Vo abaixo de metade da referência por 50 ms | _shutdown_ até o comando `x`              |
+| Acima da referência | Vo mais de 2 V acima da referência por 50 ms                   | _shutdown_ até o comando `x`              |
 
 A falha "sem resposta" pega curto na saída, MOSFET sem comando e perda da medida de Vo. Ela usa
 o pino 9, que é a única medida que mostra o que o CI está **tentando** fazer. A falha "acima da
@@ -688,15 +732,15 @@ void loop() {
 
 ### Comandos pelo monitor serial
 
-| Comando | Efeito                                                                  |
-| ------- | ----------------------------------------------------------------------- |
-| `r 9`   | referência de 9 V pelo serial (faixa de 7 V a 12 V)                     |
-| `p`     | volta a usar o trimpot do GPIO34                                        |
-| `m 60`  | limita a razão cíclica a 60 %, além do grampo adaptativo                |
-| `i 3.5` | muda `ki` (só no modo 2)                                                |
-| `d`     | desliga pelo pino 10                                                    |
-| `l`     | religa                                                                  |
-| `x`     | rearma depois de uma falha                                              |
+| Comando | Efeito                                                   |
+| ------- | -------------------------------------------------------- |
+| `r 9`   | referência de 9 V pelo serial (faixa de 7 V a 12 V)      |
+| `p`     | volta a usar o trimpot do GPIO34                         |
+| `m 60`  | limita a razão cíclica a 60 %, além do grampo adaptativo |
+| `i 3.5` | muda `ki` (só no modo 2)                                 |
+| `d`     | desliga pelo pino 10                                     |
+| `l`     | religa                                                   |
+| `x`     | rearma depois de uma falha                               |
 
 ```text title="Monitor serial (modo 1, valores aproximados)"
 === ESP32 + SG3525A (modo 1: malha analogica no CI) ===
@@ -743,14 +787,14 @@ void loop() {
 2. Observe Vo com acoplamento AC e escala de 100 mV/div: a oscilação lenta da resolução do DAC
    deve aparecer.
 
-| Medida                                    | Modo 1 (previsto) | Modo 1 (medido) | Modo 2 (previsto) | Modo 2 (medido) |
-| ----------------------------------------- | ----------------- | --------------- | ----------------- | --------------- |
-| Vo com referência de 9 V                  | 9,0 V             |                 | 9,0 V ± 0,2 V     |                 |
-| Pico no degrau de carga 22 Ω → 15 Ω       | dezenas de mV     |                 | décimos de volt   |                 |
-| Tempo de recuperação                      | poucos ms         |                 | ~0,1 s a 0,2 s    |                 |
-| Degrau de referência de 7 V para 11 V     | ~20 ms            |                 | ~0,2 s            |                 |
-| Vo com `m 40`                             | ~7 V              |                 | ~7 V              |                 |
-| Pico com a realimentação aberta           | ~14 V             |                 | —                 |                 |
+| Medida                                | Modo 1 (previsto) | Modo 1 (medido) | Modo 2 (previsto) | Modo 2 (medido) |
+| ------------------------------------- | ----------------- | --------------- | ----------------- | --------------- |
+| Vo com referência de 9 V              | 9,0 V             |                 | 9,0 V ± 0,2 V     |                 |
+| Pico no degrau de carga 22 Ω → 15 Ω   | dezenas de mV     |                 | décimos de volt   |                 |
+| Tempo de recuperação                  | poucos ms         |                 | ~0,1 s a 0,2 s    |                 |
+| Degrau de referência de 7 V para 11 V | ~20 ms            |                 | ~0,2 s            |                 |
+| Vo com `m 40`                         | ~7 V              |                 | ~7 V              |                 |
+| Pico com a realimentação aberta       | ~14 V             |                 | —                 |                 |
 
 :::tip[Preveja antes de medir]
 
@@ -769,14 +813,14 @@ void loop() {
 
 ## Se algo não funcionar {/* #problemas */}
 
-| Sintoma                                        | Verifique                                                                           |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `[CAL] VEB fora da faixa`                      | BC558 invertido; divisor do GPIO33; DAC1 chegando ao pino 2                         |
-| Sem pulsos, `Vcomp` próximo de 0,6 V           | grampo fechado: estado `PARTIDA` ou `FALHA`; DAC2 no GPIO26                         |
-| Sem pulsos, `Vcomp` normal                     | pino 10 em nível alto: GPIO27, BC548, 2,2 kΩ                                        |
-| Modo 1: falha `ACIMA DA REF` ou `SEM RESPOSTA` | realimentação aberta ou invertida: LM358, R1, entradas + e − trocadas                |
-| Modo 1: oscilação de centenas de hertz         | valores da rede tipo 3; C2 ou C3 trocados; capacitor eletrolítico na rede           |
-| Modo 1: Vo errado e estável                    | resistores do LM358 desiguais; refaça `CAL_REF`                                     |
-| Modo 2: `Vcomp` diferente do DAC1              | J1 aberto; rede tipo 3 ainda ligada ao pino 1                                       |
-| `Vo` do serial diferente do multímetro         | multímetro sobre a carga; `CAL_VO`                                                  |
-| ESP32 reinicia ao ligar o conversor            | GND do ESP32 junto ao pino 12 e à fonte do MOSFET; fios curtos                      |
+| Sintoma                                        | Verifique                                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------------- |
+| `[CAL] VEB fora da faixa`                      | BC558 invertido; divisor do GPIO33; DAC1 chegando ao pino 2               |
+| Sem pulsos, `Vcomp` próximo de 0,6 V           | grampo fechado: estado `PARTIDA` ou `FALHA`; DAC2 no GPIO26               |
+| Sem pulsos, `Vcomp` normal                     | pino 10 em nível alto: GPIO27, BC548, 2,2 kΩ                              |
+| Modo 1: falha `ACIMA DA REF` ou `SEM RESPOSTA` | realimentação aberta ou invertida: LM358, R1, entradas + e − trocadas     |
+| Modo 1: oscilação de centenas de hertz         | valores da rede tipo 3; C2 ou C3 trocados; capacitor eletrolítico na rede |
+| Modo 1: Vo errado e estável                    | resistores do LM358 desiguais; refaça `CAL_REF`                           |
+| Modo 2: `Vcomp` diferente do DAC1              | J1 aberto; rede tipo 3 ainda ligada ao pino 1                             |
+| `Vo` do serial diferente do multímetro         | multímetro sobre a carga; `CAL_VO`                                        |
+| ESP32 reinicia ao ligar o conversor            | GND do ESP32 junto ao pino 12 e à fonte do MOSFET; fios curtos            |

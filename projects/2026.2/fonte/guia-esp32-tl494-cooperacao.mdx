@@ -1,6 +1,6 @@
 ---
 title: Guia — ESP32 e TL494 trabalhando juntos
-sidebar_position: 14
+sidebar_position: 3
 ---
 
 {/* Figuras geradas pelo Kroki. Fontes em diagramas/; depois de editar, rode diagramas/gerar_kroki.py */}
@@ -94,21 +94,21 @@ flowchart LR
 
 ## Parte 1 — Por que o TL494 em projetos novos {/* #parte-1 */}
 
-| Característica                     | SG3525A (onsemi)                                  | TL494 (TI, rev. J)                                       |
-| ---------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
-| Amplificador de erro               | 1, de transcondutância (±100 µA no pino 9)        | **2**, de tensão: 80 dB, 800 kHz, fornece 2 mA           |
-| Faixa de modo comum                | 1,5 V a 5,2 V (teste de CMRR)                     | **−0,3 V a VCC − 2 V**                                   |
-| Corrente de polarização            | 1 µA típico, 10 µA máximo                         | 0,2 µA típico, 1 µA máximo                               |
-| Referência                         | 5,1 V ± 1 %                                       | 5 V ± 5 %, até 10 mA                                     |
-| Sentido do PWM                     | COMP sobe → razão cíclica sobe                    | **FEEDBACK sobe → razão cíclica desce**                  |
-| Faixa do pino de controle          | 0,9 V (D = 0) a 3,3 V (D máx.)                    | 0,5 V (97 %) a 3,5 V (0 %)                               |
-| Razão cíclica máxima               | 49 % por saída (98 % em A OU B)                   | ~97 % em saída simples; 45 % por saída em _push-pull_    |
-| Tempo morto                        | RD entre CT e Discharge                           | **entrada DTC**: 0 V (~3 %) a 3,3 V (100 %), I < 10 µA   |
-| Partida suave                      | interna (pino 8)                                  | não tem (DTC com RC externo)                             |
-| Desligamento                       | pino 10                                           | não tem (DTC ou o segundo amplificador)                  |
-| Saídas                             | _totem-pole_, 400 mA de pico                      | transistores abertos, 200 mA                             |
-| Oscilador                          | 100 Hz a 400 kHz                                  | 1 kHz a 300 kHz, `f = 1 / (RT × CT)`                     |
-| Alimentação                        | 8 V a 35 V                                        | 7 V a 40 V, 1,6 mA típico em repouso                     |
+| Característica            | SG3525A (onsemi)                           | TL494 (TI, rev. J)                                     |
+| ------------------------- | ------------------------------------------ | ------------------------------------------------------ |
+| Amplificador de erro      | 1, de transcondutância (±100 µA no pino 9) | **2**, de tensão: 80 dB, 800 kHz, fornece 2 mA         |
+| Faixa de modo comum       | 1,5 V a 5,2 V (teste de CMRR)              | **−0,3 V a VCC − 2 V**                                 |
+| Corrente de polarização   | 1 µA típico, 10 µA máximo                  | 0,2 µA típico, 1 µA máximo                             |
+| Referência                | 5,1 V ± 1 %                                | 5 V ± 5 %, até 10 mA                                   |
+| Sentido do PWM            | COMP sobe → razão cíclica sobe             | **FEEDBACK sobe → razão cíclica desce**                |
+| Faixa do pino de controle | 0,9 V (D = 0) a 3,3 V (D máx.)             | 0,5 V (97 %) a 3,5 V (0 %)                             |
+| Razão cíclica máxima      | 49 % por saída (98 % em A OU B)            | ~97 % em saída simples; 45 % por saída em _push-pull_  |
+| Tempo morto               | RD entre CT e Discharge                    | **entrada DTC**: 0 V (~3 %) a 3,3 V (100 %), I < 10 µA |
+| Partida suave             | interna (pino 8)                           | não tem (DTC com RC externo)                           |
+| Desligamento              | pino 10                                    | não tem (DTC ou o segundo amplificador)                |
+| Saídas                    | _totem-pole_, 400 mA de pico               | transistores abertos, 200 mA                           |
+| Oscilador                 | 100 Hz a 400 kHz                           | 1 kHz a 300 kHz, `f = 1 / (RT × CT)`                   |
+| Alimentação               | 8 V a 35 V                                 | 7 V a 40 V, 1,6 mA típico em repouso                   |
 
 O que isso significa para o ESP32:
 
@@ -138,28 +138,33 @@ razão cíclica zero do DTC de 3 V para **2,5 V** (máximo 3,3 V) e do FEEDBACK 
 
 Os dois CIs não são compatíveis pino a pino: o TL494 precisa de outra placa ou de um adaptador.
 
-| Função                     | SG3525A          | TL494                          | Neste guia                                           |
-| -------------------------- | ---------------- | ------------------------------ | ---------------------------------------------------- |
-| Referência                 | 16 (5,1 V)       | 14 REF (5 V)                   | divisores do amplificador de erro 2                  |
-| Alimentação                | 15 VCC, 13 VC    | 12 VCC; 8 C1, 11 C2            | +18 V                                                |
-| GND                        | 12               | 7                              | GND comum com o ESP32                                |
-| Oscilador                  | 5 CT, 6 RT, 7 RD | 5 CT, 6 RT                     | 1 nF e 47 kΩ                                         |
-| Amplificador de erro       | 1 ERR−, 2 ERR+   | 2 1IN−, 1 1IN+                 | **realimentação no pino 1 (+)**, rede no pino 2      |
-| Saída do amplificador      | 9 COMP           | 3 FEEDBACK                     | lido pelo GPIO33                                     |
-| Partida suave              | 8                | —                              | rampa do DTC pelo ESP32                              |
-| Desligamento               | 10               | —                              | amplificador de erro 2 (15 e 16)                     |
-| Tempo morto / limite de D  | RD               | 4 DTC                          | DAC2 pelo LM324-C                                    |
-| Saídas                     | 11 A, 14 B       | 9 E1, 10 E2                    | em paralelo, no nó X                                 |
-| Modo das saídas            | —                | 13 OUTPUT CTRL                 | GND: saída simples                                   |
-| Sincronismo               | 3 SYNC, 4 OSC    | —                              | não usado                                            |
+| Função                    | SG3525A          | TL494               | Neste guia                                      |
+| ------------------------- | ---------------- | ------------------- | ----------------------------------------------- |
+| Referência                | 16 (5,1 V)       | 14 REF (5 V)        | divisores do amplificador de erro 2             |
+| Alimentação               | 15 VCC, 13 VC    | 12 VCC; 8 C1, 11 C2 | +18 V                                           |
+| GND                       | 12               | 7                   | GND comum com o ESP32                           |
+| Oscilador                 | 5 CT, 6 RT, 7 RD | 5 CT, 6 RT          | 1 nF e 47 kΩ                                    |
+| Amplificador de erro      | 1 ERR−, 2 ERR+   | 2 1IN−, 1 1IN+      | **realimentação no pino 1 (+)**, rede no pino 2 |
+| Saída do amplificador     | 9 COMP           | 3 FEEDBACK          | lido pelo GPIO33                                |
+| Partida suave             | 8                | —                   | rampa do DTC pelo ESP32                         |
+| Desligamento              | 10               | —                   | amplificador de erro 2 (15 e 16)                |
+| Tempo morto / limite de D | RD               | 4 DTC               | DAC2 pelo LM324-C                               |
+| Saídas                    | 11 A, 14 B       | 9 E1, 10 E2         | em paralelo, no nó X                            |
+| Modo das saídas           | —                | 13 OUTPUT CTRL      | GND: saída simples                              |
+| Sincronismo               | 3 SYNC, 4 OSC    | —                   | não usado                                       |
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="t4-pinagem"
     src="https://kroki.io/tikz/svg/eNqdld9O2zAUxu_3FOciF0V4OE7S0g71AkKZprExoYAmNRVyEre1mtqR7fIv6iPtao-wF5vd0lI0JhEUKYnsfL_zHZ9jJy1kvpgzYfKSaj3MpCqY6ncrM6q1oaKgpRRs-SFdaFbRfEYnbJiQUT2WwjCRv5ygc6Z4TgXSRlE-mZpbWRo7oUd1zlW-4IbPHtcS91byTFH1UGdWPlFyIQqNclo6aMYmXNQba9uBHcpQT-UdPEtBsdz6nZQMvTqKD7R5KFm_HvOy7N9NuWFLBC6NfqrntCxHH9Lcka23er4oDa9kyTQueJVPeYXveGGm_fAgsGaELNjwaQKBWMyh4kL3SQfBlBfMjWRMaQTs3jAlaLmahzXCPwjauzO0gLGiNrQU_c4IWld7UC-PnoLQTN6yjc1srO362tUEaux3B0IqM7VfJ-dRL3KSsVSM5lNIK5wK4AJqgsmX7_socA_vo4dCfDYYnJ4cx19RhE-TGLVxnKAOvkzQIf78_RR1cUyW9Tq4ciXcrlGueGU0f2Sb8JlNyoayBtIqPbKXWB4tXzPRwwOCiI8HASIEx_Ye4Os4RiTEF1fJj6sE4uTyHJEIXw7OEGnjYG2WdNzb_sZOycZvcyNWbqqVm3-UYymNkIbtap2UWKV3fVOPsyX0wa_RMohSdH0jPWidfwuD6OPx3rYsbwEGFqiY7QbXSRBCS_z5DZ7wmlHCl5QjIL4_w-4GXroqEFVK3nnw-ceXizBsxI4se51abGFOscMKOtA6PY6DZnbbbhXjm8QDkiJxBlSC7apGiI5DXDpEdJiimZdezNmEeu9BHVpUU03XavZJ15Z-K3uxD_6n61mdq_BPaJF_be81gxF_Q2uoI-90T4Kt0Pr3fVe8pp7D9Wp_Ak3__CooaD6v7AnakOKasu1sVFRRkBoKfsu1PVOaglatmNKqUvLeI6vEwp7bOjMoJNiTpml-rjGJv1vbNQf24SRuR11orfbN4YrLRPHyn-cGnv9nfwGWW4cw"
     alt="Pinagem do TL494 com a ligação de cada pino neste guia"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
   <figcaption>Ligações do TL494 neste guia.</figcaption>
 </figure>
@@ -173,15 +178,23 @@ comparadores olham para ela. A saída conduz enquanto a rampa está **acima** da
 `V(pino 3) − 0,7 V` (o diodo interno do comparador PWM) e `V(DTC) + 0,11 V` (o _offset_ do
 comparador de tempo morto). Vale a linha mais alta, isto é, a que pedir menos razão cíclica.
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="t4-rampa"
     src="https://kroki.io/tikz/svg/eNqdVMFy2jAQvfcr9sABEuHYkJC0qTuTJvTSY9NcbA8jZIE1yBKR5FDQ-GM6Pecr-LHKNoYwEw7tbS1p9-17-7xxKkmRU2EIx1pHU6lSqsKbpUmsNlikmEtByw9xoekSkwWe0-gxSOxMCkMFOb7AOVWMYIG0UZjNM_MiuXEXOrGEKVIwwxabJqWKOJsqrNZ26tLnShYi1YhgXhWd0jkTtm1tf_CmSqQzuYJDKihKXL9zTtG7pxeeNmtOQztjnIerjBlaIqhohLHOMedJC6KJXNIy-hUG3uCK5AjWoe_duMi9SBVeRf0vCXR95Peg34fuyLuqQiFTGqmKdGI7plPevvvYR0PvevcYT-ULTayTUW__yCphJhXFJIN4AUyA9VGABqVt6piMkYUrNTiLF221Kj4foOHRl9-7LRts6PZ9zx-1921cg3M6M-GgmvIwRk_7blOsM5oiqNGckLygdfuBN2rZDpuPA18EmLO5CKuSjvvTxA5L6INvUXndccXjuPttPH74enf_vXcKSNG0kalSp8Xx91KdwHl4vC_hvEYKgh2UoflSQi6VkTVand-MeSalEdJQzTbOJFiQTKpwRbVJAJtKn8BN57IHVuF8iYHm0LmfPNajPHLGWmfMqdcfeKN_N8Ve_ZZOc9104ChfOXyNt69OIMdmHCAYD3r_Yw7b-OHMTetiWJ44DY6sE5wwUvS5ZmcPaV7ruSasSeUsXeG1o1X5uv213mpeaTCxUpS1EFSkO0GP49MDq-Uibh9Q1eh16fmoP_Q-OskwNKIBkSItNkDFc4GFkYBhN01ttr8BE5ZjcNrCw8-7H8CZyLD-FMcvmFP39LmgsKQpU-DWjtQudeN-TSDbV8LdYmvbPlpm1cFhUf0FT0_Aag=="
     alt="Rampa do oscilador comparada com as linhas do FEEDBACK e do DTC, e as saídas resultantes"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>A saída conduz no fim de cada período, enquanto a rampa supera as duas linhas.</figcaption>
+  <figcaption>
+    A saída conduz no fim de cada período, enquanto a rampa supera as duas
+    linhas.
+  </figcaption>
 </figure>
 
 ```text title="Relações usadas no guia (valores típicos)"
@@ -201,15 +214,23 @@ pelo DTC:      D ≤ 1 − (VDTC + 0,11) / 3,0         VDTC = 0,79 V  →  D ≤
 
 ### 4.1 Oscilador e saídas
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="t4-saida"
     src="https://kroki.io/tikz/svg/eNqNVNFO2zAUfecr7kMfEkhCEwoqm_oymHhBY6UFTaqjyXHc1MK1K9ulLaGftKd9Aj822yktRdvES2T53HPu8T12UCnJfEqFIRxrPSqkKqnqdWcmr7XBosRcCro-QHNNZ5g84IqOhmlej6UwVJB9AE-pYgSLSBuFWTUxj5IbC-i8JkyROTPs4amhuBVnhcJqVReWXik5F6WOCOZOtKAVE_Wrte3GG5WRnsgF7KigKLF-K06jv-4eJ9qsOO3VY8Z5bzFhhq4jcMfoIT3FnOcHqFR4MSqxntAygkrhVQ5B3E7OojhLzsKdFgQnSSdKk274-QAJWdKRmEpti_tpCNhA4DjtEOr1ezxr8MzS9_CND6LYzGj2ZM_A6djkvrifJlebWmfQb1yGEMdwdBS0o3ZyHgKRNjcmsKEB9lCAIX6GfrapDPxqq-DBNDl1JhzqltZTCN7MIyF5fZR2UXT_H4PKBbx1aNvUFykE3fCDlKyhZLZ5Gn64zcByvto25x9v4ymuTTvcG-FgN8L4_QyLZizFZoaD7QwHuxm-AY10t1GZ6DA-tCnbscJzDMWe5HIzXFzIR5rX4uU3_Nj5WXqRWxt7L0XRQwvdTGmFW1Zs6aSsxddwmnudb6_DKOZWfpl7jeZAWZK5YH25n0UEmLNK9Pydqt82gBbyFVgpuWjBl4vTTvfYfk-7CO1DWYaif7Ba9z-r1rs8xlIaIQ1tEnFv6dUEsQ-aqiae1L6D-CSxr6YeXnfOO59A45df9gUCncIMK8wplwgFN3fD73dDuBjeXttjwdW3S58lFeX-j8Vt7H4afwDHgZUB"
     alt="Saídas do TL494 em paralelo como seguidores, ligadas ao nó X com 1 kΩ para o GND"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>Saídas em paralelo como seguidores de fonte. O nó X é o mesmo da placa da experiência.</figcaption>
+  <figcaption>
+    Saídas em paralelo como seguidores de fonte. O nó X é o mesmo da placa da
+    experiência.
+  </figcaption>
 </figure>
 
 - RT de 47 kΩ do pino 6 ao GND e CT de 1 nF (C0G ou filme) do pino 5 ao GND.
@@ -224,26 +245,36 @@ pelo DTC:      D ≤ 1 − (VDTC + 0,11) / 3,0         VDTC = 0,79 V  →  D ≤
 
 O mesmo amplificador de diferença do guia anterior, agora numa das quatro seções do LM324.
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="t4-amp-diferenca"
     src="https://kroki.io/tikz/svg/eNqFk81unDAUhfd5irtgAcFQmB8pasVipKrdtKlUVbMZ0MhjDGONsZHt6SihPFJXeYS8WG3I_FVJu7Ouz7n-jn2dl5LsGyoM4Vjr1UaqkqrsrjVFpw0WJeZS0P4m32vaYrLDNV39SIuuksJQQa43cEMVI1ggbRRm9db8lNzYDV10hCmyZ4btHkeLW3G2UVg9dBtrr5Xci1IjgrlruqE1E90R7VS46LLSW3mAsxUUJZa35hS9Wn0Xa_PAadZVjPPssGWG9ghcjCzXDea8uMmFLOlKtoCbtgB_EQA24M_jOUoC6PoPL4LRU0lphDRUs0daDELPX8TE0lIVhH6UxKm1edb45et0MosWzl8qfLCN4yiAKILQypwIiLS3zgQ21G-CC1n4pqw9y5pgUEzjmdMMhJxW9vnE8xPcg6_x8-8Sgxd5QQ9GuntTBsmocLYknjqXLX9HwLM0SXK08_JvDa2xhyC6LeASqTkCJSiN51dE1bnLZHbRxDaoIPoFi1juzWD3x-WpaftWAC9crjsmeu8cIvx_iPXrKdqrA0_av1iHaNHkBWOcoaK7fLohxYngNpKDKY0nJ3jlJt_SW_hq00MGSYd6ew4ppYHlWnr_mCQEWBDbOTtQbcaxmlueeHqco_fQMiFhBrSBML3L0dI-QgNDZPEJjbtpakng8_1HdxIV5fXvc4Xzz_oDBYtLKw=="
     alt="Amplificador de diferença com o LM324-A e resistores de 100 kΩ e 24 kΩ"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
   <figcaption>Vfb = 0,24 × Vo, referenciado ao GND.</figcaption>
 </figure>
 
 A saída vai ao pino 1 do TL494 e ao ESP32, pelo mesmo filtro com grampo do guia anterior:
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="g3-vfb-adc"
     src="https://kroki.io/tikz/svg/eNp1kk1v2zAMhu_9FTz44BSyF9tJV2DwYR_YsFOHocglMgJZlh0hitRJcoNW8H-v5LhJunU36yUfviRN3Cja75m0VBBj1rXSDdPl7YOtnLFENkQoyYYr3Bv2QOiOdGx9n1WuVdIySd8GyJ5pTolExmrCu619VML6gKkc5Zr23PLd8xEJX4LXmugnV3u806qXjUGUiFC0Zh2X7rW1k3BRZW226gBnFDSjvt9OMPSu-iE19kmw0rVciPKw5ZYNCMIYJTZ7IkR1hRtNDhDPUT4DqRq2Fqz1a4hWG9fWQzSAVcFVW6SSyuelRcj04m8EoszmGO0ifLdnHYkQJNc-JU_zkEKV3yqXxLKYzD69-pATuynzS3gC51MXx0kqN7xDltm_pot08ZdpfTatR_TraBo6lt8n4v9uHkkSiJfpzTSu-TbiXz7fLxcIrsMuQrBIb6caj5RWrlgV5xoX8LjARHno42nROhxL5X78-nlXLAM1qsef0yplpbLM8GdWAbEQF77dJEuzGUwElDB3aMhuIkwbZWG1URHgPz1pII7GRwnZEqMVRHi0IlqrQwS5hxZengVLJpu3VxqE8wW-AHJ9DP8="
     alt="Divisor de 10 kΩ e 20 kΩ, filtro de 1 kΩ e 10 nF e grampo BAT54 no GPIO35"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
   <figcaption>Medida de Vo pelo GPIO35.</figcaption>
 </figure>
@@ -254,28 +285,40 @@ Na rede da [Parte 5](#parte-5), R1 e o ramo R3–C3 ligam o pino 2 ao **nó de r
 R3–C3 puxa corrente alternada; se o nó fosse o próprio filtro do DAC, a referência oscilaria
 junto. O seguidor LM324-B mantém o nó firme.
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="t4-ref-buffer"
     src="https://kroki.io/tikz/svg/eNptUstu2zAQvOcr9qCDZEtqZCdBgUKHKkWLAg1SBL1ZQkBTK5kwRQokFSNR_UO59hPyYyXlh-wgJ1G7M7Ozj7yUtGtQGMqJ1oulVCWq9HNril4bIkrCpcDtRd5pbAldkxoXf5Kir6QwKOh5gjSoGCUi1EYRVq_Mk-TGJnTRU6Zoxwxbv-wo7sXZUhH13C8tvVayE6UOKeFOdIk1E_3B2jFworLQK7mBkQoKqfVbcww_jH6KtXnmmPYV4zzdrJjBbQiujTTXDeG8uMhLRTbgX4aXAQhZ4oJjZcfw4_fP-9k1-N--3ibBFox0pZUJZVRYcDx3cBt8CIGnSR6uvfy-wZp4IUQTi5jFVw5BpZ0sE8SgT4Ivh1pkoN5a6qPjennTed_3pGi2t7Frpei3p7QoAn8e37wrfjcWnzh7DvGhzhCQLZCmDW2WiSdgou0MdPafCGo7TKdWIAuAGPCvXZ2RuBtbJaUR0qBmL1gMsCymdl2oLPbX3Xx2FWWj571Z5zuLp-MIsjgaotOpnXyUxMnZrKodo4LoL2Sx7MxBwT1PNIbMcTWTSBZOMIlnx2Uqd5C2N85qke42K97-QYn2RipUb6-CMpLnvvfwmHiAYL9zD0pi0xZjWCthHrh2UJTn5-wC46n-ByTeGY8="
     alt="DAC1 com filtro de 1 kΩ e 1 µF, 1 MΩ para o GND e seguidor LM324-B"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
   <figcaption>Referência: DAC1 filtrado e isolado pelo LM324-B.</figcaption>
 </figure>
 
 ### 4.4 DTC: DAC2 e LM324-C
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="t4-dtc"
     src="https://kroki.io/tikz/svg/eNp9U02L2zAQve-vmEMOzkZ2HSeEdosPxYVSaNlSlr3Epiiy7IjIGiPJCbtu_nsl55tdepNn5r15M8-Tl8i6hivLJDVmuUJdcp1-bG3RG0tVSSUqvr_LO8Nbyja05sunadFXqCxX7DZBG64Fo4oYq6mo13aL0rqEKXomNOuEFZvXA8S_pFhpql_6lYPXGjtVGsKo9KQrXgvVn6SdA1csS7PGHVygoDlzemvJybvRD5GxL5KnfSWkTHdrYfmegB8jzU1DpSzucoUlX2ILtGkJKBRqC0K1nYXOfVPF1qjTSQFBNgZqIZhHcxKPod9_PkIPbBWiVWi5Ea-8GAqziLkpuHa1P37OknmYeUip6Q6C2FMMaMkrt_Rvv74_JgsIvn7JkvEeLPpBtSUYusZJtPDlDJ1LQlHLAzqGMPQdJuMzpYs52G8CMp3GcU42o_yx4TUdEbg_sSTHplvGin72PLsIyqJw4JxMgjB-06855WISTqP5Ta66SKjOEv6kyVsFFYR_IYuwsyf5_vkueno9QHHsfFJ_MLnor9UPpOe13Yc4gKZRcl609r9m0bdCIczdpp-y8X8sdM5LUav0YGFxdH5BwkXkza-pWiNMSfIAzjIoOcRAYUZmOXmGUT70olrjbgSu0SX_aeEK8txjjLsSfADHcuMWSL6lLuphZwQEhjfQdtKgGVRzVd4elw9cDucf1WxD_Q=="
     alt="DAC2 com pull-up de 100 kΩ para 3V3 e amplificador LM324-C de ganho 1,2 até o pino 4"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>O DTC recebe 1,2 × DAC2. Com o DAC solto, o pino 4 fica em 3,96 V.</figcaption>
+  <figcaption>
+    O DTC recebe 1,2 × DAC2. Com o DAC solto, o pino 4 fica em 3,96 V.
+  </figcaption>
 </figure>
 
 - O ganho de 1,2 leva o DTC até 3,96 V, acima do limiar **máximo** de razão cíclica zero do
@@ -286,13 +329,18 @@ junto. O seguidor LM324-B mantém o nó firme.
 
 ### 4.5 Desligamento seguro pelo amplificador de erro 2
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="t4-shutdown"
     src="https://kroki.io/tikz/svg/eNp1VMtu2zAQvOcr9qCDlFCq5FedFjo0QVrkktRB0YslFBRFy0RoUiBp56H630tKfte5Cbs7s7OzS2WlJMsFFYZwrPW0kKqkKh3XJm-0waLEXAq6vsiWmtaYPOOKTn8leTOTwlBBjhN4QRUjWCBtFGbV3KwkNzah84YwRZbMsOf3DuK-OCsUVm9NYeGVkktRakQwd6QFrZhottJ2gQOWqZ7LF9hDQVFi9VacorPRT5E2b5ymzYxxnr7MmaFrBG6MNNMLzHl-kZUKv4Afo0EAQpZ0uiIkb57uvoNfMyEhGQRrCENX0Y9GARg5fULA_6T96ww9e9njglbYy10-icYBEGnNZAIb6tfJ8KA-iU_r403HTnXerL9u1WyRdlxl0GUoc7i68pOot8Mo53TedBKH4PfuH7zQC8DLcF0r-epBkqHfjrEtF7WwLScBYAP-NYrdJM0u25G1uUlEsTY2eXM7HIz3iibRXeBssDJiFMbR4EPtk-j2QHt4mXeYtuWROaPgYN69s6dGtejex8v5j2TTeOvZ6Lxno9azq-BQ-E3gIGHvAMPpzEJ-_Lx_7H1e79ll2AmL-q7yrHIEbnbfa3kta9yyekcmFK2nbcVORnF0MydHU8DfEOwC7CmcWUAb6K57JqUR0lDN3u3bwJxVIiX2VVHV7XmE7Jh2iZvRbIWRX2Brzf6K7FXbO0Lw7a4HTjNbySzbYArMXiXIJWh5hE5huMNwusIgu1QfsGwbga_pAuol11K3C6CiPP5ZuMD-R_AP7wGAPA=="
     alt="Amplificador de erro 2 com o pino 15 em 1 V e o pino 16 puxado ao REF, com BC548 comandado pelo GPIO27"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
   <figcaption>O AE2 só fica inativo com o GPIO27 em nível alto.</figcaption>
 </figure>
@@ -308,15 +356,22 @@ junto. O seguidor LM324-B mantém o nó firme.
 
 ### 4.6 Lendo o pino 3
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="t4-fb-adc"
     src="https://kroki.io/tikz/svg/eNp1kU1PwzAMhu_7FTnssE1p6VaBQKgHGBtCHIYQt7ZCaep10dJkSlKmEfW_k6j7RHCzXvuxX9tZKWlTgzCUE63TQqoSVHK7MbnVhoiScCmg7WWNhg2ha1JB-jHO7VIKA4JeJkgNilEisDaKsGplviQ3LqFzS5miDTNs_d0hPuKsUETtbOHwSslGlBpTwn3TAiom7MHaUTjrkuqV3KITihRQ57figP9Ur0JtdhwSu2ScJ9sVM9Bi5NdIMl0TzvNeViqyRYMIT4ZIyBJSDkt3hg0TEsVoMJ_Nnh4fpq_DFhnpxyuDZZA7IIw94sR3jHgyjqIMr_vZooaK9DEKRq5mEt74GirdfZkgBgZkeH-YSI7w5y96T0Z7Q91SuW3P0SBAgzi821uYdhYyLOYYjbw9n_u_wYnsNgqkQ67DyfEIyj8yt89vL4s49hyI8vKdXji96gfXiMvQ"
     alt="Divisor de 100 kΩ com 10 nF entre o pino 3 e o GPIO33"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>O pino 3 tem saída de tensão: um divisor de 100 kΩ basta.</figcaption>
+  <figcaption>
+    O pino 3 tem saída de tensão: um divisor de 100 kΩ basta.
+  </figcaption>
 </figure>
 
 O amplificador de erro fornece 2 mA, então o divisor de 200 kΩ (no máximo ~20 µA) não pesa. No
@@ -324,16 +379,16 @@ SG3525A foi preciso usar 940 kΩ para não roubar corrente do OTA.
 
 ### 4.7 Resumo das ligações
 
-| ESP32         | Função                         | Liga em                                                    |
-| ------------- | ------------------------------ | ---------------------------------------------------------- |
-| GPIO25 (DAC1) | referência                     | 1 kΩ / 1 µF → LM324-B → nó de referência                   |
-| GPIO26 (DAC2) | DTC                            | LM324-C (ganho 1,2) → pino 4; 100 kΩ para 3V3              |
-| GPIO27        | desligamento                   | 10 kΩ → base do BC548, coletor no pino 16                  |
-| GPIO32        | Vin                            | divisor 27 kΩ / 3,3 kΩ com 10 nF                           |
-| GPIO33        | pino 3 (FEEDBACK)              | divisor 100 kΩ / 100 kΩ com 10 nF                          |
-| GPIO34        | trimpot de referência          | cursor entre 3V3 e GND                                     |
-| GPIO35        | Vo                             | LM324-A → 10 kΩ / 20 kΩ → 1 kΩ, 10 nF e BAT54              |
-| GND           | referência comum               | pino 7 do TL494, pino 11 do LM324, GND da fonte            |
+| ESP32         | Função                | Liga em                                         |
+| ------------- | --------------------- | ----------------------------------------------- |
+| GPIO25 (DAC1) | referência            | 1 kΩ / 1 µF → LM324-B → nó de referência        |
+| GPIO26 (DAC2) | DTC                   | LM324-C (ganho 1,2) → pino 4; 100 kΩ para 3V3   |
+| GPIO27        | desligamento          | 10 kΩ → base do BC548, coletor no pino 16       |
+| GPIO32        | Vin                   | divisor 27 kΩ / 3,3 kΩ com 10 nF                |
+| GPIO33        | pino 3 (FEEDBACK)     | divisor 100 kΩ / 100 kΩ com 10 nF               |
+| GPIO34        | trimpot de referência | cursor entre 3V3 e GND                          |
+| GPIO35        | Vo                    | LM324-A → 10 kΩ / 20 kΩ → 1 kΩ, 10 nF e BAT54   |
+| GND           | referência comum      | pino 7 do TL494, pino 11 do LM324, GND da fonte |
 
 ---
 
@@ -347,23 +402,30 @@ Por isso Vfb entra pelo **pino 1** e a rede tipo 3 fica entre o pino 2, o pino 3
 referência. É a mesma organização do exemplo de aplicação do datasheet, em que a amostra da
 saída vai ao 1IN+ e a referência dividida ao 1IN−.
 
-<figure style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+<figure style={{ margin: "1.5rem 0", textAlign: "center" }}>
   <img
     data-kroki="t4-tipo3"
     src="https://kroki.io/tikz/svg/eNptlMFymzAURff9Ci1Y2LGgCDupMx0Wbpps2k47mUy6sJiMLATRRJYYIdeTUP9Qt_2E_FglgQMkXRk_6d173n0MOFd0t2XSUEHqer1ROmc6XVYma2pDZE6EkuzwDu9qVhH6QEq2vkFZUyhpmKTjA7JlmlMiYW004eW9-aWEsQd11lCu6Y4b_vDUtrgnwTea6MdmY9tLrXYyryElwoluWMllc0R7KQxU1vW92oO-FWhGLW8pGPxv9X1Um0fB0qbgQqT7e27YAQI3RorrLREie4elytlaVYBsqwxMVlNADJgsowWMp6A5fGwv-OIqopaLaVtfXaLj0bqVK5QyUhlW8yeW-etB3zCbxDBEETqdBrbZOgle2MxypYHVZlorgECuwM3XxfnCCeea7J1hOAVhCGazSRhHHxwRVXZXXBLDJnJ6JNgwYWPRLvzjdG9xpHWuuFQgGRrMXhsY5ULWBoYq6-o-Cm8kWGFfEa-CQIDdX2Lh9wEIbu-aYnMAKYgbeEgWGN7eqWDopHZmqH7i1d9Opd4ixNH5C0E3JBG8lOkAZw4mV5eXnz-tLr5MMQ6wv9exUbWtiPZp__j5rWeyibgBT6PlaMCjupfIGvn81y4JY80Kpp__SMrJoUdUYYc4fzUHl36QawhEGlzfoQCgGMOHAH_fspIEEJy4CNoltjiuo91FDFF0Omqf23abKxooeN8kOuuWduFvXribZ0sM5dXwfMCl597F_oLwN2gthxQDiCQ6H7UaNGJKApAkr4FQu6sBEOqBrIIzVa2p6k075TbSky7SNoShfzISTpywzbTyykmnPHrDXgytE5P5-IPkCv3H5h8esZ0h"
     alt="Rede tipo 3 não inversora em volta do amplificador de erro 1 do TL494"
     loading="lazy"
-    style={{ maxWidth: '100%', background: '#fff', padding: '0.75rem', borderRadius: '8px' }}
+    style={{
+      maxWidth: "100%",
+      background: "#fff",
+      padding: "0.75rem",
+      borderRadius: "8px",
+    }}
   />
-  <figcaption>Rede tipo 3 do modo 1. Em regime, pino 1 = pino 2 = nó de referência.</figcaption>
+  <figcaption>
+    Rede tipo 3 do modo 1. Em regime, pino 1 = pino 2 = nó de referência.
+  </figcaption>
 </figure>
 
-| Elemento        | Posição                         | Valor                                         |
-| --------------- | ------------------------------- | --------------------------------------------- |
-| R2 · C1         | zero 1                          | 1 / (2π × 22 kΩ × 68 nF) = 106 Hz             |
-| (R1 + R3) · C3  | zero 2                          | 1 / (2π × 11,1 kΩ × 68 nF) = 211 Hz           |
-| R3 · C3         | polo 1                          | 1 / (2π × 1,1 kΩ × 68 nF) = 2,1 kHz           |
-| R2 · C2         | polo 2                          | 1 / (2π × 22 kΩ × 680 pF) = 10,6 kHz          |
+| Elemento       | Posição | Valor                                |
+| -------------- | ------- | ------------------------------------ |
+| R2 · C1        | zero 1  | 1 / (2π × 22 kΩ × 68 nF) = 106 Hz    |
+| (R1 + R3) · C3 | zero 2  | 1 / (2π × 11,1 kΩ × 68 nF) = 211 Hz  |
+| R3 · C3        | polo 1  | 1 / (2π × 1,1 kΩ × 68 nF) = 2,1 kHz  |
+| R2 · C2        | polo 2  | 1 / (2π × 22 kΩ × 680 pF) = 10,6 kHz |
 
 ```text title="Ganho de malha no cruzamento (fc ≈ 900 Hz)"
 modulador:       0,97 / 3,0 V                     = 0,323 por volt
@@ -382,15 +444,15 @@ Em relação à versão do SG3525A, só R2, C1 e C2 mudaram (18 kΩ, 82 nF, 820 
 Mesmo modelo médio do buck dos guias anteriores, agora com o amplificador de erro como amp-op
 (80 dB, 800 kHz). São resultados de simulação, não de bancada:
 
-| Situação                                         | Resultado previsto                                     |
-| ------------------------------------------------ | ------------------------------------------------------ |
-| Cruzamento e margem de fase (RSE de 0,05 a 0,3 Ω) | 880 Hz a 1,1 kHz, 49° a 86°                           |
-| Estabilidade condicional abaixo do cruzamento    | não aparece                                            |
-| Erro em regime                                   | desprezível (ganho de 80 dB)                           |
-| Carga de 22 Ω para 15 Ω e de volta               | cerca de ±30 mV                                        |
-| Degrau de referência de 9 V para 6 V             | vale de ~5,6 V, acomoda em ~20 ms                      |
-| Degrau de referência de 6 V para 9 V             | sem sobressinal, acomoda em ~20 ms                     |
-| Partida com rampa de 20 V/s e grampo adaptativo  | sem sobressinal                                        |
+| Situação                                          | Resultado previsto                 |
+| ------------------------------------------------- | ---------------------------------- |
+| Cruzamento e margem de fase (RSE de 0,05 a 0,3 Ω) | 880 Hz a 1,1 kHz, 49° a 86°        |
+| Estabilidade condicional abaixo do cruzamento     | não aparece                        |
+| Erro em regime                                    | desprezível (ganho de 80 dB)       |
+| Carga de 22 Ω para 15 Ω e de volta                | cerca de ±30 mV                    |
+| Degrau de referência de 9 V para 6 V              | vale de ~5,6 V, acomoda em ~20 ms  |
+| Degrau de referência de 6 V para 9 V              | sem sobressinal, acomoda em ~20 ms |
+| Partida com rampa de 20 V/s e grampo adaptativo   | sem sobressinal                    |
 
 A margem não depende mais do `gm` do amplificador, que no SG3525A não era especificado: o pior
 caso caiu para 49° (contra 32°).
@@ -439,11 +501,11 @@ Dmax = 1,3 × ref / Vin + 0,05        (e nunca acima do valor do comando m)
 ref = 9 V, Vin = 18 V  →  Dmax = 70 %  →  VDTC = 0,79 V
 ```
 
-| Situação no modelo                                | Sem limite             | Com limite                   |
-| ------------------------------------------------- | ---------------------- | ---------------------------- |
-| Medida de Vo perdida com a saída em 9 V           | pico de 21,5 V, depois 17,1 V | pico de 14,3 V, depois 12,4 V, até o ESP32 desligar |
-| Comando `m 30` liberado de uma vez               | —                      | sobressinal até ~10,1 V      |
-| Comando `m 30` liberado a 0,5 por segundo        | —                      | sobressinal até ~9,3 V       |
+| Situação no modelo                        | Sem limite                    | Com limite                                          |
+| ----------------------------------------- | ----------------------------- | --------------------------------------------------- |
+| Medida de Vo perdida com a saída em 9 V   | pico de 21,5 V, depois 17,1 V | pico de 14,3 V, depois 12,4 V, até o ESP32 desligar |
+| Comando `m 30` liberado de uma vez        | —                             | sobressinal até ~10,1 V                             |
+| Comando `m 30` liberado a 0,5 por segundo | —                             | sobressinal até ~9,3 V                              |
 
 O pico sem limite é maior que no SG3525A (21,5 V contra 17,7 V) porque o TL494 chega a 97 % de
 razão cíclica. Por isso o firmware nunca deixa o DTC em 0 V com a malha fechada, e o limite do
@@ -451,12 +513,12 @@ comando `m` só sobe a 0,5 por segundo.
 
 ### Falhas
 
-| Falha               | Como o ESP32 detecta                                                  | Reação                                    |
-| ------------------- | --------------------------------------------------------------------- | ----------------------------------------- |
-| Subtensão           | Vin < 8 V                                                             | desligamento; volta com Vin > 8,5 V       |
-| Sobretensão         | Vo > 15 V                                                             | desligamento até o comando `x`            |
-| Saída sem resposta  | o pino 3 pede mais que o limite do DTC e Vo < ref / 2, por 50 ms      | desligamento até o comando `x`            |
-| Acima da referência | Vo mais de 2 V acima da referência por 50 ms                          | desligamento até o comando `x`            |
+| Falha               | Como o ESP32 detecta                                             | Reação                              |
+| ------------------- | ---------------------------------------------------------------- | ----------------------------------- |
+| Subtensão           | Vin < 8 V                                                        | desligamento; volta com Vin > 8,5 V |
+| Sobretensão         | Vo > 15 V                                                        | desligamento até o comando `x`      |
+| Saída sem resposta  | o pino 3 pede mais que o limite do DTC e Vo < ref / 2, por 50 ms | desligamento até o comando `x`      |
+| Acima da referência | Vo mais de 2 V acima da referência por 50 ms                     | desligamento até o comando `x`      |
 
 No modo 1, "pedir mais que o limite" sai direto da leitura do pino 3: `D = 0,97 × (3,5 − V3) / 3`
 maior que `Dmax`. No SG3525A era preciso comparar com a tensão do grampo.
@@ -760,13 +822,13 @@ void loop() {
    de 18 V para 24 V, se ela permitir. Sem o teto a saída iria a ~12 V; o AE1 deve segurá-la
    perto de 10,5 V, abaixo do limite da falha "acima da referência" (11 V).
 
-| Medida                                      | TL494 modo 1 (previsto) | Medido | SG3525A modo 1 (guia anterior) |
-| ------------------------------------------- | ----------------------- | ------ | ------------------------------ |
-| Vo com referência de 9 V                    | 9,0 V                   |        |                                |
-| Pico no degrau de carga 22 Ω → 15 Ω          | dezenas de mV           |        |                                |
-| Degrau de referência de 9 V para 6 V        | ~20 ms                  |        |                                |
-| Vo com `m 40`                               | ~7 V                    |        |                                |
-| Margem de fase (se medida com injeção)      | 49° a 86°               |        |                                |
+| Medida                                 | TL494 modo 1 (previsto) | Medido | SG3525A modo 1 (guia anterior) |
+| -------------------------------------- | ----------------------- | ------ | ------------------------------ |
+| Vo com referência de 9 V               | 9,0 V                   |        |                                |
+| Pico no degrau de carga 22 Ω → 15 Ω    | dezenas de mV           |        |                                |
+| Degrau de referência de 9 V para 6 V   | ~20 ms                  |        |                                |
+| Vo com `m 40`                          | ~7 V                    |        |                                |
+| Margem de fase (se medida com injeção) | 49° a 86°               |        |                                |
 
 :::tip[Preveja antes de medir]
 
@@ -786,14 +848,14 @@ void loop() {
 
 ## Se algo não funcionar {/* #problemas */}
 
-| Sintoma                                        | Verifique                                                                       |
-| ---------------------------------------------- | ------------------------------------------------------------------------------- |
-| Sem pulsos, pino 16 em 5 V                     | GPIO27, BC548 do AE2; estado `DESLIGADO` ou `FALHA` no serial                   |
-| Sem pulsos, pino 4 acima de 2,5 V              | DAC2, LM324-C, ganho; estado do firmware                                        |
-| Sem pulsos, pino 3 acima de 3,5 V              | pinos 1 e 2 trocados; referência do LM324-B; AE2 ativo                          |
-| Pulsos com o ESP32 desligado                   | pino 15 sem o divisor de 1 V; pino 16 sem o 10 kΩ do REF                        |
-| Vo vai ao máximo e o ESP32 desliga             | realimentação no pino 2 em vez do pino 1; LM324-A                               |
-| Oscilação de centenas de hertz no modo 1       | valores da rede tipo 3; nó de referência sem o LM324-B                          |
-| Frequência longe de 21 kHz                     | CT e RT; capacitor de CT de baixa qualidade                                     |
-| Nível alto do nó X muito abaixo de 16 V        | C1 e C2 sem o +18 V; pino 13 fora do GND                                        |
-| `D~` do serial diferente do osciloscópio       | `V3_ZERO` e `V3_MAX` (calibração 9.2)                                           |
+| Sintoma                                  | Verifique                                                     |
+| ---------------------------------------- | ------------------------------------------------------------- |
+| Sem pulsos, pino 16 em 5 V               | GPIO27, BC548 do AE2; estado `DESLIGADO` ou `FALHA` no serial |
+| Sem pulsos, pino 4 acima de 2,5 V        | DAC2, LM324-C, ganho; estado do firmware                      |
+| Sem pulsos, pino 3 acima de 3,5 V        | pinos 1 e 2 trocados; referência do LM324-B; AE2 ativo        |
+| Pulsos com o ESP32 desligado             | pino 15 sem o divisor de 1 V; pino 16 sem o 10 kΩ do REF      |
+| Vo vai ao máximo e o ESP32 desliga       | realimentação no pino 2 em vez do pino 1; LM324-A             |
+| Oscilação de centenas de hertz no modo 1 | valores da rede tipo 3; nó de referência sem o LM324-B        |
+| Frequência longe de 21 kHz               | CT e RT; capacitor de CT de baixa qualidade                   |
+| Nível alto do nó X muito abaixo de 16 V  | C1 e C2 sem o +18 V; pino 13 fora do GND                      |
+| `D~` do serial diferente do osciloscópio | `V3_ZERO` e `V3_MAX` (calibração 9.2)                         |
