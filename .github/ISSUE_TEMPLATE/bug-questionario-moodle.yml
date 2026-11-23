@@ -6,21 +6,21 @@ body:
   - type: markdown
     attributes:
       value: |
-        Obrigado por reportar este problema! Por favor, preencha os campos abaixo com o máximo de detalhes possível para agilizar a análise técnica e pedagógica.
+        Obrigado por reportar este problema! Preencha os campos abaixo com o máximo de detalhes possível para agilizar a análise técnica e pedagógica.
 
   - type: input
     id: contexto_curso
     attributes:
-      label: Link ou ID do Curso e do Questionário
-      description: "Cole a URL direta do questionário (ex: https://ava.instituicao.edu.br/mod/quiz/view.php?id=12345) ou informe o nome exato da disciplina."
+      label: Link ou ID do Curso e do Questionário (Opcional)
+      description: "Cole a URL direta do questionário (ex: https://ava.instituicao.edu.br/mod/quiz/view.php?id=12345) apenas se diferir do ambiente padrão."
       placeholder: "https://..."
     validations:
-      required: true
+      required: false
 
   - type: dropdown
     id: categoria_problema
     attributes:
-      label: Categoria do Problema
+      label: Categoria do Problema (Opcional)
       description: Qual área do questionário está apresentando falha?
       options:
         - Cálculo de notas / Avaliação / Reavaliação
@@ -31,7 +31,7 @@ body:
         - Travamento / Erro 500 / Timeout ao enviar tentativa
         - Outro
     validations:
-      required: true
+      required: false
 
   - type: dropdown
     id: tipo_questao
@@ -66,42 +66,4 @@ body:
       label: Passos para Reproduzir
       description: Como a equipe técnica pode simular o erro?
       value: |
-        1. Acessar o questionário '...'
-        2. Iniciar/Visualizar tentativa como papel '...'
-        3. Responder a questão '...' com o valor '...'
-        4. Clicar em 'Enviar tudo e terminar' e observar o erro
-    validations:
-      required: true
-
-  - type: textarea
-    id: comportamento_esperado
-    attributes:
-      label: Comportamento Esperado
-      description: O que deveria acontecer normalmente segundo a configuração da atividade?
-    validations:
-      required: true
-
-  - type: textarea
-    id: evidencias_logs
-    attributes:
-      label: Prints, Vídeos ou Mensagens de Erro (Debug)
-      description: Arraste e solte capturas de tela aqui. Se o modo de depuração (Debug) do Moodle estiver ativo, cole o stack trace abaixo.
-      render: shell
-
-  - type: input
-    id: ambiente_moodle
-    attributes:
-      label: Ambiente (Versão do Moodle / Navegador / Dispositivo)
-      description: Informe se o erro ocorre no navegador desktop ou no Moodle App.
-      placeholder: "Ex: Moodle 4.5 | Google Chrome 130 | Windows 11"
-    validations:
-      required: true
-
-  - type: checkboxes
-    id: checklist_triagem
-    attributes:
-      label: Verificações Preliminares
-      options:
-        - label: Verifiquei se o problema ocorre também na visualização prévia (Preview) do professor.
-        - label: Confirmei que não há bloqueio por restrição de data, grupo ou nota mínima.
-        - label: O problema já impactou tentativas reais de estudantes em andamento.
+        1. Acessar o
