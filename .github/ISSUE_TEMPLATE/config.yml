@@ -1,4 +1,4 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
   - name: "Como funciona a avaliação (aluno)"
     url: "https://SEU-SITE/lab/como-funciona-avaliacao"
