@@ -21,3 +21,7 @@ yarn-error.log*
 
 # Secrets
 .env
+
+# Grades
+_autograde
+
