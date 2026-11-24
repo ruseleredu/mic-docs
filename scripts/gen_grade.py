@@ -22,12 +22,14 @@ Uso:
     python gen_grade.py aula.mdx --check autograde/grade.py --strict
     python scripts/gen_grade.py lab-docs/LAB03.mdx --check autograde/grade.py
 
-    # modo correcao em lote: clona todos os repos <lab>-grupo-X do dono (org/usuario),
-    # roda o grade.py em cada um e publica o boletim no proprio repositorio
-    python scripts/gen_grade.py lab-docs/LAB03.mdx --corrigir MINHA-ORG
-    python scripts/gen_grade.py lab-docs/LAB03.mdx --corrigir MINHA-ORG --publicar commit
-    python scripts/gen_grade.py lab-docs/LAB03.mdx --corrigir MINHA-ORG --publicar nenhum
-    python scripts/gen_grade.py lab-docs/LAB03.mdx --corrigir MINHA-ORG --repos lab03-grupo-8
+    # modo correcao em lote: org + lab (+ grupos) definem tudo
+    #   MDX:      labs/LAB03.mdx            (--labs-dir)
+    #   rubrica:  autograde/lab03-grade.py  (--autograde-dir; gerada do MDX se nao existir)
+    #   repos:    lab03-grupo-*             (--grupos a b  -> lab03-grupo-a, lab03-grupo-b)
+    python scripts/gen_grade.py --corrigir MINHA-ORG --lab 3
+    python scripts/gen_grade.py --corrigir MINHA-ORG --lab 3 --grupos a b --publicar nenhum
+    python scripts/gen_grade.py --corrigir MINHA-ORG --lab 3 --publicar commit
+    python scripts/gen_grade.py --lab 3 --check          # confere autograde/lab03-grade.py
     # autenticacao: GITHUB_TOKEN / GH_TOKEN, ou `gh auth token` se o gh CLI estiver logado
 
 Observacoes:
@@ -219,21 +221,44 @@ def py_str(s):
     return json.dumps(s, ensure_ascii=False)
 
 
+MARCA_TODO = "# TODO: defina as verificacoes desta tarefa"
+
+
+def arquivos_da_tarefa(files):
+    """files="src/main.cpp, include/botao.h" -> ['src/main.cpp', 'include/botao.h'] ('.' = nenhum)."""
+    vistos = []
+    for f in re.split(r"[\s,;]+", files or ""):
+        f = f.strip().replace("\\", "/")
+        while f.startswith("./"):
+            f = f[2:]
+        if f and f not in (".", "/") and f not in vistos:
+            vistos.append(f)
+    return vistos
+
+
 def render_tarefas(tasks, compile_check):
     linhas = ["TAREFAS = ["]
     for t in tasks:
-        arq = t["files"].split()[0] if t["files"] and t["files"] != "." else "src/main.cpp"
+        arquivos = arquivos_da_tarefa(t["files"])
         nota_pts = "" if t["pontos_definido"] else "  ·  pontos nao definidos no MDX (usando default)"
         linhas.append(f'  # {t["token"]} — arquivos: {t["files"]}{nota_pts}')
         linhas.append(
             f'  {{"token": {py_str(t["token"])}, "nome": {py_str(t["nome"])}, '
             f'"pontos": {t["pontos"]}, "checks": ['
         )
-        linhas.append("      # TODO: defina as verificacoes desta tarefa")
-        linhas.append(
-            f'      # {{"tipo": "contem", "arquivo": {py_str(arq)}, '
-            f'"padrao": r"...", "desc": "..."}},'
-        )
+        linhas.append(f"      {MARCA_TODO}")
+        if arquivos:
+            # um `contem` por arquivo do `files`; r"\S" so exige que o arquivo exista e nao esteja vazio
+            linhas.append('      # ajuste o "padrao" (regex) de cada arquivo; r"\\S" = existe e nao esta vazio')
+            for arq in arquivos:
+                linhas.append(
+                    f'      {{"tipo": "contem", "arquivo": {py_str(arq)}, '
+                    f'"padrao": r"\\S", "desc": {py_str(arq + " existe e nao esta vazio")}}},'
+                )
+        else:
+            linhas.append(
+                '      # {"tipo": "contem", "arquivo": "src/main.cpp", "padrao": r"...", "desc": "..."},'
+            )
         if compile_check:
             linhas.append('      {"tipo": "compila", "desc": "projeto compila"},')
         linhas.append("  ]},")
@@ -579,10 +604,36 @@ def obter_token():
     return None
 
 
+def normalizar_lab(valor):
+    """'3', '03', 'lab3', 'LAB03', 'lab-03' -> 'lab03'. Retorna None se nao houver numero."""
+    m = re.search(r"(\d+)", str(valor))
+    return f"lab{int(m.group(1)):02d}" if m else None
+
+
 def inferir_lab(mdx_path):
-    """LAB03.mdx -> 'lab03'; lab-7.mdx -> 'lab7'."""
+    """labs/LAB03.mdx -> 'lab03'."""
     m = re.search(r"lab[-_ ]?(\d+)", Path(mdx_path).stem, re.IGNORECASE)
-    return f"lab{m.group(1)}" if m else None
+    return normalizar_lab(m.group(1)) if m else None
+
+
+def achar_mdx(lab, labs_dir):
+    """Acha o MDX do lab em labs_dir (ex.: lab03 -> labs/LAB03.mdx)."""
+    pasta = Path(labs_dir)
+    if not pasta.is_dir():
+        raise ValueError(f"pasta de labs nao encontrada: {pasta} (use --labs-dir ou passe o MDX)")
+    achados = sorted(p for p in pasta.glob("*.mdx") if inferir_lab(p) == lab)
+    if not achados:
+        raise ValueError(f"nenhum MDX de {lab} em {pasta} (esperado algo como {pasta / (lab.upper() + '.mdx')})")
+    if len(achados) > 1:
+        raise ValueError(f"mais de um MDX para {lab}: {', '.join(map(str, achados))}; passe o arquivo explicitamente")
+    return achados[0]
+
+
+def nomes_dos_grupos(lab, grupos):
+    """['a', 'b', 'lab03-grupo-c'] -> ['lab03-grupo-a', 'lab03-grupo-b', 'lab03-grupo-c']."""
+    if not grupos:
+        return None
+    return [g.lower() if g.lower().startswith(lab) else f"{lab}-grupo-{g.lower()}" for g in grupos]
 
 
 def listar_repos(gh, dono):
@@ -601,7 +652,7 @@ def filtrar_repos(repos, lab, padrao, somente=None):
     sel, ignorados = [], []
     for r in repos:
         nome = r["name"]
-        if somente and nome not in somente:
+        if somente and nome.lower() not in somente:
             continue
         if not rx.match(nome):
             continue
@@ -780,11 +831,15 @@ def gerar_mdx_geral(caminho, lab, dono, resumo_md, resultados, work):
 
 
 def corrigir_lote(args, tasks):
-    lab = (args.lab or inferir_lab(args.mdx) or "").lower()
-    if not lab:
-        print("ERRO: nao consegui inferir o lab pelo nome do MDX; use --lab lab03", file=sys.stderr)
-        return 2
+    lab = args.lab
     grade_py = Path(args.grade)
+
+    # 0) sem grade.py: gera o scaffold a partir do MDX (mesmas opcoes do modo gerador)
+    if not grade_py.exists():
+        bloco = render_tarefas(tasks, compile_check=not args.no_compile_check)
+        grade_py.parent.mkdir(parents=True, exist_ok=True)
+        grade_py.write_text(ENGINE_HEADER + bloco + ENGINE_BODY, encoding="utf-8")
+        print(f"AVISO: {grade_py} nao existia; gerado a partir de {args.mdx}.", file=sys.stderr)
 
     # 1) a rubrica precisa estar sincronizada com o MDX antes de corrigir alguem
     try:
@@ -801,6 +856,17 @@ def corrigir_lote(args, tasks):
             print("ERRO: grade.py divergente do MDX; corrija ou use --forcar.", file=sys.stderr)
             return 1
 
+    # rubrica com TODO: corrige para teste, mas nao publica notas para os alunos
+    if MARCA_TODO in grade_py.read_text(encoding="utf-8"):
+        if args.publicar != "nenhum" and not args.forcar:
+            print(f"ERRO: {grade_py} ainda tem checks TODO; nada sera publicado.\n"
+                  f"      Complete os checks e apague as linhas '{MARCA_TODO}',\n"
+                  "      ou rode com --publicar nenhum para testar.", file=sys.stderr)
+            return 1
+        print(f"AVISO: {grade_py} ainda tem checks TODO; as notas refletem so os checks ja definidos "
+              "(na rubrica gerada: arquivos do `files` existirem" + ("" if args.no_compile_check else " + 'compila'")
+              + ").", file=sys.stderr)
+
     # 2) descoberta dos repositorios
     token = obter_token()
     if not token:
@@ -808,12 +874,17 @@ def corrigir_lote(args, tasks):
               "e nada podera ser publicado.", file=sys.stderr)
     gh = GitHub(token)
     try:
-        repos, arquivados = filtrar_repos(listar_repos(gh, args.corrigir), lab, args.padrao_repo, args.repos)
+        somente = nomes_dos_grupos(lab, args.grupos)
+        repos, arquivados = filtrar_repos(listar_repos(gh, args.corrigir), lab, args.padrao_repo, somente)
     except GitHubErro as e:
         print(f"ERRO ao listar repos de {args.corrigir}: {e}", file=sys.stderr)
         return 2
     if arquivados:
         print(f"ignorados (arquivados): {', '.join(arquivados)}", file=sys.stderr)
+    if somente:
+        faltando = sorted(set(somente) - {r["name"].lower() for r in repos} - {a.lower() for a in arquivados})
+        if faltando:
+            print(f"AVISO: nao encontrados em {args.corrigir}: {', '.join(faltando)}", file=sys.stderr)
     if not repos:
         print(f"Nenhum repo de {args.corrigir} casa com '{args.padrao_repo.replace('{lab}', lab)}'.", file=sys.stderr)
         return 1
@@ -899,24 +970,30 @@ def main(argv=None):
         except (AttributeError, ValueError):
             pass
     ap = argparse.ArgumentParser(description="Gera o scaffold do grade.py a partir dos <CommitPoint/> de um MDX.")
-    ap.add_argument("mdx", help="arquivo .mdx da aula")
+    ap.add_argument("mdx", nargs="?", help="arquivo .mdx da aula (opcional com --lab: procura em --labs-dir)")
+    ap.add_argument("--lab", help="numero do lab: 3, 03, lab3 ou lab03 (default: inferido do nome do MDX)")
+    ap.add_argument("--labs-dir", default="labs", help="pasta dos MDX dos labs (default: labs)")
+    ap.add_argument("--autograde-dir", default="autograde",
+                    help="pasta dos grade.py por lab: <dir>/<lab>-grade.py (default: autograde)")
     ap.add_argument("-o", "--output", help="arquivo de saida (default: stdout)")
     ap.add_argument("-f", "--force", action="store_true", help="sobrescreve o arquivo de saida se existir")
     ap.add_argument("--tarefas-only", action="store_true", help="imprime apenas o bloco TAREFAS")
     ap.add_argument("--default-points", type=int, default=10, help="pontos quando o CommitPoint nao define (default: 10)")
     ap.add_argument("--no-compile-check", action="store_true", help="nao inclui o check 'compila' por padrao")
-    ap.add_argument("--check", metavar="GRADE_PY", help="compara um grade.py existente com o MDX e reporta divergencias (nao gera nada)")
+    ap.add_argument("--check", metavar="GRADE_PY", nargs="?", const="",
+                    help="compara um grade.py com o MDX e reporta divergencias (nao gera nada); "
+                         "sem valor usa <autograde-dir>/<lab>-grade.py")
     ap.add_argument("--strict", action="store_true", help="em --check, faz avisos tambem falharem (exit != 0)")
 
     lote = ap.add_argument_group("correcao em lote (--corrigir)")
     lote.add_argument("--corrigir", metavar="DONO",
                       help="org (ou usuario) do GitHub: clona todos os repos <lab>-grupo-X, corrige e publica")
-    lote.add_argument("--grade", default="autograde/grade.py",
-                      help="grade.py (com os checks completos) usado na correcao (default: autograde/grade.py)")
-    lote.add_argument("--lab", help="nome do lab (ex.: lab03); default: inferido do nome do MDX")
+    lote.add_argument("--grade", help="grade.py usado na correcao (default: <autograde-dir>/<lab>-grade.py, "
+                                      "gerado a partir do MDX se nao existir)")
     lote.add_argument("--padrao-repo", default=r"{lab}-grupo-[a-z0-9]+",
                       help=r"regex do nome do repo; {lab} e substituido (default: '{lab}-grupo-[a-z0-9]+')")
-    lote.add_argument("--repos", nargs="+", metavar="NOME", help="corrige so estes repos (ex.: lab03-grupo-8)")
+    lote.add_argument("--grupos", "--repos", dest="grupos", nargs="+", metavar="GRUPO",
+                      help="corrige so estes grupos: letras (a b) ou nomes completos (lab03-grupo-a)")
     lote.add_argument("--publicar", choices=["issue", "commit", "nenhum"], default="issue",
                       help="onde postar o boletim no repo do grupo (default: issue)")
     lote.add_argument("--arquivo-boletim", default="GRADE.md",
@@ -927,12 +1004,40 @@ def main(argv=None):
     lote.add_argument("--timeout", type=int, default=900, help="tempo maximo do grade.py por repo, em s (default: 900)")
     lote.add_argument("--forcar", action="store_true", help="corrige mesmo se o grade.py divergir do MDX")
     args = ap.parse_args(argv)
-    if args.check and args.corrigir:
+    if args.check is not None and args.corrigir:
         ap.error("use --check ou --corrigir, nao os dois")
 
-    src = Path(args.mdx)
-    if not src.is_file():
-        ap.error(f"arquivo nao encontrado: {src}")
+    # lab + MDX: um define o outro
+    if args.lab:
+        args.lab = normalizar_lab(args.lab)
+        if not args.lab:
+            ap.error("--lab precisa conter um numero (ex.: 3, 03, lab03)")
+    elif args.mdx:
+        args.lab = inferir_lab(args.mdx)
+    if args.mdx:
+        src = Path(args.mdx)
+        if not src.is_file():
+            ap.error(f"arquivo nao encontrado: {src}")
+    elif args.lab:
+        try:
+            src = achar_mdx(args.lab, args.labs_dir)
+        except ValueError as e:
+            ap.error(str(e))
+        args.mdx = str(src)
+    else:
+        ap.error("informe o MDX da aula ou --lab")
+
+    # grade.py por lab: autograde/lab03-grade.py
+    grade_padrao = Path(args.autograde_dir) / f"{args.lab}-grade.py" if args.lab else None
+    if args.check == "" or (args.corrigir and not args.grade):
+        if grade_padrao is None:
+            ap.error("nao consegui inferir o lab pelo nome do MDX; use --lab")
+        if args.check == "":
+            args.check = str(grade_padrao)
+        else:
+            args.grade = str(grade_padrao)
+    if args.lab:
+        print(f"{args.lab}: {src}", file=sys.stderr)
 
     text = src.read_text(encoding="utf-8")
     cps = find_commitpoints(text)
@@ -957,7 +1062,7 @@ def main(argv=None):
         print(f"  {t['token']:>4}  {t['pontos']:>3} pts  {t['nome']}", file=sys.stderr)
 
     # modo comparacao: nao gera nada, apenas reporta divergencias
-    if args.check:
+    if args.check is not None:
         return run_check(tasks, args.check, args.strict)
 
     # modo correcao em lote
