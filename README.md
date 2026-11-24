@@ -109,6 +109,13 @@ node scripts/download-katex.js
 ./scripts/mic/create-lab-from-template.sh
 ```
 
+```bash
+./scripts/mic/create-pjt-pio-template.sh
+```
+
+```bash
+./scripts/mic/create-pjt-from-template.sh
+```
 
 Um repositório criado a partir de um template recebe uma cópia dos arquivos com um histórico novo, sem ligação com o template. Por isso não dá para fazer `git pull` do template. O script `sync-lab-from-template.sh` resolve isso assim:
 
@@ -160,4 +167,10 @@ O que ele mostra:
 node scripts\mic\componentes-usados.mjs
 node scripts\mic\componentes-usados.mjs --detalhe
 node scripts\mic\componentes-usados.mjs LabIotAlunoSimples
+```
+
+## Grade
+
+```bash
+py scripts/gen_grade.py
 ```
