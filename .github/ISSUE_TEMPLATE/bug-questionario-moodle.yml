@@ -34,7 +34,16 @@ body:
       placeholder: "Ex: Tentativa 1"
     validations:
       required: true
-
+      
+  - type: textarea
+    id: print_questao
+    attributes:
+      label: Print da Questão
+      description: Arraste e solte, cole (Ctrl+V) ou selecione a imagem mostrando a questão e o problema ocorrido.
+      placeholder: "Cole a captura de tela aqui..."
+    validations:
+      required: true
+      
   - type: textarea
     id: descricao
     attributes:
@@ -49,15 +58,6 @@ body:
     attributes:
       label: Comportamento Esperado
       description: O que deveria acontecer normalmente segundo a configuração da atividade?
-    validations:
-      required: true
-
-  - type: textarea
-    id: print_questao
-    attributes:
-      label: Print da Questão
-      description: Arraste e solte, cole (Ctrl+V) ou selecione a imagem mostrando a questão e o problema ocorrido.
-      placeholder: "Cole a captura de tela aqui..."
     validations:
       required: true
 
