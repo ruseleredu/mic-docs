@@ -21,6 +21,26 @@ sincronizado com o MDX depois que alguém edita a aula.
 - Para **rodar** o `grade.py` gerado: `git` e, se usar o check `compila`, o PlatformIO (`pio`) no `PATH`.
   :::
 
+## Convenção: organização, lab e grupos definem tudo
+
+O script segue uma convenção de nomes. Dados a organização, o número do lab e (opcionalmente) os
+grupos, todo o resto é deduzido:
+
+| Item         | Convenção                        | Exemplo (`--lab 3`)                 | Mudar com                      |
+| ------------ | -------------------------------- | ----------------------------------- | ------------------------------ |
+| MDX da aula  | `<labs-dir>/LABnn.mdx`           | `labs/LAB03.mdx`                    | `--labs-dir` ou passando o MDX |
+| Rubrica      | `<autograde-dir>/labnn-grade.py` | `autograde/lab03-grade.py`          | `--autograde-dir` ou `--grade` |
+| Repositórios | `labnn-grupo-X`                  | `lab03-grupo-a`, `lab03-grupo-b`, … | `--padrao-repo`                |
+| Resultados   | `_autograde/labnn/`              | `_autograde/lab03/`                 | `--workdir`                    |
+
+O `--lab` aceita `3`, `03`, `lab3` ou `lab03`. Se você passar o MDX em vez do `--lab`, o lab é
+deduzido do nome do arquivo (`LAB03.mdx` → `lab03`).
+
+```bash
+python scripts/gen_grade.py --corrigir ELT73A-S22-2026-2 --lab 3                 # todos os grupos
+python scripts/gen_grade.py --corrigir ELT73A-S22-2026-2 --lab 3 --grupos a b    # só a e b
+```
+
 ## Fluxo de trabalho
 
 1. Escreva a aula em MDX com os `<CommitPoint />`.
@@ -71,7 +91,7 @@ A numeração reproduz exatamente a do componente:
 No exemplo acima, os tokens ficam `T1`, `T2` e `E5` (o terceiro seria `T3`, mas `n={5}` e `prefix="E"`
 o transformam em `E5`).
 
-:::warning Tokens repetidos
+:::warning[Tokens repetidos]
 Se dois `CommitPoint` resultarem no mesmo token (por exemplo, um `n={2}` explícito colidindo com o
 segundo automático), o script emite `AVISO: tokens repetidos`. No modo `--check` isso é **erro**.
 :::
@@ -82,13 +102,13 @@ segundo automático), o script emite `AVISO: tokens repetidos`. No modo `--check
   <TabItem value="arquivo" label="Gravar em arquivo" default>
 
 ```bash
-python scripts/gen_grade.py labs/LAB03.mdx -o autograde/grade.py
+python scripts/gen_grade.py labs/LAB03.mdx -o autograde/lab03-grade.py
 ```
 
 Se o arquivo já existir, o script recusa. Use `-f` para sobrescrever:
 
 ```bash
-python scripts/gen_grade.py labs/LAB03.mdx -o autograde/grade.py -f
+python scripts/gen_grade.py labs/LAB03.mdx -o autograde/lab03-grade.py -f
 ```
 
   </TabItem>
@@ -119,7 +139,7 @@ AVISO: sem 'pontos' no MDX (usando 10): T2
     T1   20 pts  Pisca LED no GPIO2
     T2   10 pts  Le botao com debounce > 50ms
     E5    5 pts  Desafio extra
-gravado: autograde/grade.py
+gravado: autograde/lab03-grade.py
 ```
 
 ### Opções
@@ -136,24 +156,43 @@ gravado: autograde/grade.py
 
 ## 3. Completando os checks
 
-O bloco gerado para cada tarefa fica assim:
+Para cada arquivo listado no `files` do `CommitPoint`, a rubrica gerada já traz um check `contem` ativo.
+O padrão `r"\S"` só exige que o arquivo exista e não esteja vazio. O `files` pode separar os arquivos
+por espaço, vírgula ou ponto e vírgula; `./` e `\` são normalizados. Tarefas sem `files` (ou com
+`files="."`) recebem apenas um exemplo comentado.
 
-```python title="autograde/grade.py"
+```mdx
+<CommitPoint task="README e primeiro push" pontos={20} files="README.md" />
+<CommitPoint
+  task="Branch, pull request e conflito"
+  pontos={30}
+  files="README.md, docs/conflito.md"
+/>
+```
+
+gera:
+
+```python title="autograde/lab01-grade.py"
 TAREFAS = [
-  # T1 — arquivos: src/main.cpp
-  {"token": "T1", "nome": "Pisca LED no GPIO2", "pontos": 20, "checks": [
+  # T1 — arquivos: README.md
+  {"token": "T1", "nome": "README e primeiro push", "pontos": 20, "checks": [
       # TODO: defina as verificacoes desta tarefa
-      # {"tipo": "contem", "arquivo": "src/main.cpp", "padrao": r"...", "desc": "..."},
+      # ajuste o "padrao" (regex) de cada arquivo; r"\S" = existe e nao esta vazio
+      {"tipo": "contem", "arquivo": "README.md", "padrao": r"\S", "desc": "README.md existe e nao esta vazio"},
       {"tipo": "compila", "desc": "projeto compila"},
   ]},
-  # T2 — arquivos: src/main.cpp include/botao.h  ·  pontos nao definidos no MDX (usando default)
-  {"token": "T2", "nome": "Le botao com debounce > 50ms", "pontos": 10, "checks": [
-      ...
+  # T2 — arquivos: README.md, docs/conflito.md
+  {"token": "T2", "nome": "Branch, pull request e conflito", "pontos": 30, "checks": [
+      # TODO: defina as verificacoes desta tarefa
+      # ajuste o "padrao" (regex) de cada arquivo; r"\S" = existe e nao esta vazio
+      {"tipo": "contem", "arquivo": "README.md", "padrao": r"\S", "desc": "README.md existe e nao esta vazio"},
+      {"tipo": "contem", "arquivo": "docs/conflito.md", "padrao": r"\S", "desc": "docs/conflito.md existe e nao esta vazio"},
+      {"tipo": "compila", "desc": "projeto compila"},
   ]},
 ]
 ```
 
-Substitua o `TODO` pelas verificações reais. Os tipos disponíveis são:
+Troque o `r"\S"` por padrões que verifiquem o conteúdo, acrescente checks se precisar e apague as linhas `# TODO`. Os tipos disponíveis são:
 
 | `tipo`       | Campos                      | Passa quando                                      |
 | ------------ | --------------------------- | ------------------------------------------------- |
@@ -205,7 +244,7 @@ A nota final é normalizada para **0 a 10**.
 ### Executando
 
 ```bash
-REPO_DIR=/caminho/do/repo-do-grupo STUDENT="ORG/lab03-grupo-a" python autograde/grade.py
+REPO_DIR=/caminho/do/repo-do-grupo STUDENT="ORG/lab03-grupo-a" python autograde/lab03-grade.py
 ```
 
 | Variável   | Padrão  | Descrição                                                        |
@@ -219,7 +258,7 @@ Saídas geradas no diretório atual:
 - `nota.csv`: linha `grupo,nota,total,total_max`.
 - No GitHub Actions: o boletim vai para o _job summary_ e `nota` é exportada em `GITHUB_OUTPUT`.
 
-:::caution Clone com histórico
+:::caution[Clone com histórico]
 Em CI, use `fetch-depth: 0` no `actions/checkout`. Com clone raso, os commits das tarefas antigas não
 aparecem e o grupo leva `sem commit`.
 :::
@@ -230,8 +269,9 @@ O modo `--check` não gera nada: ele lê a lista `TAREFAS` do `grade.py` **sem e
 (via `ast.literal_eval`) e compara com o MDX.
 
 ```bash
-python scripts/gen_grade.py labs/LAB03.mdx --check autograde/grade.py
-python scripts/gen_grade.py labs/LAB03.mdx --check autograde/grade.py --strict
+python scripts/gen_grade.py --lab 3 --check           # usa autograde/lab03-grade.py
+python scripts/gen_grade.py --lab 3 --check --strict
+python scripts/gen_grade.py labs/LAB03.mdx --check autograde/lab03-grade.py   # caminhos explícitos
 ```
 
 :::note
@@ -273,7 +313,7 @@ Quando está tudo certo:
 | `1`    | Há erros, ou há avisos com `--strict`. Também quando o MDX não tem nenhum `CommitPoint`.  |
 | `2`    | Não foi possível ler o `grade.py` (arquivo ausente ou `TAREFAS` não encontrado/ilegível). |
 
-:::warning `compila` conta como check
+:::warning[`compila` conta como check]
 O check `compila`, incluído por padrão, já faz a tarefa ter um check. Ou seja, um `grade.py` recém-gerado
 **passa** no `--check` mesmo com os `TODO` em aberto. Se quiser que o CI barre rubricas incompletas, gere
 com `--no-compile-check` e adicione o `compila` manualmente junto dos checks reais.
@@ -298,7 +338,7 @@ jobs:
         with:
           python-version: "3.x"
       - name: MDX x grade.py
-        run: python scripts/gen_grade.py labs/LAB03.mdx --check autograde/grade.py --strict
+        run: python scripts/gen_grade.py --lab 3 --check --strict
 ```
 
 O relatório também é anexado ao _job summary_ na seção **Sincronizacao MDX × grade.py**.
@@ -307,31 +347,39 @@ O relatório também é anexado ao _job summary_ na seção **Sincronizacao MDX 
 
 Com `--corrigir DONO`, o script corrige **todos os grupos de um lab** de uma vez:
 
-1. Confere se o `grade.py` está sincronizado com o MDX (mesma verificação do `--check`). Se houver
+1. Se `autograde/lab03-grade.py` não existir, **gera a rubrica** a partir do MDX.
+2. Confere se o `grade.py` está sincronizado com o MDX (mesma verificação do `--check`). Se houver
    **erros**, para. Use `--forcar` para corrigir mesmo assim.
-2. Lista os repositórios da organização (ou do usuário) `DONO` no GitHub e mantém os que seguem o
-   padrão `<lab>-grupo-X` (X = letra ou número). O lab vem do nome do MDX (`LAB03.mdx` → `lab03`) ou de `--lab`. Repositórios
+3. Lista os repositórios da organização (ou do usuário) `DONO` no GitHub e mantém os que seguem o
+   padrão `<lab>-grupo-X` (X = letra ou número), ou só os grupos de `--grupos`. Repositórios
    arquivados são ignorados.
-3. Clona cada repositório com histórico completo em `_autograde/<lab>/repos/`.
-4. Roda o `grade.py` (`--grade`, padrão `autograde/grade.py`) em cada clone.
-5. Publica o boletim **no próprio repositório do grupo**.
-6. Grava o consolidado em `_autograde/<lab>/notas.csv` e `_autograde/<lab>/RESUMO.md`, que também vai
+4. Clona cada repositório com histórico completo em `_autograde/<lab>/repos/`.
+5. Roda o `autograde/lab03-grade.py` em cada clone.
+6. Publica o boletim **no próprio repositório do grupo**.
+7. Grava o consolidado em `_autograde/<lab>/notas.csv` e `_autograde/<lab>/RESUMO.md`, que também vai
    para o _job summary_ se rodar no GitHub Actions.
 
 ```bash
-python scripts/gen_grade.py labs/LAB03.mdx --corrigir ELT73A-S22-2026-2
+python scripts/gen_grade.py --corrigir MINHA-ORG --lab 3
 ```
+
+:::warning[Rubrica com `TODO` não é publicada]
+Enquanto o `grade.py` tiver linhas `# TODO: defina as verificacoes desta tarefa`, o script só corrige
+com `--publicar nenhum`, para teste. Com `issue` ou `commit`, ele para antes de corrigir, para não postar
+nos repositórios dos alunos notas de uma rubrica incompleta. Complete os checks e apague as linhas
+`TODO` para liberar a publicação.
+:::
 
 ```text
 3 repo(s) de lab03 para corrigir (publicar: issue)
 
 ▸ lab03-grupo-1
   nota 8.57 / 10  (30.0 de 35.0 pts)
-  ✓ publicado (issue) https://github.com/ELT73A-S22-2026-2/lab03-grupo-1/issues/1
+  ✓ publicado (issue) https://github.com/MINHA-ORG/lab03-grupo-1/issues/1
 
 ▸ lab03-grupo-2
   nota 2.86 / 10  (10.0 de 35.0 pts)
-  ✓ publicado (issue) https://github.com/ELT73A-S22-2026-2/lab03-grupo-2/issues/1
+  ✓ publicado (issue) https://github.com/MINHA-ORG/lab03-grupo-2/issues/1
 ...
 3/3 ok · consolidado em _autograde/lab03/notas.csv e _autograde/lab03/RESUMO.md
 ```
@@ -378,19 +426,21 @@ Para GitHub Enterprise, defina `GITHUB_API_URL` e `GITHUB_SERVER_URL`.
 
 ### Opções da correção em lote
 
-| Opção                 | Padrão                      | Descrição                                                             |
-| --------------------- | --------------------------- | --------------------------------------------------------------------- |
-| `--corrigir DONO`     | —                           | Organização (ou usuário) dona dos repositórios.                       |
-| `--grade ARQ`         | `autograde/grade.py`        | `grade.py` com os checks completos.                                   |
-| `--lab LAB`           | inferido do MDX             | Nome do lab, por exemplo `lab03`.                                     |
-| `--padrao-repo REGEX` | `{lab}-grupo-[a-z0-9]+`     | Regex do nome do repositório; `{lab}` é substituído.                  |
-| `--repos NOME ...`    | todos                       | Corrige só estes repositórios (por exemplo, `--repos lab03-grupo-8`). |
-| `--publicar`          | `issue`                     | `issue`, `commit` ou `nenhum`.                                        |
-| `--arquivo-boletim`   | `GRADE.md`                  | Caminho do boletim no repositório (modo `commit`).                    |
-| `--workdir DIR`       | `_autograde/<lab>`          | Pasta dos clones, boletins e consolidado.                             |
-| `--mdx-geral ARQ`     | `<workdir>/<lab>-notas.mdx` | Rascunho MDX com o resumo e todos os boletins.                        |
-| `--timeout S`         | `900`                       | Tempo máximo do `grade.py` por repositório.                           |
-| `--forcar`            | —                           | Corrige mesmo com divergências entre MDX e `grade.py`.                |
+| Opção                 | Padrão                           | Descrição                                                                                  |
+| --------------------- | -------------------------------- | ------------------------------------------------------------------------------------------ |
+| `--corrigir DONO`     | —                                | Organização (ou usuário) dona dos repositórios.                                            |
+| `--lab N`             | inferido do MDX                  | Número do lab: `3`, `03`, `lab3` ou `lab03`.                                               |
+| `--labs-dir DIR`      | `labs`                           | Onde procurar o `LABnn.mdx` quando o MDX não é passado.                                    |
+| `--autograde-dir DIR` | `autograde`                      | Onde fica o `labnn-grade.py`.                                                              |
+| `--grade ARQ`         | `<autograde-dir>/labnn-grade.py` | Rubrica explícita (gerada do MDX se não existir).                                          |
+| `--padrao-repo REGEX` | `{lab}-grupo-[a-z0-9]+`          | Regex do nome do repositório; `{lab}` é substituído.                                       |
+| `--grupos G ...`      | todos                            | Corrige só estes grupos: `--grupos a b` ou `--grupos lab03-grupo-a`. `--repos` é sinônimo. |
+| `--publicar`          | `issue`                          | `issue`, `commit` ou `nenhum`.                                                             |
+| `--arquivo-boletim`   | `GRADE.md`                       | Caminho do boletim no repositório (modo `commit`).                                         |
+| `--workdir DIR`       | `_autograde/<lab>`               | Pasta dos clones, boletins e consolidado.                                                  |
+| `--mdx-geral ARQ`     | `<workdir>/<lab>-notas.mdx`      | Rascunho MDX com o resumo e todos os boletins.                                             |
+| `--timeout S`         | `900`                            | Tempo máximo do `grade.py` por repositório.                                                |
+| `--forcar`            | —                                | Corrige mesmo com divergências entre MDX e `grade.py`.                                     |
 
 ### Página geral de notas (rascunho MDX)
 
@@ -399,7 +449,7 @@ principal (`#`), com o `GRADE.md` de cada grupo, como seções (`##`). Grupos qu
 o erro num bloco `:::danger`.
 
 ```bash
-python scripts/gen_grade.py labs/LAB03.mdx --corrigir ELT73A-S22-2026-2 \
+python scripts/gen_grade.py --corrigir ELT73A-S22-2026-2 --lab 3 \
   --publicar nenhum --mdx-geral docs/notas/lab03.mdx
 ```
 
@@ -415,28 +465,28 @@ erro ao listar repositórios).
 
 :::note
 Os arquivos `notas.csv` e `RESUMO.md` refletem só os repositórios da última execução. Rodar com
-`--repos` sobrescreve o consolidado com aquele subconjunto.
+`--grupos` sobrescreve o consolidado com aquele subconjunto.
 :::
 
 ## Referência rápida
 
 ```bash
 # gerar
-python scripts/gen_grade.py labs/LAB03.mdx -o autograde/grade.py
-python scripts/gen_grade.py labs/LAB03.mdx -o autograde/grade.py -f
+python scripts/gen_grade.py labs/LAB03.mdx -o autograde/lab03-grade.py
+python scripts/gen_grade.py labs/LAB03.mdx -o autograde/lab03-grade.py -f
 python scripts/gen_grade.py labs/LAB03.mdx --tarefas-only
 python scripts/gen_grade.py labs/LAB03.mdx --default-points 15 --no-compile-check
 
 # verificar (CI)
-python scripts/gen_grade.py labs/LAB03.mdx --check autograde/grade.py
-python scripts/gen_grade.py labs/LAB03.mdx --check autograde/grade.py --strict
+python scripts/gen_grade.py --lab 3 --check
+python scripts/gen_grade.py --lab 3 --check --strict
 
 # corrigir um grupo manualmente
-REPO_DIR=../lab03-grupo-a STUDENT="ORG/lab03-grupo-a" python autograde/grade.py
+REPO_DIR=../lab03-grupo-a STUDENT="ORG/lab03-grupo-a" python autograde/lab03-grade.py
 
 # corrigir todos os grupos do lab e publicar o boletim em cada repo
-python scripts/gen_grade.py labs/LAB03.mdx --corrigir ELT73A-S22-2026-2
-python scripts/gen_grade.py labs/LAB03.mdx --corrigir ELT73A-S22-2026-2 --publicar commit
-python scripts/gen_grade.py labs/LAB03.mdx --corrigir ELT73A-S22-2026-2 --publicar nenhum
-python scripts/gen_grade.py labs/LAB03.mdx --corrigir ELT73A-S22-2026-2 --repos lab03-grupo-a
+python scripts/gen_grade.py --corrigir MINHA-ORG --lab 3
+python scripts/gen_grade.py --corrigir MINHA-ORG --lab 3 --publicar commit
+python scripts/gen_grade.py --corrigir MINHA-ORG --lab 3 --publicar nenhum
+python scripts/gen_grade.py --corrigir MINHA-ORG --lab 3 --grupos a b
 ```
