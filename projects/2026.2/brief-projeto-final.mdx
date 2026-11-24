@@ -1,0 +1,240 @@
+---
+title: Brief do projeto final para IA
+sidebar_position: 16
+description: Prompts para verificar com uma IA se a ideia do grupo atende às especificações
+---
+
+## Para que serve {/* #inicio */}
+
+Antes de escrever a [proposta (T0)](./projeto-final.mdx#parte-0), use uma IA (Claude, ChatGPT,
+Gemini…) para conferir se a ideia do grupo atende aos critérios do projeto final. O brief abaixo
+explica as regras para a IA e pede uma resposta no mesmo formato para todos os grupos.
+
+1. Escolha o brief da versão do projeto: **tema livre** ou **fonte chaveada** (TL494/SG3525A).
+2. Copie o bloco inteiro (ícone de copiar, no canto do bloco).
+3. Cole numa conversa **nova** com a IA.
+4. Preencha a seção **IDEIA DO GRUPO**, no fim, e envie.
+5. Corrija a ideia com o que a IA apontou e repita até não sobrar "Não atende".
+6. Leve a última resposta para a proposta: a tabela de critérios e as perguntas em aberto ajudam
+   a escrever o `docs/proposta.md`.
+
+:::warning[A IA não aprova o projeto]
+
+- Quem aprova é o **professor**, no PR da proposta. A IA só ajuda a achar lacunas antes.
+- A IA erra. Confira o que ela disser sobre peças do Wokwi em
+  [docs.wokwi.com](https://docs.wokwi.com) e sobre pinos do ESP32 no datasheet.
+- Não cole senhas, tokens ou dados pessoais na conversa.
+
+:::
+
+<Tabs groupId="versao">
+<TabItem value="livre" label="Tema livre" default>
+
+```text title="Brief — Projeto final, tema livre (copie tudo)"
+Você é um avaliador técnico de propostas de projeto final da disciplina de Sistemas
+Embarcados e IoT (ELT73A, UTFPR). Sua tarefa é verificar se a IDEIA DO GRUPO, no fim
+desta mensagem, atende às especificações abaixo. Não escreva código nem o projeto pelo
+grupo: avalie, aponte lacunas e sugira o mínimo necessário para atender.
+
+== CONTEXTO DA DISCIPLINA ==
+Os alunos já fizeram 10 laboratórios com: ESP32 DevKit (Arduino ou ESP-IDF) no
+PlatformIO; simulador Wokwi no VS Code e wokwi-cli no Docker; Wi-Fi e MQTT
+(PubSubClient ou esp-mqtt), com LWT; DHT22, potenciômetro (ADC1), OLED SSD1306 (I2C),
+LEDs com PWM (LEDC), temporizadores (Ticker/esp_timer), NVS; Node-RED com Dashboard 2.0
+e SQLite (INSERT preparado, CHECK, GROUP BY, LAG/LEAD, retenção); Git/GitHub com
+issues, PRs e um commit "Tn:" por tarefa; GitHub Actions com build e teste no Wokwi.
+O grupo tem 4 semanas. O projeto roda em DOIS lugares: no Wokwi e numa bancada com
+ESP32 real, com o MESMO firmware (só a configuração de rede muda; na bancada o broker
+é um Mosquitto local).
+
+== CRITÉRIOS DE AVALIAÇÃO (peso) E REQUISITO MÍNIMO ==
+T1 (10 %) Dispositivo de entrada e saída: pelo menos 1 entrada e 1 saída USADAS pela
+    lógica da aplicação (não só ligadas). Ex.: sensor, botão, teclado; display, LED,
+    buzzer, servo, relé.
+T2 (10 %) Periférico dedicado ou interrupção: pelo menos 1 periférico dedicado (ADC,
+    PWM/LEDC, timer, I2C, DMA…) E pelo menos 1 interrupção (GPIO ou timer), com uma
+    medição que prove o funcionamento (analisador lógico ou serial).
+T3 (10 %) MQTT via Node-RED: contrato de tópicos escrito, com no mínimo dados
+    periódicos (JSON com seq), eventos só quando mudam, status com LWT online/offline
+    retidos e pelo menos 1 comando broker -> ESP32 com faixa válida, validado e
+    confirmado pelo ESP32 (comando inválido é recusado).
+T4 (10 %) SQL via Node-RED (SQLite): pelo menos 2 tabelas do domínio (uma de dados
+    periódicos, uma de eventos) com NOT NULL e CHECK, mais a tabela status; INSERT
+    preparado; pelo menos 3 consultas que respondem perguntas do projeto, sendo uma
+    com GROUP BY e uma com LAG() ou LEAD(); índice e retenção.
+T5 (10 %) Simulação no Wokwi: diagram.json com todas as peças, simulação ponta a ponta
+    (Wokwi -> broker -> Node-RED -> SQLite -> dashboard e comandos de volta) e um
+    cenário do wokwi-cli no CI que mexe numa entrada e espera a reação no serial.
+T6 (30 %) Protótipo em bancada operacional: o mesmo firmware num ESP32 real, com um
+    roteiro de pelo menos 8 testes escrito pelo grupo, cobrindo: boot e rede; cada
+    entrada; cada saída; a interrupção; um comando pelo dashboard confirmado; broker
+    parado (o dispositivo continua funcionando e reconecta); reset (volta com a
+    configuração da NVS); dados da bancada no banco.
+T7 (5 %)  Dashboard no Node-RED: estado ao vivo, comandos mostrando o valor confirmado,
+    histórico vindo do banco com período escolhido, indicadores das consultas.
+T8 (5 %)  Documentação no GitHub: README (arquitetura e estados em Mermaid, como rodar
+    no Wokwi e na bancada, resultados), contrato MQTT, pinagem, badge do CI, release
+    v1.0.0, uma issue por tarefa fechada por PR revisado.
+T9 (10 %) Vídeo de 3 a 5 min com a bancada funcionando e todos os integrantes.
+
+== REGRAS QUE NÃO PODEM SER QUEBRADAS ==
+- A decisão (controle, alarme, segurança) mora no ESP32; o Node-RED só registra, mostra
+  e repassa comandos. Sem broker, o dispositivo continua funcionando.
+- Sinal analógico só em pino do ADC1 (GPIO32-39), porque o ADC2 não funciona com Wi-Fi.
+  GPIO34-39 são só entrada.
+- Nenhum pino do ESP32 recebe mais que 3,3 V. Servo, motor e relé não se alimentam do
+  pino do ESP32. Nada ligado à rede elétrica (127/220 V) na bancada.
+- Cada peça precisa existir no Wokwi (ou ter um substituto declarado) E na bancada.
+- Escopo pequeno e completo: poucos estados bem tratados valem mais que muitos pela
+  metade.
+- Senhas e tokens nunca no repositório.
+
+== O QUE RESPONDER ==
+1. Resumo da ideia em 2 frases, como você entendeu.
+2. Tabela com uma linha por critério (T1 a T9): critério | situação | justificativa |
+   o que falta. Situação é uma de: Atende / Parcial / Não atende / Não dá para saber.
+   Use "Não dá para saber" quando a ideia não trouxer a informação, e diga qual.
+3. Violações das REGRAS, se houver, com a correção mínima.
+4. Viabilidade: (a) cada peça existe no Wokwi? Se não tiver certeza, diga para o grupo
+   conferir em docs.wokwi.com, não invente; (b) riscos da bancada; (c) o escopo cabe em
+   4 semanas? Se não, o que cortar.
+5. Sugestão de contrato MQTT mínimo (tópico, sentido, quando, exemplo de payload) e das
+   3 perguntas que o banco deveria responder, se a ideia ainda não tiver.
+6. Até 5 perguntas que o grupo precisa responder antes de escrever a proposta.
+Seja direto, em português, e não elogie a ideia: o objetivo é achar o que falta.
+
+== IDEIA DO GRUPO ==
+Nome do projeto:
+Problema que resolve (quem usa, para quê):
+O que o ESP32 decide sozinho e em que estados pode estar:
+Entradas (peça e pino):
+Saídas (peça e pino):
+Periféricos e interrupção que pretendemos usar:
+Tópicos MQTT e comandos (se já pensamos):
+O que queremos guardar no banco e que perguntas responder:
+Peças que temos para a bancada:
+Dúvidas do grupo:
+```
+
+</TabItem>
+<TabItem value="fonte" label="Fonte chaveada (TL494/SG3525A)">
+
+```text title="Brief — Projeto final, fonte chaveada supervisionada (copie tudo)"
+Você é um avaliador técnico de propostas de projeto final da disciplina de Sistemas
+Embarcados e IoT (ELT73A, UTFPR). Sua tarefa é verificar se a IDEIA DO GRUPO, no fim
+desta mensagem, atende às especificações da versão "fonte chaveada supervisionada".
+Não escreva código nem o projeto pelo grupo: avalie, aponte lacunas e sugira o mínimo
+necessário para atender.
+
+== CONTEXTO ==
+Os alunos fizeram 10 laboratórios de IoT (ESP32 no PlatformIO, Wokwi, Wi-Fi e MQTT com
+LWT, OLED, ADC, LEDC, timers, NVS, Node-RED com Dashboard 2.0 e SQLite, GitHub com
+commits "Tn:", GitHub Actions com wokwi-cli) e uma série de guias de eletrônica de
+potência:
+- buck de 18 V com MOSFET no retorno, L = 1 mH, C = 470 uF, carga de 22 ohms,
+  estágio BC548/BC558 e divisores de medida (Vin, Vo);
+- ESP32 cooperando com o TL494: DAC1 -> LM324-B -> referência do amplificador de
+  erro 1 (2 a 12 V); DAC2 -> LM324-C (ganho 1,2) -> DTC (limite de razão cíclica);
+  GPIO27 -> BC548 -> amplificador de erro 2 (desligamento seguro: sem ESP32, sem
+  pulsos); ADC1 lendo Vin (GPIO32), pino 3 (GPIO33), trimpot (GPIO34) e Vo (GPIO35);
+  modo 1 = malha analógica no CI com rede tipo 3 e ESP32 supervisionando; modo 2 =
+  malha digital pelo DTC;
+- a mesma cooperação com o SG3525A (referência de 7 a 12 V no pino 2, grampo com BC558
+  no pino 9, desligamento pelo pino 10, LM358);
+- chips personalizados do TL494 e do SG3525A para o Wokwi (o Wokwi não simula
+  resistores, capacitores nem o estágio de potência; o buck entra como modelo médio no
+  firmware);
+- supervisão com estados DESLIGADO, (PARTIDA), OPERANDO, FALHA; falhas de subtensão
+  (Vin < 8 V), sobretensão (Vo > 15 V), "sem resposta" e "acima da referência",
+  detectadas em até 50 ms.
+O grupo tem 4 semanas. O mesmo firmware roda no Wokwi (modo 2 + modelo do buck) e na
+bancada (modo 1, buck real), com broker Mosquitto local na bancada.
+
+== CRITÉRIOS DE AVALIAÇÃO (peso) E O QUE ESTA VERSÃO EXIGE ==
+T1 (10 %) Entrada e saída: trimpot de referência e botão (toque liga/desliga, 2 s
+    rearma); OLED com Vin, Vo, referência, D e estado; LED de estado.
+T2 (10 %) Periférico e interrupção: DAC1 e DAC2, ADC1, supervisão a cada 2 ms numa
+    TASK PRÓPRIA de prioridade maior que a da rede (Wi-Fi/MQTT nunca bloqueiam a
+    supervisão; troca de dados por fila); ISR do botão; ISR medindo a razão cíclica e a
+    frequência no nó X por divisor (47k/10k) em janelas, comparada com a estimada e com
+    o osciloscópio.
+T3 (10 %) MQTT via Node-RED: .../medidas a cada 1 s (seq, vin, vo, ref, D estimado e
+    medido, dmax); .../estado retido a cada mudança, com motivo; .../status LWT;
+    comandos cmd/ref (faixa do CI), cmd/dmax e cmd/liga, recusados fora da faixa.
+    NÃO existe rearme pelo MQTT: rearme só no botão local.
+T4 (10 %) SQLite: tabelas medidas, eventos e status com CHECK e INSERT preparado;
+    consultas de regulação de linha por faixa de Vin (GROUP BY), tempo em cada estado
+    (LEAD), falhas e tempo até o rearme (LEAD), Vo / (D x Vin) e D medido - D estimado,
+    disponibilidade; índice e retenção.
+T5 (10 %) Wokwi: chip do CI + modelo médio do buck alimentado pela razão cíclica
+    medida; potenciômetro fazendo o papel de Vin; cenário do wokwi-cli que testa
+    partida, regulação e subtensão. Risco conhecido: não foi verificado se o DAC do
+    ESP32 aciona um pino de chip personalizado; o plano B é malha aberta com
+    potenciômetro no DTC.
+T6 (30 %) Bancada: o buck regulando no modo 1 com supervisão e rede ao mesmo tempo.
+    Ordem: desligamento seguro primeiro (sem pulsos com o ESP32 desligado), depois
+    medidas, ESP32, calibração documentada, rede tipo 3. Roteiro com: Vo = 9 V; troca
+    de referência pelo dashboard; referência fora da faixa recusada; degrau de carga no
+    osciloscópio; variação de Vin; limite de D; realimentação aberta -> FALHA em 50 ms;
+    rearme pelo botão; broker parado com a fonte regulando; reset do ESP32 com 18 V;
+    tabela previsto x medido.
+T7 (5 %)  Dashboard: Vo x referência, D, estado, sliders de referência e limite,
+    liga/desliga sem rearme, falhas e indicadores.
+T8 (5 %)  GitHub: esquema completo, calibração, contas (oscilador, rede tipo 3,
+    malha), tabela previsto x medido, justificativa do CI, contrato MQTT, release.
+T9 (10 %) Vídeo de 3 a 5 min: regulação, degrau de carga, uma falha tratada, broker
+    parado, Wokwi.
+
+== REGRAS QUE NÃO PODEM SER QUEBRADAS ==
+- Só 18 V, fonte limitada em corrente. Ligar ao retificador da rede está FORA do
+  projeto.
+- Nenhum pino do ESP32 recebe mais que 3,3 V: REF (5 V), pino 3, pino 9 e nó X só por
+  divisor ou transistor.
+- Desligamento seguro em hardware: com o ESP32 desligado, travado ou em reset, o CI não
+  pode pulsar.
+- O CI regula; o ESP32 supervisiona. A supervisão não depende da rede.
+- Mudanças em relação aos guias precisam de conta ou medida que as justifique.
+- Senhas e tokens nunca no repositório.
+
+== O QUE RESPONDER ==
+1. Resumo da ideia em 2 frases, como você entendeu.
+2. Tabela com uma linha por critério (T1 a T9): critério | situação | justificativa |
+   o que falta. Situação: Atende / Parcial / Não atende / Não dá para saber (diga qual
+   informação faltou).
+3. Violações das REGRAS, com a correção mínima. Dê atenção especial a tensões acima de
+   3,3 V em pinos do ESP32 e ao comportamento sem o ESP32.
+4. Se o grupo mudou algo dos guias (outro CI, outra topologia, outra tensão, outra
+   carga, outra faixa de referência), liste cada mudança e o que precisa ser
+   recalculado (divisores, rede tipo 3, limites, constantes do firmware).
+5. Viabilidade em 4 semanas e os 3 maiores riscos da bancada, com como reduzir cada um.
+6. Até 5 perguntas que o grupo precisa responder antes de escrever a proposta.
+Seja direto, em português, e não elogie a ideia: o objetivo é achar o que falta. Não
+invente valores de datasheet: se não tiver certeza, diga para conferir.
+
+== IDEIA DO GRUPO ==
+CI escolhido (TL494 ou SG3525A) e por quê:
+Mudanças em relação aos guias (topologia, tensões, carga, faixa de referência):
+Modo de malha na bancada (1, e se 2 também):
+Estado da placa (já temos o buck da experiência montado? o que falta?):
+Interface local (entradas e saídas além das do guia):
+Tópicos MQTT e comandos (se já pensamos):
+O que queremos medir e comparar no banco:
+Peças e instrumentos que temos:
+Dúvidas do grupo:
+```
+
+</TabItem>
+</Tabs>
+
+## Exemplo de uso {/* #exemplo */}
+
+Uma resposta útil da IA tem a tabela de critérios e diz **o que falta**, não só se está bom:
+
+```text title="Trecho de resposta (ilustrativo)"
+| Critério | Situação     | Justificativa                              | O que falta                                   |
+| T2       | Parcial      | usa ADC e PWM, mas nenhuma interrupção     | ISR no botão de parada ou no sensor de pulso  |
+| T5       | Não dá para saber | o sensor de vazão não tem peça no Wokwi | conferir em docs.wokwi.com ou declarar um substituto (botão gerando pulsos) |
+```
+
+Se a IA aprovar tudo sem apontar nada, desconfie: peça "liste três motivos pelos quais o professor
+poderia pedir ajustes nesta proposta".
