@@ -57,11 +57,22 @@ body:
       required: true
 
   - type: textarea
-    id: evidencias_logs
+    id: print_questao
     attributes:
-      label: Prints, Vídeos ou Mensagens de Erro (Debug)
-      description: Arraste e solte capturas de tela aqui. Se o modo de depuração (Debug) do Moodle estiver ativo, cole o stack trace abaixo.
+      label: Print da Questão
+      description: Arraste e solte, cole (Ctrl+V) ou selecione a imagem mostrando a questão e o problema ocorrido.
+      placeholder: "Cole a captura de tela aqui..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs_debug
+    attributes:
+      label: Mensagens de Erro / Debug (Opcional)
+      description: Se o modo de depuração (Debug) do Moodle estiver ativo ou houver erro no console do navegador, cole o texto abaixo.
       render: shell
+    validations:
+      required: false
 
   - type: checkboxes
     id: checklist_triagem
