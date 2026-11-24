@@ -168,9 +168,3 @@ node scripts\mic\componentes-usados.mjs
 node scripts\mic\componentes-usados.mjs --detalhe
 node scripts\mic\componentes-usados.mjs LabIotAlunoSimples
 ```
-
-## Grade
-
-```bash
-py scripts/gen_grade.py
-```
