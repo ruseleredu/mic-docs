@@ -8,43 +8,39 @@ body:
       value: |
         Obrigado por reportar este problema! Por favor, preencha os campos abaixo com o máximo de detalhes possível para agilizar a análise técnica e pedagógica.
 
-  - type: dropdown
-    id: tipo_questao
+  - type: input
+    id: nome_completo
     attributes:
-      label: Tipo de Questão Afetada (se aplicável)
-      options:
-        - Não se aplica (problema geral no questionário)
-        - Múltipla escolha
-        - Verdadeiro/Falso
-        - Associação (Matching)
-        - Resposta curta
-        - Numérica / Calculada
-        - Dissertativa (Essay)
-        - Arrastar e soltar (sobre texto ou imagem)
-        - Cloze (Respostas embutidas)
-        - "Plugin de terceiros (ex: CodeRunner, STACK, H5P)"
+      label: Nome Completo
+      description: Informe o nome completo do usuário ou estudante afetado.
+      placeholder: "Ex: Maria da Silva Santos"
     validations:
-      required: false
+      required: true
+
+  - type: input
+    id: questionario
+    attributes:
+      label: Questionário
+      description: Informe o nome exato ou número do questionário onde ocorreu o problema.
+      placeholder: "Ex: Questionário Avaliativo 01 - Unidade 2"
+    validations:
+      required: true
+
+  - type: input
+    id: tentativa
+    attributes:
+      label: Tentativa
+      description: Informe o número da tentativa em que o erro aconteceu.
+      placeholder: "Ex: Tentativa 1"
+    validations:
+      required: true
 
   - type: textarea
     id: descricao
     attributes:
       label: Descrição do Problema
-      description: Explique claramente o que está acontecendo. Se afetar apenas alunos específicos, informe os IDs ou matrículas.
+      description: Explique claramente o que está acontecendo.
       placeholder: "Ao finalizar a tentativa, a nota exibida no livro de notas não corresponde à soma das questões..."
-    validations:
-      required: true
-
-  - type: textarea
-    id: passos_reproduzir
-    attributes:
-      label: Passos para Reproduzir
-      description: Como a equipe técnica pode simular o erro?
-      value: |
-        1. Acessar o questionário '...'
-        2. Iniciar/Visualizar tentativa como papel '...'
-        3. Responder a questão '...' com o valor '...'
-        4. Clicar em 'Enviar tudo e terminar' e observar o erro
     validations:
       required: true
 
@@ -82,3 +78,4 @@ body:
         - label: Verifiquei se o problema ocorre também na visualização prévia (Preview) do professor.
         - label: Confirmei que não há bloqueio por restrição de data, grupo ou nota mínima.
         - label: O problema já impactou tentativas reais de estudantes em andamento.
+        
