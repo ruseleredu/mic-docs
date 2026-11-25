@@ -98,39 +98,35 @@ const footer: ThemeConfig["footer"] = {
             ],
         },
         {
-            title: "Sistemas",
+            title: "Doku Sites",
             items: [
                 {
-                    label: "Sigepe",
-                    href: "https://sougov.sigepe.gov.br/sougov/Home",
+                    label: "IoT Industrial",
+                    href: "https://ruseleredu.github.io/iiot-docs/",
                 },
                 {
-                    label: "gov.br",
-                    href: "https://servicos.acesso.gov.br/",
+                    label: "Main Site",
+                    href: "https://adrianoruseler.github.io/site/",
                 },
                 {
-                    label: "Consulta Diários",
-                    href: "https://sistemas2.utfpr.edu.br/url/1141",
+                    label: "MIC-ESP32",
+                    href: "https://ruseleredu.github.io/mic-docs/",
                 },
                 {
-                    label: "Permanências",
-                    href: "https://sistemas2.utfpr.edu.br/url/1026",
+                    label: "MIC-STM32",
+                    href: "https://ruseleredu.github.io/stm32doc/",
                 },
                 {
-                    label: "Planejamento",
-                    href: "https://sistemas2.utfpr.edu.br/url/1890",
+                    label: "Sistemas Digitais",
+                    href: "https://ruseleredu.github.io/sd-docs/",
                 },
                 {
-                    label: "Lançamentos",
-                    href: "https://sistemas2.utfpr.edu.br/url/1514",
+                    label: "Eletrônica Digital",
+                    href: "https://ruseleredu.github.io/ed-docs/",
                 },
                 {
-                    label: "Mapa de Professor",
-                    href: "https://sistemas2.utfpr.edu.br/url/1022",
-                },
-                {
-                    label: "Mapa de Sala",
-                    href: "https://sistemas2.utfpr.edu.br/url/1934",
+                    label: "Eletrônica Analógica",
+                    href: "https://ruseleredu.github.io/ea-docs/",
                 },
             ],
         },
